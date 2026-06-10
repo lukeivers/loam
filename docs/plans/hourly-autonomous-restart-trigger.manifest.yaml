@@ -1,0 +1,200 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: hourly-autonomous-restart-trigger
+  title: "Hourly autonomous-restart trigger — an IN-SESSION once-per-hour self-wake (Claude-native CronCreate, session-scoped, restored on --resume) that re-engages the LIVE interactive session to safely continue approved-autonomous work when the agent drifts off mid-run: doubly-gated approval scope, real-usage cost ceiling, one-command CronDelete off-switch, owner-class halt, each-tick Telegram report. NO detached spawn / NO launchd in build scope (the launchd persistence layer is DEFERRED — §7.D — with Luke's check-live-session-first constraint). PART 2 of 2 (#79 CORE-loam primitive; reads PART 1's census). REVISED 2026-06-05 per owner decision: in-session-only for now."
+
+# BASELINE: current branch tip @ build time. ONE NEW component (autonomous-restart), now MUCH SMALLER
+# than the prior launchd version — the scheduler is the Claude-native session-scoped CronCreate tick
+# (composed-on, NOT a component-generated plist); the component adds only the on-wake runbook
+# (refresh census -> read approved-autonomous queue -> doubly-gated pick -> continue IN the live session
+# -> report to Telegram) + the guardrails + the arming helper + the CronDelete off-switch.
+#
+# ★ OWNER DECISION (Luke, 2026-06-05) — IN-SESSION ONLY FOR NOW. The persistent launchd
+# "re-launch the session with claude --resume" layer is DEFERRED (he's uncomfortable with it / it feels
+# hollow + out of his control). Build NOW: an in-session hourly self-wake — while the interactive session
+# is alive, a session-scoped CronCreate tick fires hourly and re-engages the LIVE session to check the
+# approved-autonomous queue + continue work. Full live context, visible in Telegram, supervised, trivially
+# killable. The launchd layer is DEMOTED-NOT-DELETED to plan §7.D, with Luke's load-bearing constraint
+# recorded: IF ever built it MUST check for a live session FIRST and DEFER to it (act only when there is
+# genuinely no live session) — so it never fights the in-session loop or double-runs. Out of scope today.
+#
+# ★ CAPABILITY-CONFIDENCE-GATE STILL APPLIES (to the lower-risk in-session shape) — this is a SELF-WAKING
+# agent (a tick continues real work on a clock). Safety bounds are LOAD-BEARING, each with a REAL test:
+# doubly-gated scope (persona-eligible AND explicit autonomous_ok, never self-authorized, owner-class
+# HALTED-and-surfaced); cost bound against the REAL INTERACTIVE /api/oauth/usage window + the #82
+# daily-ration cap + per-tick/per-day caps; a one-command documented off-switch (CronDelete + task id);
+# conservative dedup with the in-session Stop-hook (never double-continue one item). The prior #1 risk —
+# Telegram-bot-slot theft via a detached claude -p spawn — is ELIMINATED FROM BUILD SCOPE: there is no
+# detached spawn (the tick re-engages the LIVE session, which already owns the bot slot). The AC.ISO.*
+# isolation family + the spawn-isolation wiring are RETIRED here and recorded as a precondition of the
+# DEFERRED §7.D layer (which would spawn headless and would need isolation).
+#
+# ★ LIVE-ARMING IS OWNER-GATED (explicit plan constraint, D7): the build PRODUCES + TEST-FIRES the
+# mechanism, but does NOT arm the live recurring hourly tick. The arming helper (the documented CronCreate
+# register one-liner) ships; the live tick is armed only on Luke's explicit "arm it" — after he sets the
+# two owner calls D2 (the approval signal) + D3 (the cost numbers).
+#
+# Two genuinely-his OWNER calls gate the live-armed run (set BEFORE arming): D2 the approval signal
+# (the autonomous_ok second gate + who sets it) and D3 the cost ceiling (the daily-ration % against the
+# INTERACTIVE window + per-tick + max-items/day numbers).
+#
+# READ-DEPENDENCY on PART 1 (self-maintaining-work-loop, sealed-local on build/self-maintaining-work-loop):
+# the tick refreshes + reads PART 1's census to know what's genuinely current/done before continuing.
+# SEQUENCE AFTER PART 1; do NOT build concurrently in one tree. If PART 1's census is unreadable, the
+# safety scaffold (scope-gate + cost-bound + off-switch + a no-op fire) ships TODAY with the census-read
+# behind a fail-soft seam (plan §8 #3) — the safety bar does NOT depend on the census, only the
+# continue-intelligence does. FEASIBILITY: this is LIGHTER than the launchd version and buildable to a
+# verified test-fire TODAY (no plist generator, no detached-spawn runner, no isolation wiring).
+#
+# Adds AC.TICK.* / AC.RESUME.* / AC.SCOPE.* / AC.BOUND.* / AC.KILL.* / AC.AUTORESTART.LIVE.1
+# (the outcome-altitude: a REAL test fire — the tick wakes the LIVE session, refreshes+reads the census,
+# reads the approved queue, continues an approved-autonomous item IN-SESSION OR correctly no-ops/surfaces,
+# reports to Telegram, HALTS on an owner-class item, and the CronDelete off-switch verifiably stops further
+# ticks — no launchd, no detached spawn). RETIRED from the prior version: AC.ISO.* (no spawn to isolate).
+baseline: "fa422412715ef69f51dc70ba78665dcb725f6d66"
+
+plan: docs/plans/hourly-autonomous-restart-trigger.md
+
+components:
+  - name: autonomous-restart
+    new_component: true            # NEW in-session-continuation capability (#79), composes on CronCreate
+    seal_test: framework/autonomous-restart/tests/test_no_sealed_amendments.py
+    sidecar: framework/autonomous-restart/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/hourly-autonomous-restart-trigger.md
+  body: |
+    # Hourly autonomous-restart trigger — an IN-SESSION self-wake heartbeat that re-engages the live session to safely continue approved work (launchd persistence deferred)
+
+    Per `docs/plans/hourly-autonomous-restart-trigger.md`. PART 2 of a two-part build (Luke: "build it
+    TODAY"); this IS task #79 (persona self-scheduled follow-up / recheck — CORE loam). REVISED 2026-06-05
+    per owner decision: IN-SESSION ONLY for now. ONE NEW component `autonomous-restart`, now MUCH SMALLER
+    than the prior launchd version. Composes on the Claude-native session-scoped `CronCreate` tick + the
+    existing autonomy-queue pick-logic + the usage-cap probe + PART 1's census (Lens-1: compose on the
+    platform scheduler, reuse the proven pick-logic + safety vocabulary, don't reinvent).
+
+    ★ OWNER DECISION (Luke, 2026-06-05) — the mechanism this revision implements: the trigger is IN-SESSION
+    ONLY for now. The persistent launchd "re-launch the session with `claude --resume`" layer is DEFERRED —
+    Luke is uncomfortable with it / it feels hollow + out of his control. Build NOW: an in-session hourly
+    self-wake. While this interactive session is alive, a session-scoped `CronCreate` tick fires hourly and
+    re-engages the LIVE session to check the approved-autonomous queue + continue work. Full live context,
+    visible in Telegram in real time, supervised, trivially killable. The launchd layer is DEMOTED-NOT-
+    DELETED to plan §7.D with Luke's load-bearing constraint recorded: IF ever built it MUST check for a
+    live session FIRST and DEFER to it (act only when there is genuinely no live session) — so it never
+    fights the in-session loop or double-runs. Out of scope today.
+
+    The failure mode this fixes: long autonomous runs wind down and approved work silently stalls, because
+    the only continuation mechanism (the pos3 `autonomy_continuation.py` Stop-hook) fires only on an idle
+    turn-END — when the agent winds down mid-run, no Stop fires and nothing re-engages the session. This
+    trigger is the periodic in-session heartbeat that re-engages the LIVE session on a clock and keeps
+    approved-autonomous work moving — inside the supervised, Telegram-visible live session, the safest
+    place. It COMPOSES with the in-session Stop-hook (the idle-turn-end continuation; same queue + pick-
+    logic, deduped on in-flight — never double-continue one item), it does not replace or touch it.
+
+    What it ships: an in-session once-per-hour self-wake — while the session is alive, a session-scoped
+    `CronCreate` tick (restored on `--resume` if un-expired) fires hourly and re-engages the LIVE session
+    to: refresh + read PART 1's census (know what's genuinely current/done — never re-continue finished
+    work or act on a stale picture), read the approved-autonomous queue, pick the next item that is BOTH
+    persona-eligible AND explicitly autonomous_ok-flagged, continue it IN the live session, report the
+    outcome to Telegram (each tick reports — what it continued OR that it correctly no-op'd), and is
+    cost-bounded + killable (one documented `CronDelete` off-switch).
+
+    ★ CAPABILITY-CONFIDENCE-GATE — still applies to the lower-risk in-session shape; the safety bounds are
+    load-bearing, each with a REAL test:
+      - SCOPE (AC.SCOPE.*): ONLY items that are BOTH persona-eligible AND explicitly autonomous_ok-flagged
+        are continued; owner-class / public-action / money-spending / irreversible items are HALTED-and-
+        surfaced, never acted; the tick can NEVER self-authorize an item (the flag is set only by Luke or
+        the persona-with-recorded-rationale, never the self-waking tick).
+      - COST (AC.BOUND.*): bounded per-tick (one continue / token cap) and overall (the #82 daily-ration
+        cap, default 15%/day, read from the REAL INTERACTIVE /api/oauth/usage window — never a guess; the
+        in-session tick draws the interactive limit, not the SDK credit bucket); on any cap, stop + surface
+        a cap-reached report; idempotent continue (an item is continued at most once — moved to in-flight
+        before the next fire, deduped against the Stop-hook, no double-acting).
+      - OFF-SWITCH (AC.KILL.*): one documented command disables the tick (the `CronDelete` + task-id
+        pattern); after disable, no further ticks. Documented in the component + STATE.md + surfaced to
+        Luke at seal.
+      - CONSERVATIVE DEDUP: the tick and the Stop-hook share the same queue; if an item is already
+        in-flight, the tick continues the NEXT eligible item or no-ops — the tick is the periodic
+        heartbeat, the Stop-hook is the idle-turn-end continuation; same driver, two triggers, never two
+        continues of one item.
+
+    The prior #1 risk — Telegram-bot-slot theft via a detached `claude -p` spawn — is ELIMINATED FROM
+    BUILD SCOPE: the in-session mechanism has NO detached spawn (the tick re-engages the LIVE session,
+    which already owns the bot slot). The AC.ISO.* isolation family + the spawn-isolation wiring are
+    RETIRED here and recorded as a precondition of the DEFERRED §7.D launchd layer (which would spawn
+    headless and would need isolation). The report uses the NORMAL in-session Telegram reply (the MCP is
+    alive inside the live session), NOT the out-of-band Bot-API direct-send the detached runner needed.
+
+    ★ LIVE-ARMING IS OWNER-GATED (D7): the build PRODUCES + TEST-FIRES the mechanism, but does NOT arm the
+    live recurring hourly tick. The arming helper (the documented `CronCreate` register one-liner) ships;
+    the live tick is armed only on Luke's explicit "arm it" — after he sets D2 + D3.
+
+    Two genuinely-his OWNER calls gate the live-armed run (must be set BEFORE arming):
+      - D2 (the approval signal): RECOMMEND a SECOND explicit gate — persona-eligible is not enough for a
+        self-waking continue; an item needs an explicit `autonomous_ok: true` flag (opt-in per item), set
+        by Luke or the persona-with-recorded-rationale, never the tick. RETAINED unchanged.
+      - D3 (the cost ceiling): RECOMMEND three composed bounds — the #82 daily-ration cap (default 15%/day)
+        against the INTERACTIVE window as the overall ceiling + a per-tick token cap + a max-items/day;
+        conservative defaults, the numbers are Luke's to set. CHANGED: the bucket is the interactive limit
+        (the tick runs in the live session), not the SDK credit bucket.
+
+    READ-DEPENDENCY on PART 1 (self-maintaining-work-loop, sealed-local on build/self-maintaining-work-loop):
+    the trigger refreshes + reads PART 1's census + on-demand capture entry point. SEQUENCE AFTER PART 1
+    (do NOT build concurrently in one tree, feedback_serialize_amendment_builds). Feasibility-honesty (plan
+    §10 #6): this is LIGHTER than the launchd version and realistically buildable to a verified TEST-FIRE
+    TODAY (no plist generator, no detached-spawn runner, no isolation wiring — it leans on the shipped
+    CronCreate + the existing autonomy-queue + PART 1's census). If PART 1's census is unreadable, ship the
+    safety scaffold today with the census-read behind a fail-soft seam (§8 #3). The LIVE recurring tick is
+    NOT claimed running today — that is owner-gated (D7); the build delivers a verified test-fire + the
+    arming helper, and Luke arms it live on his explicit "arm it."
+
+    ACs:
+      - AC.TICK.1 — a session-scoped tick, registered through the component's arming helper (not a
+        hand-rolled cron string), fires once per hour and re-engages the LIVE session; restored on
+        `--resume` if un-expired.
+      - AC.TICK.2 — registered / listed / removed through the component's own entry points (arm → list →
+        off-switch), each independently exercisable.
+      - AC.RESUME.1 — a fire refreshes the census, reads the approved-autonomous queue, picks the next
+        persona-eligible AND autonomous_ok item, continues it IN the live session, reports to Telegram.
+      - AC.RESUME.2 — nothing eligible → correct no-op, fabricates no work, AND reports the no-op to
+        Telegram (each tick reports — what it did OR that it correctly no-op'd).
+      - AC.SCOPE.1 — owner-class / public-action / money / irreversible / un-autonomous_ok item is NEVER
+        auto-continued: it stays queued and the tick halts-and-surfaces rather than acting.
+      - AC.SCOPE.2 — the tick can NEVER self-authorize: it cannot set autonomous_ok on any item.
+      - AC.BOUND.1 — bounded per-tick + overall (daily-ration cap from the real INTERACTIVE usage window);
+        on any bound, stop + surface a cap-reached report, never unbounded tokens.
+      - AC.BOUND.2 — idempotent continue: an item is continued at most once (moved to in-flight before the
+        next fire, deduped against the Stop-hook); a re-fire does not re-continue it.
+      - AC.KILL.1 — one documented command (CronDelete + task id) disables the tick; after disable, no
+        further fires.
+      - AC.AUTORESTART.LIVE.1 (outcome-altitude) — a REAL test fire end-to-end: the tick wakes the LIVE
+        session → refresh+read census → read approved queue → EITHER continue an approved-autonomous item
+        IN-SESSION (continue, report to Telegram, move to in-flight) OR correctly no-op/surface if none
+        eligible / the only item is owner-class (and report the no-op) — AND on an owner-class item HALT-
+        and-surface — AND the off-switch (CronDelete) verifiably stops further ticks. No launchd, no
+        detached spawn; the real tick, the real census read, the real queue, the real in-session Telegram
+        report.
+
+    Fence: NEW component under framework/autonomous-restart/; COMPOSES on CronCreate/CronDelete/CronList
+    (the platform scheduler — used, not generated); REUSES the usage-cap probe + PART 1's census READ-ONLY.
+    Forbidden without a halt: any auto-pick of an owner-class / un-autonomous_ok item; any cost path not
+    reading the real interactive usage window; any non-one-command / unreliable off-switch; any detached
+    `claude -p` / launchd spawn (that is the DEFERRED §7.D layer, owner-gated + out of scope); building the
+    continue-path against a non-existent census without surfacing the ordering; arming the LIVE recurring
+    tick (live-arming is owner-gated — the build test-fires + ships the arming helper only) (§8 halts 1–7).
+
+    No ODD violation in surrounding code; every added path traces to a named AC
+    (AC.TICK.*/AC.RESUME.*/AC.SCOPE.*/AC.BOUND.*/AC.KILL.*/AC.AUTORESTART.LIVE.1), no defensive code for
+    unnamed cases.

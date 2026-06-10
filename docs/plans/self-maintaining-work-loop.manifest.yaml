@@ -1,0 +1,153 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: self-maintaining-work-loop
+  title: "Self-maintaining work loop — event-sourced work-state auto-capture (git/task/queue ground truth → objective-tracker events) + a live current-state-of-all-work census that stays correct on its own, no hand-reconciliation. PART 1 of 2 (foundation for the hourly autonomous-restart trigger)."
+
+# BASELINE: current branch tip @ build time (the plan-doc commit's parent). TWO-component
+# amendment, ADDITIVE. The WMS shipped the store + the lenses (read surfaces); it never
+# shipped the WRITE-BACK loop that keeps the store true without a human reconciling it — the
+# only existing tracker-write path is intake.py (NEW work, on confirm). This layer adds the
+# capture-from-ground-truth path: a turn-close (Stop-hook) + on-demand capture pass that
+# event-sources work-DELTAS (a sealed/merged git ref via FBM Slice C, a task-list completion,
+# a workstream-queue completion, a decision-register entry) into the tracker as auditable
+# events — so a work item auto-transitions (active→achieved/blocked) from DERIVED ground-truth
+# STATE, never from LLM recall (the structural fix for "claimed done when the outcome wasn't
+# delivered"). Plus a current-state-of-all-work census surface that SUBSUMES the existing lens
+# blocks (one capped fail-soft block, derived live). Adds AC.CAP.* / AC.DERIVE.* / AC.CENSUS.* /
+# AC.HONEST.* / AC.SELFMAINT.LIVE.1 (the outcome-altitude: at an arbitrary moment against the
+# LIVE loam+cairn repos with NO hand-reconciliation, the census shows the genuinely-current
+# state, an advanced item MOVED by the capture loop, no fabricated "done").
+# Ground-truth-only sourcing (no LLM-recall auto-capture) is the load-bearing owner call (D2 ★).
+baseline: "fa422412715ef69f51dc70ba78665dcb725f6d66"
+
+plan: docs/plans/self-maintaining-work-loop.md
+
+components:
+  - name: objective-tracker
+    new_component: false           # additive capture adapter; WRITES via the existing event API
+    seal_test: framework/objective-tracker/tests/test_no_sealed_amendments.py
+    sidecar: framework/objective-tracker/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/self-maintaining-work-loop.md
+  body: |
+    # Self-maintaining work loop — auto-capture + a live current-state census
+
+    Per `docs/plans/self-maintaining-work-loop.md` and the parent architecture
+    `docs/design/work-management-system-architecture.md`. PART 1 of a two-part build (Luke:
+    "build it TODAY"). Two-component amendment, ADDITIVE: a git/task/queue→event capture
+    adapter on the SEALED `objective-tracker` + the turn-close capture contributor and the
+    current-state census surface on `primary-persona` keep-pace. Composes on objective_tracker
+    + intake's write-path + FBM Slice C/D + the shipped lenses (Lens-1: extend, don't duplicate).
+
+    The gap this closes (the thing Luke caught): the WMS shipped the work-item STORE and the
+    LENSES (streams/projects/goals/plate/waiting/analytics — all READ-ONLY surfacers over the
+    store). The ONLY thing that writes work-state from real activity today is `intake.py`, and
+    it captures only NEW work on confirm. NOTHING event-sources work-DELTAS — a task completing,
+    a release shipping, a status transition — from real git/task/queue signals back into the
+    store. So the census is only as current as the last MANUAL transition — which is exactly how
+    the persona "claimed a component done when the OUTCOME wasn't delivered." This layer adds the
+    write-back loop that makes the store track reality on its own.
+
+    What it ships:
+      - **A capture adapter** (objective-tracker, additive) that READS ground-truth signals
+        (FBM Slice C `derive_project_state` git refs; the persona task-list completions; the
+        workstream-queue `completed:` entries; decision-register entries) and WRITES work-deltas
+        into the tracker via the EXISTING event API (`StatusTransitioned`/`ObjectiveCreated`),
+        with a new `origin: ground-truth-capture` provenance value (the LiftedFrom additive
+        precedent). Idempotent (a delta captured once); every auto-transition recorded as an
+        evented, auditable delta carrying its evidence; reconstructable from the event log alone
+        (D8 round-trip preserved).
+      - **A turn-close capture contributor** (primary-persona) — `stop_emitter` gains an additive
+        capture-enqueue step alongside the existing memory-episode enqueue; the Stop hook still
+        returns 0 unconditionally (AC.M.4 non-blocking contract preserved). Also exposes an
+        on-demand entry point (the seam PART 2's hourly job calls to refresh the census before
+        it decides what to resume).
+      - **A current-state-of-all-work census** (primary-persona keep-pace `work_census.py`) — ONE
+        concise capped fail-soft block rendering the genuinely-current state of every
+        stream/project/open-loop, derived LIVE (a fresh derive_project_state for a bound project;
+        the live task/queue signal otherwise), SUBSUMING the existing streams/projects lens blocks
+        (one block, not a sixth wall of text — the FBM-don't-bloat / #80 mandate holds).
+
+    The load-bearing correctness decision (D2 ★, owner call): the auto-capture is event-sourced
+    from GROUND-TRUTH signals ONLY — it NEVER asks the model "what got done this turn." An item
+    only transitions to `achieved` when a real git ref / task-completion / queue-completion
+    evidences it. This structurally prevents the Luke-caught failure (the model narrating progress
+    that isn't on disk). New conversational work still enters via the EXISTING propose-and-confirm
+    intake path; the auto-loop handles only the transition/completion deltas that HAVE ground-truth
+    evidence. Falling back to LLM-recall capture to paper over an un-evidenced delta is a HALT, not
+    a default (plan §8 #5) — that would reintroduce the exact failure this layer exists to kill.
+
+    The auto-transition boundary (D5): the loop auto-moves a lifecycle ONLY on hard evidence
+    (active→achieved on a bound project's sealed/merged git STATE; active→blocked on a
+    ground-truth-confirmed blocker). It does NOT auto-close `owner_pending` items (those mean
+    "waiting on Luke" — never decided on his behalf) and NEVER fabricates a transition without a
+    signal. Every auto-move is an append-only event — auditable + reversible.
+
+    Honest reach (plan §10 RF #1): the self-maintaining property is FULLY real today for the
+    FBM-registered projects (`loam` + `cairn` — git-ref-derived) + every task/queue-tracked item;
+    it is NOT yet true for Money/LitRPG/Personal-Home (no registered git derivation —
+    `registry.py` registers exactly loam+cairn). AC.HONEST.1 makes the no-ground-truth case
+    explicit (real staleness + a "no ground-truth bound" mark, NEVER a fabricated STATE);
+    registering the other projects is a named follow-on. The headline "self-maintains without
+    reconciliation" is honest about its current reach by construction.
+
+    ACs:
+      - AC.CAP.1 — on turn-close a capture pass records real work-deltas as events, derived from
+        ground-truth signals (git/task/queue/decision-register), NOT from model narration.
+      - AC.CAP.2 — idempotent: re-running over unchanged ground truth records no duplicate event;
+        the projection is unchanged.
+      - AC.CAP.3 — fail-soft: a capture failure never blocks the turn; the Stop hook still returns
+        0; the failure is logged, not raised (AC.M.4 contract preserved).
+      - AC.DERIVE.1 — a work item bound to an FBM-registered project transitions from its DERIVED
+        STATE (a fresh derive_project_state), never a hand-typed status; advancing real ground
+        truth and re-running moves the item with NO register edit (derived-not-stored).
+      - AC.DERIVE.2 — every auto-transition is an evented, auditable delta (reconstructable from
+        events alone) carrying its triggering evidence.
+      - AC.CENSUS.1 — one concise capped current-state-of-all-work block, one short line per
+        stream/project/open-loop, subsuming (not duplicating) the existing lens blocks.
+      - AC.CENSUS.2 — per-item STATE composed from a FRESH ground-truth read, never stored-stale;
+        changing ground truth and re-reading reflects it without editing any register.
+      - AC.HONEST.1 — an item with NO ground-truth signal surfaces real staleness + an explicit
+        "no ground-truth bound" mark; the census NEVER asserts "done"/a build-STATE it cannot
+        evidence (the Luke-caught failure forbidden by construction).
+      - AC.HONEST.2 — an expected-vs-derived divergence is flagged AND a structured deviation
+        record {item, expected, derived, evidence} is emitted to the #71 mismatch side-channel;
+        absent that entry point the detection no-ops fail-soft.
+      - AC.SELFMAINT.LIVE.1 (outcome-altitude) — at an arbitrary moment, against the LIVE loam +
+        cairn repos with NO pre-arranged state and NO hand-reconciliation: advance real ground
+        truth, drive the production capture pass, render the production census — and observe the
+        census show the genuinely-current state with the advanced item's lifecycle MOVED by the
+        loop (not a hand edit), STATE derived live, no fabricated "done". Production entry points
+        only, no fixtures.
+
+    Fence: objective-tracker is ADDITIVE-ONLY (changing an existing event kind/field/projection-
+    or-filter contract or breaking the D8 round-trip → HALT, plan §8 #2). primary-persona must
+    NOT change stop_emitter's return-0/non-blocking contract or the existing memory-write enqueue
+    (§8 #3), must NOT modify the OBJECTIVES.md read-contract, and the census is READ-ONLY (writes
+    go through the capture adapter's tracker API). Per-turn capture must stay cheap (TTL-cached
+    FBM read + the task/queue files) — too slow → HALT (§8 #4). The census must hold the Slice-D
+    char-cap — can't fit → HALT (§8 #1). Ground-truth-only sourcing can't evidence a needed delta
+    → HALT + surface, NEVER fall back to LLM-recall capture (§8 #5).
+
+    No ODD violation in surrounding code; every added path traces to a named AC
+    (AC.CAP.*/AC.DERIVE.*/AC.CENSUS.*/AC.HONEST.*/AC.SELFMAINT.LIVE.1), no defensive code for
+    unnamed cases.

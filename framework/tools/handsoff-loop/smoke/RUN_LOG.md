@@ -103,3 +103,75 @@ fair? I'm not technical so it needs to just work.
   PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "I help run a small rec soccer league for kids and the scheduling is killing me.\nWe've got 12 teams this fall and 3 fields we can use on Saturdays. I end up\ndoing the whole season schedule in a spreadsheet by hand every year and someone\nalways ends up mad — some team gets the early morning slot four times, some\nteam plays the same opponent twice before they've played everyone once. Can you\nmake me something that builds a fair season schedule and actually shows me it's\nfair? I'm not technical so it needs to just work." --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-off-vertical-cjq274k9 --yes
   ```
 
+
+## 2026-06-10 11:58:58 — off-vertical (SECOND ACT: operator answer round) — terminal: **done**
+
+- HONEST LABEL: this is the second act of the 2026-06-10 01:47:51 off-vertical
+  run, which ended `done` with 2 unanswered questions + 3 expert-gate flags.
+  **We played the customer for the answer round** — the league operator's
+  answers were fixed in writing BEFORE the run asked anything
+  (`<workspace>/act2-driver/operator-decision-sheet.md`), then given live
+  through the loop's own intake surface. The value being shown is that the
+  system asked the right questions and built to the answers; the "operator"
+  was the demo driver role-playing a realistic league organiser, and every
+  Q→A pair is recorded verbatim in this run's `run_record.jsonl`
+  (`answer received` events).
+- run-of-origin: this entry (loam commit `c232ab3e`, workspace
+  `/var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-off-vertical-cjq274k9`
+  — the ORIGINAL run-1 workspace, extended: this run is the sibling run dir
+  `runs/20260610-115858`; started 2026-06-10 11:58:58)
+- ask (verbatim): identical to the 01:47:51 entry (same sealed ask, re-fed unchanged).
+- ANSWER MECHANICS (Tier-0, from `cli.py` + `build_from_intent.py`): the loop
+  has NO resume command and NO answers-file flag. Its only real answer channel
+  is the interactive intake surface — run `build-from-intent` WITHOUT `--yes`;
+  `interactive_answer` prompts each elicited question on stdin and
+  `interactive_approve` prompts the single plain-language gate. This run drove
+  that surface via a FIFO on stdin (driver artefacts under
+  `<workspace>/act2-driver/`); questions were regenerated live by the run (they
+  matched run 1's two questions in substance) and answered as they appeared.
+- the operator's answers (chosen BEFORE the run; stated in full in the decision
+  sheet): (1) 10 Saturdays, every team plays once each Saturday; 12 teams means
+  a full round-robin needs 11 rounds, so each team misses exactly one opponent;
+  no rematches at all. (2) Slots 8am/10am/noon on each of 3 fields; "early
+  morning" = the 8am slot only; 10am and noon equally fine. Fairness = no team
+  at 8am more than twice all season + everyone-plays-everyone-before-rematch
+  (trivially: zero rematches) + roughly even field spread (exact equality not
+  required). These answers also settle run 1's three expert-gate flags
+  (round-robin policy, slot ranking, field-fairness meaning).
+- wall-clock: 1917.7s [this run]
+- result: done — the loop built the tool through one refine cycle
+  (refine_attempts=1) and the independent gate passed
+- grounding: grounded=False — the research leg failed honestly this run ("the
+  research output was unreadable"); the loop disclosed it up front and
+  proceeded ungrounded. Run 1 was grounded (6 live citations); this run's
+  build is NOT practitioner-grounded and says so. citations=0 | expert-gate
+  flags=0 [this run]
+- gate criteria: 6 total [this run]; gate's own honesty note: tests two
+  12-team fixtures, does NOT cover odd team counts, malformed configs,
+  non-integer weeks, or comma-containing team names; field-balance check is a
+  lenient ≤5-per-field bound honouring the operator's "roughly even"
+- convergence: stop_reason=done | refine_attempts=1 | timed_out=False | timeout_retries=0 [this run]
+- progress audit: user-visible updates=25 | max gap=120.0s (monotonic clock; wall 120.0s) | within heartbeat bound=True | unverifiable claims=0 [this run]
+- human gates fired this run: 2 questions, BOTH ANSWERED live at the intake
+  surface (verbatim Q→A in run_record.jsonl); approval gate answered `y`
+  interactively; expert-gate flags: none (research leg produced none — it
+  failed; run 1's three flags were answered by the operator decisions above)
+- THE FINISHED TOOL, run for real after the loop sealed it
+  (`runs/20260610-115858/work/schedule_gen.py`; season artefacts under
+  `<workspace>/act2-driver/season-demo/`): generated the actual Fall-2026
+  season — 60 games, 6 per Saturday × 10 Saturdays, 12 named teams. Its own
+  fairness report PLUS an independent CSV cross-check (separate script, not
+  the tool's code) both show: worst-case 8am count = 2 (distribution: 1 team×0,
+  4 teams×1, 7 teams×2 — cap honoured); opponent coverage = every team 10
+  distinct opponents, zero rematches (each misses exactly one opponent, as the
+  operator accepted); field spread per team = 3–4 games on every field; each
+  team plays exactly once per week; season slot mix 8am×9 / 10am×30 / noon×21.
+- honest gaps observed: (1) the approval-gate confirm text promised "a web
+  page you open in any browser"; the delivered tool is a CLI producing a CSV +
+  text report — a real promise-vs-delivery drift for a self-described
+  non-technical user, logged not hidden. (2) grounded=False as above.
+- reproduce this run (interactive — the answers above are typed at the
+  prompts; `--yes` would skip the answer round entirely):
+  ```
+  PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "<the 01:47:51 entry's ask, verbatim>" --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-off-vertical-cjq274k9
+  ```

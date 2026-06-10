@@ -1,0 +1,120 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
+  # Lands after Cycle 2 (c2-budget) seals. Do NOT pre-bake.
+  number: null
+  slug: context-management-see-budget-eviction-c3-eviction
+  title: "Context-management Cycle 3 — eviction discipline: a discoverable `context-hygiene` SKILL encoding the three runtime-legal doors (input-discipline / fork-by-default / externalize-early) that together produce the EFFECT of evicting content that was never resident — the achievable substitute for the runtime-forbidden `strike out message X` on the subscription path. Gates the highest-leverage fork lever on an empirical probe (AC.CTXEVICT.S) verifying the research §7 UNVERIFIED claim that fork tool-call tokens do NOT leak into the caller's `context_window` reading. Single-component fence on `plugins/loam-skills/`. Composes with `loam-spawn-isolation` + `precompact-hook` + Cycle 2's >60% trigger. Minor's last cycle → HARD-smoke ride-along."
+
+# baseline: walked at apply-time from the canonical-clean pre-this-amendment HEAD
+# (Cycle 2's seal + §14 backfill commit is the predecessor). Do NOT pre-bake.
+baseline: null
+
+plan: docs/plans/context-management-see-budget-eviction-c3-eviction.md
+
+seal_description: |
+  Context-management Cycle 3 — the eviction discipline.
+
+  Ships the achievable substitute for the runtime-forbidden "strike out
+  specific content." On the subscription `claude -p` path the runtime owns
+  the window — there is no delete-message primitive (research §2.1; the
+  closest, context-editing, is API-only + content-agnostic). The substitute:
+  a discoverable `context-hygiene` SKILL at
+  `plugins/loam-skills/skills/context-hygiene/SKILL.md` (subdirectory shape —
+  the discoverable contract per the v0.1.7 AC.LAYERED.2 pattern) encoding the
+  three runtime-legal doors — input-discipline (cap tool-return size, keep MCP
+  deferred), fork-by-default for noisy read work, externalize-early — which
+  together produce the EFFECT of evicting content that was never resident.
+
+  The highest-leverage door (fork-isolation) is GATED on an empirical probe.
+  Research §7 marks fork token-attribution to the parent's `context_window`
+  field UNVERIFIED. AC.CTXEVICT.S IS the verifier: a real fork dispatch of a
+  token-spending task, comparing the caller's occupancy reading (via Cycle 1's
+  sensor) before/after against the fork's own spend. If fork tokens LEAK into
+  the parent reading, the fork-by-default lever's premise is false → halt +
+  re-scope Cycle 3 to externalize-early + input-discipline only + surface to
+  owner (plan §6 halt-trigger 2). Cycle 3 does NOT ship with the probe red.
+
+  Body names the F2 correction (delete-message is not a subscription-path
+  runtime primitive), the skill-truncation footgun (research §2.5 — invoked
+  skill content stays resident; auto-compaction reattaches ≤5000 tok/skill,
+  ≤25000 total → keep state in files, not resident skills), and the
+  composition surfaces (`loam-spawn-isolation` fork; `precompact-hook`
+  block+log-cannot-steer-summary; the context budget's >60% externalize-early
+  trigger).
+
+  Subscription-compatible (no Anthropic API key; per
+  feedback_no_anthropic_api_key). No new fork/isolation mechanism —
+  `loam-spawn-isolation` already exists; this SKILL points the persona at it.
+
+  AC families (full text in plan §4):
+    - AC.CTXEVICT.1 — SKILL discoverable (valid frontmatter; reachable via
+      `_symlink_plugin_skills`); body carries the three doors + the
+      delete-message-not-a-primitive F2 note.
+    - AC.CTXEVICT.2 — body names the composition surfaces.
+    - AC.CTXEVICT.S — OUTCOME-ALTITUDE: empirical probe shows fork tool-call
+      tokens do NOT add to the caller's `context_window` occupancy reading.
+      RED if fork tokens leak → halt.
+
+  Out of scope (plan §3): any new fork/isolation mechanism; the API
+  context-editing path (skipped); auto-firing the discipline; steering
+  `/compact` summaries (API-only).
+
+  Method-level D-build.* decisions remain the builder's (plan §6 + §14).
+
+  Minor's last cycle → HARD-smoke ride-along per
+  feedback_hard_smoke_per_minor_before_publish (cold install + real claude -p +
+  real fixture + regression ride-alongs) AFTER local seal, BEFORE publish.
+
+  BASELINE walked at apply-time (Cycle 2 seal + §14 backfill predecessor).
+  Single-component fence: `plugins/loam-skills/`.
+
+components:
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/context-management-see-budget-eviction-c3-eviction.md
+  body: |
+    # context-management-see-budget-eviction-c3-eviction — apply ladder
+
+    Context-management Cycle 3 — the eviction discipline. Third + last of
+    three sequential context-management cycles per master plan
+    `docs/plans/context-management-see-budget-eviction-master.md`.
+    Predecessors: Cycle 1 (the sensor) + Cycle 2 (the >60% externalize-early
+    trigger this discipline fires on).
+
+    Plan: `docs/plans/context-management-see-budget-eviction-c3-eviction.md`.
+
+    Scope (plan §3 / §5): single-component fence on `plugins/loam-skills/` —
+    the new `context-hygiene` SKILL (subdirectory shape) + the fork-attribution
+    empirical probe test. Universal admissions: `docs/plans/`.
+
+    Single-cycle, single-seal ladder (plan §7). Minor's last cycle →
+    HARD-smoke ride-along.
+
+    AC families: AC.CTXEVICT.1 / .2 / .S (outcome-altitude) — full text in
+    plan §4; outcome-shaped per ODD §2.5. AC.CTXEVICT.S is the verifier for
+    the research §7 UNVERIFIED fork token-attribution claim; it is BLOCKING
+    (the cycle does not ship with the probe red).
+
+    Re-extension under existing objectives per ODD §4 — anchors to AC.PO.2
+    (intra-session protection: keeping load-bearing state from silent
+    compaction is the mirror of the memory-system's cross-session protection)
+    + AC.PO.1 (the persona translates "this is getting noisy" into a
+    fork/externalize action).
+
+    Halt triggers (plan §6): WD drift; AC.CTXEVICT.S probe shows fork tokens
+    leak into the parent reading (re-scope + surface); Cycles 1-2 not sealed;
+    `context-hygiene` slug collision; AC reframes to method-in-AC.
+
+    BASELINE walked at apply-time (Cycle 2 seal + §14 backfill predecessor).
+    Sidecar advances to this amendment's seal SHA at apply time.

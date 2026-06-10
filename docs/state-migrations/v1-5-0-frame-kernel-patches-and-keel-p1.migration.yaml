@@ -1,0 +1,40 @@
+# User-state migration — v1.5.0 (frame-kernel patches + KEEL adoption Phase 1)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.5.0 bundles four
+# sealed amendments: three frame-kernel corrective patches (cwd-fallback,
+# real-dispatch memory tier, stop-judge agent-transcript objective) and the
+# KEEL adoption Phase 1 docs amendment (Charter genesis + doctrine rewrite +
+# honesty debts paid).
+
+version: v1.5.0
+slug: v1-5-0-frame-kernel-patches-and-keel-p1
+slice: v1.5.0 MINOR (frame-kernel SubagentStart envelope correctives — cwd-fallback, real-dispatch memory tier, stop-judge transcript objective — plus KEEL P1 docs: Charter #0 genesis, methodology rewrite, honesty debts paid)
+date: 2026-06-10
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.5.0 adds three frame-kernel corrective patches and one docs-only
+  amendment, none of which change pre-existing stored .loam/ user state.
+  (1) The frame-kernel cwd-fallback fix corrects parse_envelope to read
+  workspace_root from the real cwd field — a code fix only; no user artifact
+  is written, moved, or re-schemad. (2) The real-dispatch memory tier fix
+  derives task_text from the parent transcript at dispatch time and populates
+  the standing decision floor — purely in-flight context, nothing lands in
+  user state. (3) The stop-judge agent-transcript objective fix reads the
+  agent transcript path at SubagentStop time — no user artifact. (4) The
+  KEEL P1 docs amendment adds docs/charter.md, rewrites
+  plugins/dev-sdlc/docs/odd-methodology.md, archives the derivation doc, and
+  updates docs/VALUE_PROPOSITION.md — all repo/framework files, not .loam/
+  user state. A user upgrading from v1.4.0 to v1.5.0 needs no state
+  migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a
+# pure code revert; no data move.
+reversible: true
+removes_user_state: false
+idempotent: true

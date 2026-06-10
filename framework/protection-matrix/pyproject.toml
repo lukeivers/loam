@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-protection-matrix"
-version = "1.4.0"
+version = "1.5.0"
 description = "loam protection-pillar matrix — a living, machine-checkable catalogue of every known way an AI betrays a user by default x loam's actual guard x default-on? x floor-vs-proportional x how we verify it fires; plus the `loam guards` coverage-check verb that derives the live guard set from ground truth, reconciles it against the catalogue, and NAMES the gaps."
 requires-python = ">=3.11"
 dependencies = [

@@ -1,0 +1,133 @@
+schema_version: 1
+amendment:
+  number: 183  # Next sequential amendment. Highest manifest counter on disk
+               # is 182. 183 is the next free slot for this cycle (SUB-ITEM 1b
+               # autonomous portion — rename meta dist `loam` → `loam-harness`,
+               # re-lockstep to 1.2.0, reconcile the runtime closure, author the
+               # owner-run publish runbook, prove against a LOCAL wheelhouse).
+               # The builder CONFIRMS the exact number at `loam amend apply`
+               # against the live counter (feedback_version_numbers_at_release_time
+               # — never pre-bake a number that drifts). The PUBLIC PyPI upload +
+               # name-claim of `loam-harness` (F-PUBLISH) is OWNER-RUN and NOT a
+               # manifest-driven amend (no-secret-handling, LOCKED). The structure
+               # flatten (Q1 / task #21) is SEPARABLE + DEFERRED.
+  slug: conventional-install-pypi-publish
+  title: "conventional-install / PyPI publish — `pip install loam-harness` yields a working `loam` command. The owner-gated public flip (parent SUB-ITEM 1b, F-PUBLISH) authored as its AUTONOMOUS portion: rename the dependencies-only meta-distribution dist-name `loam` → `loam-harness` (the name `loam` is taken on PyPI by an unrelated config-manager — verified; the INSTALLED COMMAND stays `loam` via loam-cli's existing `[project.scripts] loam = loam_cli.cli:main`, independent of the dist name); re-lockstep the meta version `1.1.0` → `1.2.0` (it missed the last bump); reconcile the meta's dependency list to the EXAMINE-verified runtime closure of the `loam` CLI graph (drop dev/test-only; the on-disk 11-dep list is part-aspirational); author an OWNER-RUN `build`+`twine` publish runbook (agent ends at `twine check`; Luke runs `twine upload` with his credential — no agent token-handling); flip the README + install-from-source published-set headline to `pip install loam-harness`. PROVEN against a LOCAL wheelhouse (--find-links) with ZERO public registry push, incl. the outcome-altitude AC.INSTPUB.S (a COLD env installs the built artefact → working `loam --version` reporting 1.2.0, no source checkout). Composes on the existing meta-distribution + the `loam.cli.subcommands` entry-point graph + the `loam release` gate chain as publish pre-flight (Lens 1, NO new CI, NO component runtime-behavior change). The trusted-publisher CI workflow is a DEFERRED follow-on. SUPERSEDES the prior cycle's dist-name `loam` for the published surface only."
+
+# BASELINE: 32f362915e4712d6567310f9a1a4e20dbac30162 — HEAD of main at
+# plan-authoring (v1.2.0 STATE.md post-publish backfill). The builder CONFIRMS
+# this against the actual predecessor seal-advance commit at apply time.
+baseline: "32f362915e4712d6567310f9a1a4e20dbac30162"
+
+plan: docs/plans/conventional-install-pypi-publish.md
+
+components:
+  # The dependencies-only meta-distribution home. The dist-name rename + version
+  # lockstep + closure reconcile land in framework/loam-init/meta/pyproject.toml,
+  # which is fenced under the loam-init component. The builder admits the meta
+  # pyproject + README paths via extra_allowed_prefixes at EXAMINE. The meta
+  # ships ZERO code (packages = []); this fence covers METADATA only — NO
+  # loam-init runtime-behavior change (halt trigger 4).
+  - name: loam-init
+    seal_test: framework/loam-init/tests/test_no_sealed_amendments.py
+    sidecar: framework/loam-init/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+  # The unified CLI dispatcher carrying the `loam` console-script
+  # ([project.scripts] loam = loam_cli.cli:main) + the `loam.cli.subcommands`
+  # entry-point discovery the cold-env install must resolve (AC.PKGPUB.1 /
+  # AC.INSTPUB.S: `loam --version` → 1.2.0 + `loam --help` lists the real
+  # subcommands). Fenced because the published closure roots at loam-cli; the
+  # version lockstep to 1.2.0 touches its pyproject metadata only — NO runtime
+  # change. The builder may find the fence sufficient at TWO components, OR
+  # widen at EXAMINE if a closure dep's pyproject metadata must be edited to
+  # build cleanly (halt-and-surface before widening past metadata edits per
+  # halt trigger 4 — NO component runtime behavior changes in this cycle).
+  - name: loam-cli
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. This cycle edits packaging
+# metadata + the install/publish docs. The builder admits the specific
+# per-component pyproject paths it locks via extra_allowed_prefixes at EXAMINE
+# once the EXAMINE closure walk fixes the published set.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - README.md
+    - install-from-source.txt
+    - docs/install-from-source.md
+    - docs/publish-to-pypi.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/plans/loam-roadmap.md
+    - docs/plans/foundation-polish-cluster.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/conventional-install-pypi-publish.md
+  body: |
+    # conventional-install / PyPI publish — `pip install loam-harness` → working `loam` — apply ladder
+
+    Parent SUB-ITEM 1b (the owner-gated public PyPI flip, F-PUBLISH) per
+    `docs/plans/foundation-polish-cluster.md`; this amendment is its
+    AUTONOMOUS portion. Builds on the sealed SUB-ITEM 1a packaging-readiness
+    cycle (`docs/plans/sealed/foundation-polish-cluster-install.md`), which
+    proved the meta-distribution + the AC.PYPKG.* / AC.INST.S family against a
+    LOCAL wheelhouse with the dist-name `loam`.
+
+    OWNER-DECIDED, LOCKED (Luke 2026-06-04): the PyPI distribution name is
+    `loam-harness` (the name `loam` is taken on PyPI by an unrelated
+    config-manager — verified); the INSTALLED COMMAND stays `loam` (the
+    existing loam-cli console entry-point, independent of the dist name);
+    version lockstep at 1.2.0; the final `twine upload` is OWNER-RUN with
+    Luke's credential — the agent NEVER enters a token.
+
+    This amendment (AUTONOMOUS, no public action):
+      1. Renames the dependencies-only meta-distribution dist-name
+         `loam` → `loam-harness` in framework/loam-init/meta/pyproject.toml,
+         keeping the console command `loam` (AC.PKGPUB.1 / AC.PKGPUB.3).
+      2. Re-locksteps the meta version `1.1.0` → `1.2.0` via the release
+         process (NOT a drift-prone hand-edit); every closure dist builds
+         from its pyproject (AC.PKGPUB.2).
+      3. Reconciles the meta's dependency list to the EXAMINE-verified RUNTIME
+         closure of the `loam` CLI graph — the on-disk 11-dep list is
+         part-aspirational; the reachability walk from loam-cli +
+         `loam.cli.subcommands` is authoritative; dev/test-only packages
+         (programbench-revival*, loam-heavy-b-migrate, loam-acceptance-smoke,
+         subloam-driver) are excluded (AC.PKGPUB.1 / D-PKG.2).
+      4. Confirms the three-identifier separation — dist-name `loam-harness`,
+         import-name `loam.*` (PEP 420 namespace), command-name `loam` — does
+         NOT collide with the unrelated PyPI `loam` (AC.PKGPUB.3).
+      5. Authors an OWNER-RUN publish runbook at docs/publish-to-pypi.md:
+         `loam release` pre-flight gates → `python -m build` per dist →
+         `twine check` (AC.PUBTOOL.1 / AC.PUBTOOL.2) — the agent STOPS at
+         `twine check`; `twine upload` is documented for Luke (D-PKG.3).
+      6. Flips the README + docs/install-from-source.md published-set headline
+         to `pip install loam-harness`.
+      7. ★ outcome-altitude AC.INSTPUB.S: a genuinely COLD environment
+         (throwaway venv / fresh container, no source clone on PATH, no
+         pre-arranged loam state) installs the built `loam-harness` artefact
+         from the LOCAL artefact index, then `loam --version` reports 1.2.0 +
+         `loam --help` lists the real subcommands — NO framework-tree clone or
+         edit (feedback_test_outcome_altitude_required; this IS the
+         HARD-smoke-per-minor gate for this meta-framework minor).
+
+    Composes on (Lens 1, NO re-implementation, NO new CI, NO component
+    runtime-behavior change): the existing meta-distribution; pip/pipx; the
+    `loam.cli.subcommands` entry-point discovery; the existing `loam release`
+    gate chain as publish pre-flight.
+
+    OWNER-GATED, NOT in this amendment (halt at these — halt triggers 3):
+    the PUBLIC `twine upload` + the `loam-harness` name-claim (F-PUBLISH);
+    any PyPI credential/token configuration. The trusted-publisher CI workflow
+    is a DEFERRED follow-on. The structure flatten (Q1 / task #21) is
+    SEPARABLE + DEFERRED — D-PKG.1's meta-shape is flatten-neutral by design.
+
+    BASELINE 32f362915e — HEAD of main at plan-authoring; confirm at apply
+    time. Counter 183 is the next free slot; confirm at apply time. Two-
+    component metadata fence (loam-init meta home + loam-cli entry-point);
+    the builder admits the specific per-component pyproject paths via
+    extra_allowed_prefixes at EXAMINE once the closure walk fixes the set.

@@ -1,0 +1,108 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
+  # Global counter sits at ~#183 as of 2026-06-05; the apply-time number is the
+  # next available post-WD-discipline-framework-source-guard. Do NOT pre-bake.
+  number: null
+  slug: context-management-see-budget-eviction-c1-see
+  title: "Context-management Cycle 1 — SEE layer: a stdlib-only statusline script that parses Claude Code's stdin `context_window` JSON every turn and writes the live occupancy reading to `<workspace>/.loam/context-meter.json`, plus a `read()` production entry-point returning the live reading or a fail-open `unavailable` sentinel. New `framework/context-management/` component (mirrors `usage-window-guard`'s live-read + fail-open + outcome-altitude shape). The sensor loam is missing today (grep: zero `context_window` hits in framework/plugins). Subscription-compatible, zero API cost. Independently shippable."
+
+# baseline: walked at apply-time per the #142 D-PASH.BASELINE-WALK pattern from
+# the canonical-clean pre-this-amendment HEAD. Pin the immediate-prior commit so
+# the BASELINE..HEAD diff is narrow to this cycle's surface.
+baseline: null
+
+plan: docs/plans/context-management-see-budget-eviction-c1-see.md
+
+seal_description: |
+  Context-management Cycle 1 — SEE layer (the context-occupancy sensor).
+
+  Adds loam's missing live context-window sensor. A stdlib-only statusline
+  script composes onto Claude Code's `statusLine` primitive (stdin JSON
+  envelope, per-assistant-message refresh), extracts the documented
+  `context_window` object (used_percentage / total_input_tokens /
+  total_output_tokens / context_window_size; min CC 2.1.132), writes the
+  reading to `<workspace>/.loam/context-meter.json`, and exits 0. A `read()`
+  production entry-point returns the live reading or a fail-open `unavailable`
+  sentinel — mirroring `usage-window-guard`'s `read()` shape (real default
+  path, injectable transport for fixtures, never fabricates a number).
+
+  Subscription-compatible (no Anthropic API key; per feedback_no_anthropic_api_key)
+  and zero API cost. The literal delivery of Luke's "see what's in context" —
+  the top-line occupancy %, VERIFIED-direct per research §2.2. The per-category
+  `/context` breakdown is out of scope (PLAUSIBLE-not-verified, research §7;
+  future verify-then-build).
+
+  AC families (full text in plan §4):
+    - AC.CTXSEE.1 — populated `context_window` envelope → meter file carries
+      the occupancy reading (%, token counts, window size, timestamp).
+    - AC.CTXSEE.2 — absent `context_window` field → `unavailable` sentinel +
+      exit 0 (fail-open; never fabricates).
+    - AC.CTXSEE.3 — `read()` returns the live reading or the sentinel on any
+      failure (missing file / malformed JSON / absent field); never raises.
+    - AC.CTXSEE.S — OUTCOME-ALTITUDE: real entry-point + realistic envelope +
+      no pre-arranged meter file → meter occupancy == envelope occupancy.
+      RED-on-mutation: break the extract step → assertion fails.
+
+  Out of scope (plan §3): budget math + thresholds (Cycle 2); the per-category
+  breakdown; the `strategic-compact` SKILL edit (Cycle 2); auto-firing
+  `/compact` (owner-class always); auto-claiming the workspace `statusLine`
+  slot as DEFAULT (ships + documents the script; install-decision separate, to
+  avoid colliding with the hands-off-lifecycle first-run statusLine).
+
+  Method-level D-build.* decisions remain the builder's per the
+  scope-only-dispatch CDC (plan §6 + §14).
+
+  BASELINE walked at apply-time (canonical-clean pre-this-amendment HEAD).
+  Single-component fence on the NEW `framework/context-management/`.
+
+components:
+  - name: context-management
+    seal_test: framework/context-management/tests/test_no_sealed_amendments.py
+    sidecar: framework/context-management/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/context-management-see-budget-eviction-c1-see.md
+  body: |
+    # context-management-see-budget-eviction-c1-see — apply ladder
+
+    Context-management Cycle 1 — the SEE layer (context-occupancy sensor).
+    First of three sequential context-management cycles
+    (SEE → budget → eviction-discipline) per master plan
+    `docs/plans/context-management-see-budget-eviction-master.md`.
+
+    Plan: `docs/plans/context-management-see-budget-eviction-c1-see.md`.
+
+    Scope (plan §3 / §5): single-component fence on the NEW
+    `framework/context-management/`. New package mirroring
+    `usage-window-guard`'s `src/loam/` layout: statusline entry-point
+    script (stdlib-only, stdin JSON, fail-closed exit 0) + meter-file
+    writer + `read()` production entry-point + one-file-per-AC tests.
+    Universal admissions: `docs/plans/`.
+
+    Single-cycle, single-seal ladder (plan §7).
+
+    AC families: AC.CTXSEE.1 / .2 / .3 / .S (outcome-altitude) — full text
+    in plan §4; outcome-shaped per ODD §2.5.
+
+    Re-extension under existing objectives per ODD §4 — anchors to AC.PO.1
+    (the persona's guess at context pressure becomes a measured number) +
+    AC.PO.2 (the sensor is the prerequisite for the eviction/protection
+    levers). No new spec clause; load-bearing wiring under existing
+    objectives, the same shape as amendment #49's statusline build.
+
+    Halt triggers (plan §6): WD drift; the live statusline envelope lacks a
+    `context_window` object at build time (CC version drift below 2.1.132 /
+    schema change — verify Tier-0 before source edits, research §9 warns
+    surfaces move weekly); meter write would touch a sealed component;
+    AC reframes to method-in-AC.
+
+    BASELINE walked at apply-time (canonical-clean pre-this-amendment HEAD).
+    Sidecar advances to this amendment's seal SHA at apply time.

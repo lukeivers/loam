@@ -1,0 +1,116 @@
+schema_version: 1
+amendment:
+  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
+  # Lands after Cycle 1 (c1-see) seals. Do NOT pre-bake.
+  number: null
+  slug: context-management-see-budget-eviction-c2-budget
+  title: "Context-management Cycle 2 — context budget: occupancy-vs-ceiling-with-reserves math (`remaining = window − reserve_out − reserve_work − occupied`, NOT the token-budget `/n` even-pacing formula per research §5.2), a threshold classifier (<60% / 60–85% / >85% / >92%), and the wiring that feeds the MEASURED occupancy number into the existing `strategic-compact` SKILL's decision rubric — retiring its `utilization isn't directly exposed as a number → heuristic only` honest-limit (SKILL.md:143-144/171/254). Two-component fence: `framework/context-management/` (budget) + `plugins/loam-skills/` (strategic-compact edit). Subscription-compatible. Depends on Cycle 1's `read()` sensor."
+
+# baseline: walked at apply-time from the canonical-clean pre-this-amendment HEAD
+# (Cycle 1's seal + §14 backfill commit is the predecessor). Do NOT pre-bake.
+baseline: null
+
+plan: docs/plans/context-management-see-budget-eviction-c2-budget.md
+
+seal_description: |
+  Context-management Cycle 2 — the context budget.
+
+  Turns Cycle 1's occupancy reading into a budget. Adds occupancy-vs-ceiling
+  math with reserves — `remaining = window − reserve_out − reserve_work −
+  occupied` — and a threshold classifier mapping a reading to exactly one
+  band (<60% continue / 60–85% externalize-early / >85% recommend-compact /
+  >92% hard-surface). Per research §5.2: occupancy-vs-ceiling, explicitly NOT
+  the token-budget `/n` even-pacing formula (context is occupancy-vs-ceiling,
+  not time-paced — copy the live-read + reserve-floor + threshold SHAPE, not
+  the even-pacing proof).
+
+  Feeds the MEASURED number into the existing `strategic-compact` SKILL
+  decision rubric: branch-1's "infer heuristically / name as a guess" step
+  becomes "read the measured occupancy from the context budget; fall back to
+  the heuristic ONLY when the sensor reports unavailable." The honest-limit
+  text (SKILL.md:143-144/171/254, "utilization isn't directly exposed as a
+  number") is conditioned, not blanket-deleted — the unavailable-sensor
+  fallback stays honest and AC.COMPACT.* does not regress.
+
+  Manual `/compact` / `/clear` stays OWNER-CLASS (D-COMPACT.TRIGGER lock); the
+  budget supplies the number, the rubric supplies the recommendation, the
+  owner fires. No autonomous compaction.
+
+  AC families (full text in plan §4):
+    - AC.CTXBUD.1 — `remaining` arithmetic + occupancy-% match the
+      independently-computed values.
+    - AC.CTXBUD.2 — classifier maps a reading to exactly ONE band; boundary
+      readings (60/85/92) resolve deterministically.
+    - AC.CTXBUD.3 — the SKILL decision step consumes the measured occupancy
+      when available, heuristic-fallback only when unavailable; the
+      unconditional "not directly exposed" claim is gone / conditioned.
+    - AC.CTXBUD.S — OUTCOME-ALTITUDE: a cold reading crossing 85%, fed through
+      the production budget path with no pre-arranged state, yields the
+      recommend-compact band off the MEASURED number. RED-on-mutation: revert
+      the measured-read wiring → band derives from nothing / wrong.
+
+  Out of scope (plan §3): auto-firing `/compact` (owner-class); the
+  dispatch-time worker-budget gate (lean-mode, master §7 — plan only);
+  microcompact wiring (CC built-in); PreCompact summary-steering (API-only,
+  research §2.3).
+
+  Method-level D-build.* decisions remain the builder's (plan §6 + §14).
+
+  BASELINE walked at apply-time (Cycle 1 seal + §14 backfill predecessor).
+  Two-component fence: `framework/context-management/` + `plugins/loam-skills/`.
+
+components:
+  - name: context-management
+    seal_test: framework/context-management/tests/test_no_sealed_amendments.py
+    sidecar: framework/context-management/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/context-management-see-budget-eviction-c2-budget.md
+  body: |
+    # context-management-see-budget-eviction-c2-budget — apply ladder
+
+    Context-management Cycle 2 — the context budget. Second of three
+    sequential context-management cycles per master plan
+    `docs/plans/context-management-see-budget-eviction-master.md`.
+    Predecessor: Cycle 1 (c1-see — the `read()` sensor this budget consumes).
+
+    Plan: `docs/plans/context-management-see-budget-eviction-c2-budget.md`.
+
+    Scope (plan §3 / §5): two-component fence on
+    `framework/context-management/` (the budget function + classifier +
+    tests — load-bearing) + `plugins/loam-skills/` (the `strategic-compact`
+    branch-1 edit + a regression assertion). Universal admissions:
+    `docs/plans/`.
+
+    Single-cycle, single-seal ladder (plan §7).
+
+    AC families: AC.CTXBUD.1 / .2 / .3 / .S (outcome-altitude) — full text in
+    plan §4; outcome-shaped per ODD §2.5; AC.CTXBUD.1 arithmetic-verified per
+    feedback_arithmetic_verification.
+
+    Re-extension under existing objectives per ODD §4 — anchors to AC.PO.1
+    (the guess becomes a measured number in the persona's translation) +
+    AC.PO.2 (the >85%/>92% bands are the protection trigger against silent
+    state-loss to compaction).
+
+    Halt triggers (plan §6): WD drift; Cycle 1 not sealed (no sensor to
+    consume); the SKILL edit would regress an existing AC.COMPACT.* test
+    (heuristic-fallback path must survive — re-scope to additive-only); the
+    60/85 thresholds in the SKILL's existing decision rule conflict with the
+    classifier bands (verify Tier-0 — they should align per research §5.2);
+    AC reframes to method-in-AC.
+
+    BASELINE walked at apply-time (Cycle 1 seal + §14 backfill predecessor).
+    Sidecars advance to this amendment's seal SHA at apply time.

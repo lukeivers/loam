@@ -225,9 +225,26 @@ AC IDs scope-descriptive. Each AC is satisfiable by more than one method; method
 
 ---
 
-## §14 Method-decision register (populated at build time)
+## §14 Method-decision register (backfilled at build, 2026-06-09)
 
-*Placeholder — D1..D6 narratives + commit SHAs backfilled by the builder + `loam amend seal --plan-doc`.*
+**Slice commits:** S1 `1ba0ee29` (eval-verdict execution; first build agent) · S2 `13d6ea60` (surfacing rebuild; resumed after the first agent's stream stall mid-slice) · S3 `6b65e85a` (decision ledger) · S4 `28cbe6cf` (dispatch memory packs) · S5 `aecb8e47` (decision-claim guard). Apply + seal SHAs recorded below at seal.
+
+| D | Ruling | As built |
+|---|--------|----------|
+| D1 | Merge weighting per the ratified comparison; anachronism excluded | Held throughout; B's recall-under-load point carried only in generic form. |
+| D2 ★ | Persona-writes-at-ruling-time + deterministic steer-on-miss (owner-ratified, Discord 1514065518) | `decision_ledger.write_decision` (the persona's write surface) + Stop-seam `detect_and_flag_ruling_gap` → next-turn `consume_pending_steer` + session-start `run_catch_up_sweep`. NO LLM anywhere. |
+| D3 | Dispatch packs ride the sealed frame-kernel carrier, not a new pack CLI | `bundle.py`'s client-None branch now runs the gated keep-pace retrieval (decision-aware, whole-record); fragment activation proven via the sealed auto-composer on a fixture; live pos3 timing remains dispatcher's (an `status: open` ledger record now carries that open call). |
+| D4 | One amendment, five slices, A's ordering | Held; S3's write surface was built + tested before its retrieval integration (B's capture-first honored inside the slice). |
+| D5 | Spread DELETE / activation neutralize-behind-flag | `cocitation_graph.py` (429 lines) deleted; `LOAM_FBM_ACTIVATION` default-off; harness identity 330/330 vs the floor arm. |
+| D6 | CURRENT-WORK slim-down ships as owner-side bookkeeping; full MEMORY.md derivation deferred | Loam-side build complete; the pos3 owner-side slim-down + 7-day prediction remain the dispatcher's post-seal step (§9). |
+
+**Build-time method decisions (named for the trail):**
+
+1. **AC.SRF.1's named scope-reversal required updating `test_AC_KP1_3_no_file_path_in_injection`** (the pin encoding the mis-scoped KP9 lint) — treated as the slice's delivery, parallel to S1's verdict-authorized test updates; the fence's "no AC.KP1.\* breakage" clause read as protecting unnamed guarantees, and this reversal is named four times in the ratified plan (owner summary 3b, AC.SRF.1, §2, manifest narrative). Two sibling pins updated on the same basis (FGF.3 ellipsis → bounded-preview; FBMU.2 byte-identity fixtures share one corpus dir since paths are now part of the rendered block).
+2. **Detector precision was measured twice on the live store** (AC.DLG.2's measured prediction): round 1 = 16 flags / ~12% precision over 120 real turns — ALL false positives non-owner structural turns (task-notification payloads, skill-load preambles, system banners, compaction dumps), not ordinary prose. Fix = an owner-authorship eligibility gate composing the SEALED `compute_salience` junk classifier + two named structural prefixes, plus declarative-"approved" grammar (bare infinitive mid-question was the one prose FP). Round 2 = 6 flags / 6 genuine rulings (100%) over 300 real turns. The embedded 24-turn labeled sample rides as the standing test; §8 trigger #1 did NOT fire (the gate fix was deterministic and the re-measure passed). |
+3. **AC.DCG resolution strength:** "resolvable to" implemented as ≥2 declared-vocabulary token matches with best-match-decides — added after a live-ledger FP at build time (an open question's "activation timing" brushing a different ruled record on the single common token "activation"). Genuinely-open questions pass by construction.
+4. **D-1 byte pin rebaseline** (`session_start_emitter.py`) — this cycle's own AC.DLG.2 contributor registration; in-band retire-and-rebaseline per the file's established dated-trail pattern (sixth entry).
+5. **`resolve_live_retrieval_config` public alias** added in `keep_pace/retrieval.py` so the frame-kernel bundle never binds a private symbol — surface plumbing for the named Slice-4 placement (AC.DMP.1).
 
 ---
 

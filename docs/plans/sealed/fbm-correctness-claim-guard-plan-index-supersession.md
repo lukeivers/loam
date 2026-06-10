@@ -215,6 +215,12 @@ AC IDs scope-descriptive (`feedback_scope_descriptive_ac_ids`). Each AC is satis
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `7e6621f999cec080867e256da01a1da6334c101b` —
+  `fix(hands-off-lifecycle): H19 admits interim top-level kernel/ prefix at first SEAL_COMMIT crossing`
+- Seal commit: `cb0082b6ce27c4050310ee889efd908d97fbf953` —
+  `chore(seals): fbm-correctness-claim-guard-plan-index-supersession — loam-cli+primary-persona+hands-off-lifecycle at 7e6621f`
 ## Effort estimate (duration rubric — AI-time, ranges with midpoint)
 
 | Slice | Category | Estimate |

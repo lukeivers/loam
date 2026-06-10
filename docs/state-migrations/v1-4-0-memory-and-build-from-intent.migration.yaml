@@ -1,0 +1,50 @@
+# User-state migration — v1.4.0 (the memory + build-from-intent MINOR)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.4.0 is the MINOR
+# increment over the published v1.3.0, bundling six sealed-local
+# amendments: frame-kernel subagent context handoff (1a) + stop-frame
+# check (1b), the workspace-sync settings-fragment auto-composer (RF-1),
+# the FBM-correctness cycle (plan-state index + claim guard +
+# supersession correctness), the memory-recall cycle (decision ledger +
+# surfacing rebuild + dispatch memory packs + decision-claim guard), and
+# the general build-from-intent capability.
+
+version: v1.4.0
+slug: v1-4-0-memory-and-build-from-intent
+slice: v1.4.0 MINOR (memory release — decision ledger, recall surfacing, dispatch memory packs, claim guards — plus general build-from-intent + frame-kernel subagent governance + RF-1 settings-fragment composer)
+date: 2026-06-10
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.4.0 adds capabilities that create or derive state lazily and
+  changes NO pre-existing stored .loam/ user state. (1) The decision
+  ledger writes rulings as new records under .loam/memory/decisions/ at
+  ruling time — created on first use; no existing memory file is
+  rewritten, moved, or re-schemad. (2) The recall/surfacing rebuild and
+  dispatch memory packs are read-time composition over the existing
+  file-backed memory corpus; the co-citation spread module was DELETED
+  whole and FBM activation sits default-off behind LOAM_FBM_ACTIVATION
+  (env-gated, no stored-state change). (3) The git-derived plan-state
+  index derives from the repo's own git history at read time and
+  persists no user artifact. (4) The frame-kernel SubagentStart /
+  SubagentStop hooks inject and check per-dispatch context in-flight;
+  nothing lands in user state. (5) The workspace-sync settings-fragment
+  auto-composer composes .claude settings fragments at sync time going
+  forward; it does not migrate or rewrite any workspace's existing
+  settings on upgrade. (6) The general build-from-intent path writes
+  only into the per-run workspace the user names at invocation. (7) The
+  lockstep version bump 1.3.0 -> 1.4.0 changes pyproject version fields
+  + docs/ACTIVE_MINOR + the meta-package --version literal; metadata,
+  not user state. A user upgrading from v1.3.0 to v1.4.0 needs no state
+  migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a
+# pure code revert; no data move.
+reversible: true
+removes_user_state: false
+idempotent: true

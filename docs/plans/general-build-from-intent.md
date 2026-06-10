@@ -247,7 +247,25 @@ AC IDs scope-descriptive. Each AC is satisfiable by more than one method; method
 
 ## §14 Method-decision register (populated at build time)
 
-*Placeholder — D1..D6 narratives + commit SHAs backfilled by the builder + `loam amend seal --plan-doc`.*
+Build executed 2026-06-09/10 by the dispatched builder, six slices in plan order, one commit per slice (+ fix/chore commits, NEW commits only).
+
+| # | Decision | How it landed | Commits |
+|---|----------|---------------|---------|
+| D1 | Compose on the handsoff-loop spine, single workspace-bootstrap fence | All six slices land under `framework/tools/handsoff-loop/` + `plugins/loam-skills/` — five new pipeline modules (`request_intent`, `grounding`, `generative`, `convergence`, `progress`, `build_from_intent`) COMPOSE the sealed intake/`verify`/orchestrator spine; `verify.py` untouched; the sealed goal-refinement construct untouched; model calls reuse `intake._claude_json` (the sealed isolation surface) | `33c018e9`, `6aa33800`, `080e1107`, `5b692343`, `6c5ce02c` |
+| D2 | Extend the sealed re-drive to canonical-default convergence; do NOT import improve_loop wholesale | `convergence.run_to_convergence` wraps the sealed `run_handsoff_loop` with refine-bound > 0 by default; the #111 lesson is structural: `DEFAULT_LEG_CEILING_S` (1200s-class named tunable), `subprocess.TimeoutExpired` handler returns terminal-with-state, `timeout_retries` always 0 and recorded; forced-timeout AC test counts exactly one dispatch attempt | `5b692343` |
+| D3 | Grounding docs durable + indexable, packs-compatible, packs-independent | YAML-frontmatter markdown at `<workspace>/grounding/<stamp>-grounding.md`; norm ids (N1..) are the gate-traceability keys; zero coupling to the in-build memory-recall surfaces | `6aa33800` |
+| D4 | One amendment, six slices, pipeline order | Executed S1→S6 in order, each slice's deterministic ACs green before the next; live probes per slice (results committed under `smoke/`) | all slice commits |
+| D5 | ★ Owner-authored off-vertical prompt, sealed pre-build (owner ruled, Discord 1514112412) | The harness serves it: `run_smoke.py --archetype off-vertical --prompt-file <sealed-prompt>` is the documented one-more-case command; AST-verified no per-archetype branching; the dispatcher executes the sealed prompt post-seal | `77b88f5d` |
+| D6 | Per-request routing scoped to build-shaped asks | `handsoff-loop understand` + the SKILL contract cover build-shaped asks per-request; the any-request four-step loop stays deferred (task #34) | `33c018e9` |
+
+**Build-time deviations + findings (Ruthless Feedback, §10 mirror):**
+
+1. **S1 probe run 1 scored 5/6** — the third "clear"-labeled ask omitted where files live + duplicate-id semantics, and the model asked exactly those two build-shaping questions: the LABEL was miscalibrated, not the discrimination. Run 1 preserved fails-included (`smoke/s1_probe_results_run1.json`); run 2 with the genuinely-closed wording passed 6/6 + the reword pair. AC.REQ.2's text was not loosened.
+2. **AC.DGR.2 / AC.DGR.OA serialization** — their gate-traceability halves consume the S3 generated gate, so they landed with S3 rather than S2 (plan order preserved at the slice level; noted, not silently re-ordered).
+3. **Heartbeat coverage hole found by watching the first live OA run** — research + generation legs run minutes-long with zero artifact writes; heartbeats originally wrapped only the build leg, leaving a >bound silence window in `planning`. Fixed in `60d886a5` (heartbeats wrap all three long legs); the pre-fix OA run's PRG audit failure is preserved in the run trail as the bug's evidence.
+4. **AC.GEN.2 sweep vocabulary** — "billing" was dropped from the domain-word sweep: the sealed orchestrator's comments use it for Anthropic PLAN accounting (infrastructure vocabulary, not a business vertical). Recorded in the test body.
+5. **AC.REQ.OA fresh-workspace assertion** — the spawned `claude` binary scaffolds hidden session dirs (`.scratch`) in its cwd; the test ignores dotfiles (harness scaffolding, not a pipeline write).
+6. **Sealed AC.HL.A1 sweep conflict (caught pre-seal, fixed at the implementation)** — the sealed guarantee forbids any interactive surface in `cli.py`; the new entry point's stdin prompts for the single approval gate + meaningful questions (intake-surface, never loop-driving) moved into the pipeline module (`interactive_approve`/`interactive_answer`, commit `493fa2de`); the sealed test was NOT modified.
 
 ---
 

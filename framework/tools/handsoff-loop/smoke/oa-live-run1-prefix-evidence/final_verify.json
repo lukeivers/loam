@@ -1,0 +1,9 @@
+{
+  "done": false,
+  "primary_exit": 0,
+  "held_out_exit": 1,
+  "acceptance_id": "bfi-gate",
+  "acceptance_sha256": "93c1f903ea61c649f2e4b61c8e46a71f5dbb3380100b1d5e8c5a06e452d674b2",
+  "primary_tail": "PASS: 6 teams (even), 5 rounds, 15 real matches -- all criteria satisfied\n",
+  "held_out_tail": "FAIL: [N2] Round 1: expected 3 matches, got 2\n"
+}

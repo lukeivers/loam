@@ -76,3 +76,30 @@ python3.13 framework/tools/handsoff-loop/smoke/run_smoke.py \
   PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "we're moving our bookkeeping to a new system and the export from the old one uses category names that don't line up with the new system's categories. I have the old export as a csv with date, description, amount, and old category, and a small csv that maps old category names to new ones. I need something that converts the old file into the new format using that mapping and gives me a list of any entries it couldn't map so a person can decide those" --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-app2-books-migration-aivhx4yb --yes
   ```
 
+## 2026-06-10 01:47:51 — off-vertical — terminal: **done**
+
+- run-of-origin: this entry (loam commit `a3f58a21`, workspace `/var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-off-vertical-cjq274k9`, started 2026-06-10 01:47:51)
+- ask (verbatim): I help run a small rec soccer league for kids and the scheduling is killing me.
+We've got 12 teams this fall and 3 fields we can use on Saturdays. I end up
+doing the whole season schedule in a spreadsheet by hand every year and someone
+always ends up mad — some team gets the early morning slot four times, some
+team plays the same opponent twice before they've played everyone once. Can you
+make me something that builds a fair season schedule and actually shows me it's
+fair? I'm not technical so it needs to just work.
+- wall-clock: 1435.7s [this run]
+- result: done — fails included by contract; an honest negative is logged exactly like a pass
+- grounding: grounded=True | live-verified citations=6 | dropped=0 [this run]
+- gate criteria: 8 total, 8 traceable to practitioner norms [this run]
+- convergence: stop_reason=done | refine_attempts=0 | timed_out=False | timeout_retries=0 [this run]
+- progress audit: user-visible updates=24 | max gap=120.0s (monotonic clock; wall 120.0s) | within heartbeat bound=True | unverifiable claims=0 [this run]
+- human gates fired this run:
+  - question (unanswered): How many Saturdays long is the season, and how many games does each team play? (For example: 10 weeks, each team plays once per week?)
+  - question (unanswered): What are the time slots available each Saturday — for example, 8 AM, 10 AM, noon — and is 'early morning' just the first slot of the day, or are there specific slots you're trying to keep fair?
+  - expert-gate flag: Whether to run a single round-robin (each pair plays once, 11 rounds) or a double round-robin (each pair plays twice, 22 rounds) is a season-length policy decision that depends on the league's intended number of weeks and cannot be resolved by scheduling standards alone — a league organizer must decide.
+  - expert-gate flag: How to rank or weight time slots as 'prime' versus 'non-prime' (e.g., whether 10 AM is preferable to 8 AM, or whether a late afternoon slot is desirable) is league- and participant-specific; research did not surface a universal rec-league standard for this ranking, so the league operator should specify slot preferences before the fairness metric is computed.
+  - expert-gate flag: Whether 'field fairness' means each team plays an equal number of games on each of the 3 fields, or simply avoids over-concentration on one field, is an implementation choice with real schedule-feasibility trade-offs for 12 teams across 11 rounds that a human organizer should decide up front.
+- reproduce this run:
+  ```
+  PYTHONPATH=/Users/lukeivers/loam/framework/tools/handsoff-loop/src python3.13 -m handsoff_loop.cli build-from-intent --ask "I help run a small rec soccer league for kids and the scheduling is killing me.\nWe've got 12 teams this fall and 3 fields we can use on Saturdays. I end up\ndoing the whole season schedule in a spreadsheet by hand every year and someone\nalways ends up mad — some team gets the early morning slot four times, some\nteam plays the same opponent twice before they've played everyone once. Can you\nmake me something that builds a fair season schedule and actually shows me it's\nfair? I'm not technical so it needs to just work." --workspace /var/folders/j3/0dgy1nsj045crxwt4t_h05m80000gn/T/bfi-smoke-off-vertical-cjq274k9 --yes
+  ```
+

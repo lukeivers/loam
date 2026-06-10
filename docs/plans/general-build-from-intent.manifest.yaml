@@ -5,10 +5,10 @@ amendment:
   slug: general-build-from-intent
   title: "General build-from-intent — the corrected #86 capability: a stranger's vague plain-language ask on a FRESH loam workspace flows through live per-request intent-extraction + plain-language confirm (meaningful questions ONLY when real ambiguity exists), an in-pipeline bounded web-research step producing a durable practitioner-grounding record that shapes the generated acceptance gate and flags expert-gate points, a generative middle in which loam derives the objective and GENERATES the tool + data shape + acceptance gate (nothing pre-built, no hardcoded objective, ZERO vertical-specific code — the June-8 demo's faked middle rebuilt honestly), build-to-convergence as canonical default behavior (bounded re-drive, single generous leg ceiling with NO retry-on-timeout, dispatcher-side own-the-wait, honest negative preserved), and an in-loop progress surface (plain-language stage updates + heartbeats, every claim verifiable against the run record) — proven by honest smoke runs of the Tilth back-office trio (Apps 1/3/2: reconciliation, customer-list dedupe, books migration) PLUS at least one owner-authored off-vertical run through the identical code path, each on its own fresh workspace, honestly scored fails-included, reproducible on demand. Executes the owner's verbatim 2026-06-09 spec (Discord 1514064080) under the honest-capability-demo doctrine's three sharpened rules as binding constraints; retires the loam_autoroute shortcut by name. Readiness-program W2.1-W2.4 + W1.2-W1.3; gates the Lubbock meeting bar."
 
-# BASELINE: walked at apply-time per the #142 baseline-walk pattern. The build
-# queues behind the memory-recall cycle seal (one tree, builds serialize); the
-# walk starts from whatever commit carries this plan post-ratification.
-baseline: null
+# Walked 2026-06-09 at build (the #142 baseline-walk pattern): 775d32af is
+# the commit that carries this plan (owner-ratified, G2 approved) and the
+# direct parent of the cycle's first slice commit (33c018e9).
+baseline: 775d32af67d6354ccf51a08588cddfa00788ef3f
 
 plan: docs/plans/general-build-from-intent.md
 

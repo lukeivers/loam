@@ -1033,6 +1033,18 @@ def _resolve_composer_config(
     )
 
 
+def resolve_live_retrieval_config(
+    workspace_root: Path, workspace_slug: str
+) -> RetrievalConfig:
+    """PUBLIC resolver for live-wiring consumers outside this module
+    (AC.DMP.1 — memory recall cycle, Slice 4: the frame-kernel dispatch
+    bundle's memory tier runs the SAME gated retrieval the per-turn
+    contributor runs, so dispatched agents inherit decision records +
+    the whole-record render). Thin alias over the composer-config
+    resolver so external callers never bind a private symbol."""
+    return _resolve_composer_config(workspace_root, workspace_slug)
+
+
 def register_keep_pace_turn_contributor(
     composer: object,
     *,

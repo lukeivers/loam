@@ -284,10 +284,18 @@ def _render_memory_tier(ctx: DispatchContext) -> str:
     except Exception:  # noqa: BLE001 — substrate read is fail-soft
         return _MEMORY_UNAVAILABLE_MARKER
     if client is None:
-        # No live memory-graphiti substrate in this workspace — the
-        # tier is present + honest, not fabricated (AC.SACH.3 names
-        # "≥0 retrieved entries, present as a tier even when empty").
-        return _MEMORY_EMPTY_MARKER
+        # No live memory-graphiti substrate (the PRODUCTION file-based
+        # world post-M-FBM) — run the persona's GATED keep-pace
+        # retrieval instead (AC.DMP.1, memory recall cycle Slice 4):
+        # corpus rules + junk-gated episodes + DECISION RECORDS, with
+        # rulings relevant to the task text injected WHOLE per the
+        # AC.SRF.3 contract, within the retrieval surface's named
+        # budget. Same Lens-1 posture as the MCP branch: the sealed
+        # persona surface is reused, never re-implemented. Pre-cycle
+        # this branch returned the empty marker — dispatched agents
+        # were memory-blind by construction (the third leg of the
+        # 2026-06-09 $750k failure).
+        return _render_file_memory_tier(ctx)
 
     try:
         slug = resolve_workspace_slug(ctx.workspace_root)
@@ -301,6 +309,44 @@ def _render_memory_tier(ctx: DispatchContext) -> str:
     try:
         rendered = contributor({"prompt": ctx.task_text})
     except Exception:  # noqa: BLE001 — defence-in-depth; contributor is fail-closed
+        return _MEMORY_UNAVAILABLE_MARKER
+    if not rendered.strip():
+        return _MEMORY_EMPTY_MARKER
+    return rendered.rstrip("\n")
+
+
+def _render_file_memory_tier(ctx: DispatchContext) -> str:
+    """The file-based-store memory tier (AC.DMP.1 — memory recall
+    cycle, Slice 4): the persona's GATED keep-pace ``retrieve`` run
+    with the dispatch task text as the prompt, against the SAME live
+    config resolution the per-turn contributor uses.
+
+    What the dispatched agent inherits by construction: matched +
+    ``status: open`` decision records WHOLE (question / ruling /
+    reasoning / source pointer — the AC.SRF.3 contract), path-bearing
+    corpus + episode pointers, all junk-gated, within the retrieval
+    surface's named ~5KB-class budget (the tier's budget IS that named
+    constant — no second budget to drift).
+
+    Fail-soft (AC.SACH.4, byte-preserved in outcome): any import /
+    resolution / retrieval error degrades to a structured marker;
+    never raises, never blocks the dispatch.
+    """
+    try:
+        from loam.primary_persona.keep_pace.retrieval import (
+            resolve_live_retrieval_config,
+            retrieve,
+        )
+        from loam.primary_persona.memory_consumer import (
+            resolve_workspace_slug,
+        )
+    except Exception:  # noqa: BLE001 — packaging gap is fail-soft per AC.SACH.4
+        return _MEMORY_UNAVAILABLE_MARKER
+    try:
+        slug = resolve_workspace_slug(ctx.workspace_root)
+        config = resolve_live_retrieval_config(ctx.workspace_root, slug)
+        rendered = retrieve(prompt=ctx.task_text, config=config)
+    except Exception:  # noqa: BLE001 — degraded tier never aborts a dispatch
         return _MEMORY_UNAVAILABLE_MARKER
     if not rendered.strip():
         return _MEMORY_EMPTY_MARKER

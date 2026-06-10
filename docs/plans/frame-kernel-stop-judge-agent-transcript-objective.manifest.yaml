@@ -1,0 +1,108 @@
+schema_version: 3
+amendment:
+  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
+  number: null
+  slug: frame-kernel-stop-judge-agent-transcript-objective
+  title: "frame-kernel stop-judge objective from the agent transcript + advisory provenance. THE LIVE BUG (Tier-0, 2026-06-10): the SubagentStop frame-judge composed its prompt with the WRONG stated objective — the parent transcript's FIRST user message (an owner channel message from 2026-06-09) instead of the judged subagent's dispatch prompt — and the resulting OFF_FRAME flag reached the owner as a bare verdict with no provenance. Root cause: read_subagent_result loads the envelope's transcript_path, which points at the PARENT session's transcript (same family as c39de619/9eeef654). FRESH PROBE CAPTURES (n=2, the 9eeef654 technique, Claude Code 2.1.170): the real SubagentStop envelope carries agent_transcript_path — the subagent's OWN complete transcript whose first user message IS the literal dispatch prompt — plus agent_id/agent_type and last_assistant_message (the subagent's final output; the agent transcript's final assistant text is not reliably flushed at fire time). THE FIX (D-FJO.1/2/3): agent_transcript_path becomes the SOLE transcript source for the judge (objective head, result tail-fallback, consequential cue); the parent transcript is never loaded for the seed; absent agent_transcript_path degrades fail-soft to a silent no-op (never parent-message heuristics); the off-frame flag self-identifies as a 'frame-judge advisory on dispatch <agent_type> <id>' with a first-line excerpt of the judged objective. AC.FJO.1 (objective/cue/result source + priority + degraded modes) + AC.FJO.2 (advisory provenance) + AC.FJO.S (outcome-altitude: production hook entry-point, real captured envelope shape, planted dispatch prompt reaches the judge prompt's objective block, channel message does NOT). Existing AC.SSFC. contracts preserved; conftest's make_stop_envelope reshaped to the real captured envelope; fail-soft exit-0/non-blocking unchanged."
+
+# BASELINE: 976959f8 — pre-amendment tip (HEAD at dispatch). Surface:
+# framework/frame-kernel/src/loam/frame_kernel/frame_judge.py +
+# hooks/subagent_stop_frame_check.py (docstring) + tests/conftest.py +
+# three new test files (AC.FJO.1 / AC.FJO.2 / AC.FJO.S) + this
+# plan/manifest under docs/plans/.
+baseline: "976959f8a4c4a48635df59538dc7f72204e95046"
+
+plan: docs/plans/frame-kernel-stop-judge-agent-transcript-objective.md
+plan_doc_ref: docs/plans/frame-kernel-stop-judge-agent-transcript-objective.md
+
+ac_count: 3
+smoke_outcome: "AC.FJO.1 + AC.FJO.2 + AC.FJO.S GREEN; full frame-kernel suite green under the venv Python. RED-on-revert verified on the new ACs against pre-fix frame_judge.py."
+
+seal_description: "frame-kernel stop-judge objective from the agent transcript — the frame-judge judges each subagent result against the subagent's actual dispatched objective (agent_transcript_path sole source, never the parent transcript) and the off-frame flag self-identifies as a frame-judge advisory naming the judged dispatch"
+
+# EXTEND the sealed `frame-kernel` component (frozen_baseline: false
+# advances the seal baseline — the intended fence-widening of an EXTEND).
+# Surface inside the fence: frame_judge.py + the stop hook docstring +
+# conftest + new AC.FJO.* tests. No other sealed component's fence widens.
+components:
+  - name: frame-kernel
+    seal_test: framework/frame-kernel/tests/test_no_sealed_amendments.py
+    sidecar: framework/frame-kernel/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes:
+      - framework/frame-kernel/
+      - kernel/
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/experiments/
+    - docs/design/
+    - docs/examples/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-process.md
+    - docs/release-versioning-policy.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/architecture.md
+    - docs/components/index.md
+    - docs/public-surface-manifest.md
+    - README.md
+    - install-from-source.txt
+
+narrative:
+  target: docs/plans/sealed/frame-kernel-stop-judge-agent-transcript-objective.md
+  body: |
+    # frame-kernel — stop-judge objective from the agent transcript
+
+    Third corrective in the frame-kernel real-envelope lineage
+    (c39de619 envelope-cwd, 9eeef654 memory-tier task-text): the
+    SubagentStop frame-judge now judges each finished subagent against
+    that subagent's ACTUAL dispatched objective.
+
+    THE LIVE BUG (Tier-0, 2026-06-10): the judge prompt's stated
+    -objective block carried the PARENT session's first user message —
+    an owner channel message from the previous day — while judging a
+    different subagent's result. The judge (correctly, given garbage
+    inputs) flagged OFF_FRAME, and the bare flag reached the owner with
+    no provenance. Mechanism: read_subagent_result loaded the
+    envelope's transcript_path, which points at the PARENT transcript.
+
+    THE EVIDENCE (n=2 fresh probe captures, the 9eeef654 technique —
+    real claude -p runs via loam-spawn-isolation, each dispatching a
+    Task subagent under a SubagentStop capture hook; Claude Code
+    2.1.170): the real envelope carries agent_transcript_path — the
+    subagent's OWN complete transcript whose FIRST user message is the
+    literal dispatch prompt — plus agent_id/agent_type and
+    last_assistant_message (the subagent's final output; the agent
+    transcript's final assistant text is not reliably flushed at fire
+    time, so the envelope field keeps result priority).
+
+    THE FIX (D-FJO.1/2/3): agent_transcript_path is the SOLE
+    transcript source for the judge path — objective (first user
+    message), result tail-fallback, and the consequential cue (which
+    had been counting the PARENT session's writes as the subagent's).
+    The parent transcript is never loaded for the seed; an envelope
+    without agent_transcript_path degrades fail-soft to a silent no-op
+    rather than approximating from parent-message heuristics — no
+    advisory is strictly better than a wrong advisory. The off-frame
+    flag now self-identifies: "frame-judge advisory on dispatch
+    <agent_type> <id>" + a first-line excerpt of the judged objective,
+    readable out of context.
+
+    AC.FJO.1 — objective/cue/result sources + envelope-field priority
+    + degraded modes. AC.FJO.2 — advisory provenance. AC.FJO.S
+    (outcome-altitude) — the production hook entry-point with the real
+    captured envelope shape: the planted dispatch prompt reaches the
+    judge prompt's objective block; the planted channel-shaped parent
+    message does NOT.
+
+    Unchanged: fail-soft exit-0 (AC.SSFC.5); the non-blocking surface
+    shape (AC.SSFC.4); bundle.py and all SubagentStart surfaces; all
+    existing frame-kernel tests pass under the corrected (real)
+    envelope fixture shape.

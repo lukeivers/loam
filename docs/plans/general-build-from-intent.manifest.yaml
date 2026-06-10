@@ -1,0 +1,117 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: general-build-from-intent
+  title: "General build-from-intent — the corrected #86 capability: a stranger's vague plain-language ask on a FRESH loam workspace flows through live per-request intent-extraction + plain-language confirm (meaningful questions ONLY when real ambiguity exists), an in-pipeline bounded web-research step producing a durable practitioner-grounding record that shapes the generated acceptance gate and flags expert-gate points, a generative middle in which loam derives the objective and GENERATES the tool + data shape + acceptance gate (nothing pre-built, no hardcoded objective, ZERO vertical-specific code — the June-8 demo's faked middle rebuilt honestly), build-to-convergence as canonical default behavior (bounded re-drive, single generous leg ceiling with NO retry-on-timeout, dispatcher-side own-the-wait, honest negative preserved), and an in-loop progress surface (plain-language stage updates + heartbeats, every claim verifiable against the run record) — proven by honest smoke runs of the Tilth back-office trio (Apps 1/3/2: reconciliation, customer-list dedupe, books migration) PLUS at least one owner-authored off-vertical run through the identical code path, each on its own fresh workspace, honestly scored fails-included, reproducible on demand. Executes the owner's verbatim 2026-06-09 spec (Discord 1514064080) under the honest-capability-demo doctrine's three sharpened rules as binding constraints; retires the loam_autoroute shortcut by name. Readiness-program W2.1-W2.4 + W1.2-W1.3; gates the Lubbock meeting bar."
+
+# BASELINE: walked at apply-time per the #142 baseline-walk pattern. The build
+# queues behind the memory-recall cycle seal (one tree, builds serialize); the
+# walk starts from whatever commit carries this plan post-ratification.
+baseline: null
+
+plan: docs/plans/general-build-from-intent.md
+
+components:
+  - name: workspace-bootstrap
+    new_component: false           # Single anchor per the handsoff-loop-real-build / loop-goal-refinement / loop-behavioral-refine-cycle precedents: pipeline stages land under framework/tools/handsoff-loop/ + plugins/loam-skills/ + framework/workspace-bootstrap/ inside this seal-test's admitted prefixes (verified at test_no_sealed_amendments.py allowed_prefixes this session).
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/general-build-from-intent.md
+  body: |
+    # General build-from-intent — the corrected #86 capability
+
+    Per `docs/plans/general-build-from-intent.md`, the build the June-8 demo should
+    have been. The owner's spec verbatim (Discord 1514064080, 2026-06-09): "It needs
+    to be able to take their input, ask meaningful questions if it has any, do any
+    research that's valuable to align expectations with industry standards, plan,
+    build, keep the user in the loop during the process so they can feel comfortable
+    that things are moving along." Hard constraints from the same ruling: no faking,
+    no hardcoded objectives, no pre-built tools posing as generated, no pre-gaming;
+    must run on a FRESH loam workspace in front of strangers.
+
+    Six sequenced slices on the sealed handsoff-loop spine (Lens 1: the intake
+    honesty machinery, freeze-isolation, independent judge, bounded re-drive, and
+    in-session dispatch are composed, never re-implemented):
+
+      1. **Per-request intent + meaningful questions (S1, AC.REQ.*).** Any vague
+         build-shaped ask in an established workspace triggers a live
+         intent-extraction + plain-language confirm (provably non-canned), with a
+         bounded number of meaningful questions ONLY when a build-shaping ambiguity
+         is real — zero questions on a clear ask. The stated objective is derived
+         from THAT run's ask; no objective text exists in pipeline source; the
+         retired loam_autoroute shortcut has zero references in canonical loam.
+
+      2. **Domain-grounding research IN the pipeline (S2, AC.DGR.*).** Between
+         intent confirm and gate-freeze, a bounded web-research step produces a
+         durable practitioner-grounding record (live-resolving citations, fetched
+         that run) that demonstrably shapes the generated acceptance gate and flags
+         expert-gate points in plain language where research cannot settle a
+         judgment standard. Research failure degrades to an explicitly-flagged
+         ungrounded build — never silent fake grounding. Records are written
+         packs-compatible (durable, indexable) with no dependency on the in-build
+         memory-recall cycle.
+
+      3. **The generative middle (S3, AC.GEN.*).** From confirmed intent +
+         grounding record, loam derives the objective and GENERATES the tool, the
+         data shape, and the acceptance gate — none existing before the run, the
+         gate hash-pinned before any build agent sees work (frozen-unseen contract
+         preserved by construction). Zero vertical-specific code in framework
+         source; one identical code path serves materially different domains.
+         Form-factor surfaced in the confirm; verdicts state judge-scope honestly.
+
+      4. **Convergence as canonical default (S4, AC.CVG.*).** Bounded
+         re-drive-toward-the-frozen-gate is default fresh-workspace behavior;
+         single generous named ceiling per agent leg with timeout terminal (NO
+         retry-on-timeout — the #111 empirical lesson, binding); dispatcher-side
+         own-the-wait from run artifacts; gate-pass and definite honest negative
+         the only terminals, never retried-to-green.
+
+      5. **In-loop progress surface (S5, AC.PRG.*).** Plain-language stage updates
+         (understanding -> asking -> researching -> planning -> building ->
+         checking -> verdict) with a named heartbeat bound during long legs;
+         every progress claim verifiable against the run record (narration is
+         not action, enforced). Carried by named Claude primitives: in-session
+         Task subagents, dispatcher-side Monitor, SubagentStop events, persona
+         narration (channel reply/edit when connected).
+
+      6. **Honest smoke proof (S6, AC.SMK.*).** The Tilth back-office trio —
+         App 1 (reconciliation), App 3 (customer-list dedupe), App 2 (books
+         migration) — each generated on its own fresh workspace through the one
+         general path, honestly scored fails-included with wall-clock + human-gate
+         points logged; PLUS at least one OFF-vertical run from an owner-authored
+         prompt no build agent saw before run time (D5) — the standing
+         anti-rigging probe. Every number run-attributed; any run reproducible
+         from one documented command. A change that wins on the trio but degrades
+         the off-vertical run does not land.
+
+    AC families AC.REQ/DGR/GEN/CVG/PRG/SMK.* — every AC outcome-shape
+    (method-in-AC test passed per-AC), one outcome-altitude AC per family
+    (production entry points, fresh workspaces, no pre-arranged state; AC.GEN.OA
+    is the corrected June-8 demo as a standing test).
+
+    Fence: single workspace-bootstrap anchor (the three sealed handsoff-loop-spine
+    precedents); preserved byte-for-byte in outcome: frozen-unseen, independent
+    judge, honest-negative (no retry-to-green), the sealed goal-refinement intake
+    construct, AC.FOUND.0 consumed-not-re-proved, spawn isolation on every model
+    call. HALT on: any domain-keyed branch in framework source; any edit outside
+    the fence (incl. frame-kernel / in-build memory-recall surfaces); any
+    weakening of the honesty terminals; any slice that only works in a
+    dev-configured workspace. NO Anthropic SDK/API key anywhere. LOCAL SEAL ONLY —
+    publish is a separate owner-asked action. No version bump (derives at
+    release time). NEW commits only, no --amend.
+
+    No ODD violation in surrounding code; every added path traces to a named AC,
+    no defensive code for unnamed cases.

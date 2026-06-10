@@ -95,6 +95,27 @@ _MEMORY_EMPTY_MARKER = "[no relevant memory for this dispatch]"
 
 SUBAGENT_START_EVENT = "SubagentStart"
 
+# Tail bound for the transcript task-text derivation (AC.RDM.1 /
+# D-build.1): SubagentStart fires on every dispatch inside a bounded
+# hook timeout, against a parent transcript that can be large; the last
+# real user message lives at the tail. Complete lines only — a clipped
+# first line is dropped.
+_TRANSCRIPT_TAIL_BYTES = 1 << 20
+
+# Synthetic-turn marker skipped by the derivation (AC.RDM.1): a
+# background-task notification is harness machinery, not the user ask.
+_TASK_NOTIFICATION_MARKER = "<task-notification>"
+
+# Standing-floor header (AC.RDM.2 / D-RDM.2(b)): the query-less floor
+# injected when NO task text is derivable, so dispatches still carry
+# the workspace's load-bearing rulings. Plain language, names its own
+# degraded condition.
+_FLOOR_HEADER = (
+    "standing decision records (no task text was derivable for this "
+    "dispatch; the workspace's open questions + most recent rulings "
+    "follow):"
+)
+
 
 # ---------------------------------------------------------------------
 # Envelope parsing (D-SACH.4 task-text seed; AC.SACH.4 malformed input)
@@ -124,12 +145,16 @@ def parse_envelope(envelope: Any) -> DispatchContext:
     yields an all-empty :class:`DispatchContext` rather than raising.
     The caller still composes a bundle (degraded microkernel-only).
 
-    Task-text seed (D-SACH.4): the subagent's brief/task text is read
-    from the envelope's ``prompt`` field (the SubagentStart dispatch
-    text), falling back to ``task`` / ``description``. When none is
-    present the memory tier degrades to a workspace-scoped marker
-    rather than inventing a query (plan §8 halt-trigger #2's named
-    fallback).
+    Task-text seed (D-SACH.4 + AC.RDM.1): the subagent's brief/task
+    text is read from the envelope's ``prompt`` field (the SubagentStart
+    dispatch text), falling back to ``task`` / ``description`` — kept
+    first-priority for forward-compat, though REAL envelopes carry none
+    of them (Tier-0 probe captures, 2026-06-10). The real-envelope
+    fallback derives the task text from the parent transcript's last
+    real user message (:func:`_derive_task_text_from_transcript`,
+    D-RDM.1). When nothing is derivable the memory tier renders the
+    query-less standing decision floor (AC.RDM.2) rather than inventing
+    a query.
 
     Workspace-root resolution (AC.EWR.1): real Claude Code
     SubagentStart envelopes carry the standard hook common-input
@@ -157,7 +182,8 @@ def parse_envelope(envelope: Any) -> DispatchContext:
 
     # Task-text seed for the memory query (D-SACH.4). Accept the
     # documented dispatch-text fields in priority order; the first
-    # non-empty string wins.
+    # non-empty string wins. Kept first-priority for forward-compat
+    # (AC.RDM.1) — but real envelopes carry NONE of these fields.
     task_text = ""
     for key in ("prompt", "task", "description"):
         value = envelope.get(key)
@@ -165,12 +191,95 @@ def parse_envelope(envelope: Any) -> DispatchContext:
             task_text = value.strip()
             break
 
+    if not task_text:
+        # AC.RDM.1 / D-RDM.1 — real SubagentStart envelopes carry only
+        # the documented common fields (Tier-0 probe captures,
+        # 2026-06-10), so the dispatch-text fields above never fire on
+        # a real dispatch. Derive the task text from the PARENT
+        # transcript's last real user message instead: the envelope's
+        # ``transcript_path`` points at the parent session's transcript
+        # which at fire time already contains the dispatching turn's
+        # user ask — the same seed the parent's own per-turn retrieval
+        # uses. (The in-flight Task tool_use is NOT yet flushed at fire
+        # time and a stale one would be wrong — see plan §2 finding 3.)
+        tp = envelope.get("transcript_path")
+        if isinstance(tp, str) and tp.strip():
+            task_text = _derive_task_text_from_transcript(Path(tp))
+
     workstream = _resolve_workstream(workspace_root)
     return DispatchContext(
         workspace_root=workspace_root,
         task_text=task_text,
         workstream=workstream,
     )
+
+
+def _derive_task_text_from_transcript(transcript_path: Path | None) -> str:
+    """Derive the dispatch task text from the parent session's
+    transcript (AC.RDM.1 — the real-envelope fallback, D-RDM.1).
+
+    Returns the LAST REAL USER MESSAGE in the transcript tail —
+    skipping tool_result-only records (their content carries no text
+    blocks), the local-command/caveat preambles Claude Code injects,
+    and ``<task-notification>`` synthetic turns — or ``""`` when no
+    such message exists.
+
+    Tail-bounded read (D-build.1): only the last
+    :data:`_TRANSCRIPT_TAIL_BYTES` are read, complete lines only, so
+    the per-dispatch cost stays flat against a large parent transcript.
+    Record parsing reuses ``frame_judge``'s tolerant helpers (same
+    component) rather than a second parser.
+
+    Fail-soft (AC.SACH.4 posture, AC.RDM.1 fail-soft clause): a
+    missing / unreadable / non-JSONL transcript yields ``""`` — never
+    raises, the memory tier degrades downstream.
+    """
+    if transcript_path is None or not transcript_path.exists():
+        return ""
+    try:
+        size = transcript_path.stat().st_size
+        with transcript_path.open("rb") as fh:
+            if size > _TRANSCRIPT_TAIL_BYTES:
+                fh.seek(size - _TRANSCRIPT_TAIL_BYTES)
+            raw = fh.read().decode("utf-8", errors="replace")
+        if size > _TRANSCRIPT_TAIL_BYTES:
+            # Drop the first, possibly mid-line-clipped, line.
+            raw = raw.split("\n", 1)[1] if "\n" in raw else ""
+    except (OSError, ValueError):
+        return ""
+
+    try:
+        from loam.frame_kernel.frame_judge import _block_text, _record_message
+    except Exception:  # noqa: BLE001 — packaging gap is fail-soft
+        return ""
+
+    records: list[Any] = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+    for record in reversed(records):
+        role, content = _record_message(record)
+        if role != "user":
+            continue
+        text = _block_text(content).strip()
+        if not text:
+            # tool_result-only / textless user records (AC.RDM.1 skip:
+            # _block_text reads text blocks only).
+            continue
+        # The local-command caveat preamble is synthetic, not the ask
+        # (mirrors frame_judge._extract_objective's skip).
+        if text.startswith("<local-command") or "Caveat:" in text[:80]:
+            continue
+        if _TASK_NOTIFICATION_MARKER in text[:200]:
+            continue
+        return text
+    return ""
 
 
 # ---------------------------------------------------------------------
@@ -285,10 +394,13 @@ def _render_memory_tier(ctx: DispatchContext) -> str:
     if ctx.workspace_root is None:
         return _MEMORY_UNAVAILABLE_MARKER
     if not ctx.task_text:
-        # Plan §8 halt-trigger #2's named fallback: no task-text seed ->
-        # do not invent a query; report unavailable rather than
-        # fabricate (AC.SACH.4).
-        return _MEMORY_UNAVAILABLE_MARKER
+        # AC.RDM.2 / D-RDM.2(b) — no task-text seed even after the
+        # transcript derivation: still never invent a query; render the
+        # query-less STANDING FLOOR (open + recent ruled decision
+        # records, whole) so the dispatch carries the load-bearing
+        # rulings. With no ledger this degrades byte-identically to the
+        # pre-cycle unavailable-marker.
+        return _render_standing_floor(ctx)
 
     try:
         from loam.primary_persona.mcp_memory_client import (
@@ -374,6 +486,85 @@ def _render_file_memory_tier(ctx: DispatchContext) -> str:
     if not rendered.strip():
         return _MEMORY_EMPTY_MARKER
     return rendered.rstrip("\n")
+
+
+def _render_standing_floor(ctx: DispatchContext) -> str:
+    """The query-less standing decision floor (AC.RDM.2 / D-RDM.2(b)).
+
+    When NO task text is derivable for a dispatch (no envelope field,
+    nothing recoverable from the transcript), the memory tier injects
+    the workspace's ``status: open`` decision records plus the most
+    recent ``status: ruled`` records, WHOLE (the AC.SRF.3 contract via
+    ``DecisionRecord.record_text``), newest-first, within the existing
+    injection char budget — no second budget to drift (D-build.2).
+
+    REUSES the sealed ``decision_ledger`` read surface + the same live
+    config resolution the gated retrieval uses (Lens 1; primary-persona
+    is imported, never edited).
+
+    Fail-soft (AC.SACH.4 posture): any import / resolution / read error
+    — and an absent or empty ledger — degrades to the pre-cycle
+    :data:`_MEMORY_UNAVAILABLE_MARKER` byte-identically; never raises.
+    """
+    if ctx.workspace_root is None:
+        return _MEMORY_UNAVAILABLE_MARKER
+    try:
+        from loam.primary_persona.decision_ledger import (
+            DECISION_TOP_N,
+            iter_decisions,
+            open_decisions,
+        )
+        from loam.primary_persona.keep_pace.retrieval import (
+            INJECTION_CHAR_CAP,
+            resolve_live_retrieval_config,
+        )
+        from loam.primary_persona.memory_consumer import (
+            resolve_workspace_slug,
+        )
+    except Exception:  # noqa: BLE001 — packaging gap is fail-soft per AC.SACH.4
+        return _MEMORY_UNAVAILABLE_MARKER
+
+    try:
+        slug = resolve_workspace_slug(ctx.workspace_root)
+        config = resolve_live_retrieval_config(ctx.workspace_root, slug)
+        memory_dir = config.episode_memory_dir
+        if memory_dir is None:
+            return _MEMORY_UNAVAILABLE_MARKER
+        opens = open_decisions(memory_dir)
+        ruled = [
+            rec
+            for rec in iter_decisions(memory_dir)
+            if rec.status == "ruled"
+        ]
+    except Exception:  # noqa: BLE001 — ledger read is fail-soft
+        return _MEMORY_UNAVAILABLE_MARKER
+
+    # Open questions ride first (they gate live work), then the newest
+    # ruled records up to the ledger's own top-N; dedupe by path.
+    selected = []
+    seen: set[str] = set()
+    for rec in list(opens) + ruled[: max(DECISION_TOP_N, 0)]:
+        if rec.path in seen:
+            continue
+        seen.add(rec.path)
+        selected.append(rec)
+    if not selected:
+        return _MEMORY_UNAVAILABLE_MARKER
+
+    blocks = [_FLOOR_HEADER]
+    used = len(_FLOOR_HEADER)
+    for rec in selected:
+        try:
+            text = rec.record_text()
+        except Exception:  # noqa: BLE001 — one bad record never sinks the floor
+            continue
+        if used + len(text) + 2 > INJECTION_CHAR_CAP:
+            break
+        blocks.append(text)
+        used += len(text) + 2
+    if len(blocks) == 1:
+        return _MEMORY_UNAVAILABLE_MARKER
+    return "\n\n".join(blocks)
 
 
 # ---------------------------------------------------------------------

@@ -1,3 +1,10 @@
+> **RETIRED-SCOPE BANNER 2026-06-11.** This is a completed research
+> record (2026-05-08). ProgramBench was fully retired by owner ruling
+> (Discord 1514747695972094165; plan `docs/plans/programbench-full-retirement.md`):
+> every PB-submission / PB-leaderboard recommendation herein is
+> historical and SUPERSEDED — do not treat it as pending work. Content
+> below is preserved verbatim.
+
 # Plan — Harness landscape research + gap analysis + roadmap re-rank
 
 **Authored:** 2026-05-08.

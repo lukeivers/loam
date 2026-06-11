@@ -350,6 +350,7 @@ KEEP (each with its justification — the owner-visible list):
 | D-K6 completed-work plan-docs still in docs/plans/ | v0-4-0/v0-3-0 master plans; release-roadmap-doc-plan.md; session-clear-safety-…; release-integration-fbm-…; swarming-extraction-composition{,-plan}.md; leverage-discipline-plan.md; loam-1.0-acceptance-smoke-harness.manifest.yaml | their §14 registers anchor seal SHAs — functionally sealed history that never moved to sealed/; editing audit prose = history edit (the ruling's named "expensive" class). Master plans get the inventory's optional RETIRED-scope banner |
 | D-K7 provenance citations into kept sealed history | plugins/dev-sdlc/odd-extractor/build_next.py:566 + test_AC_V041_3_tie_breaker.py:10–11 | the only why-record for a live tie-breaker design; reworded to past-tense + "(RETIRED)"-marked citation — the stem then survives only inside the cited sealed path (long-term-path weighting: deleting provenance is the worse outcome) |
 | D-K8 the retirement record itself | this plan pair; the inventory; roadmap Candidate 1 text until collapse | the artefacts ARE the retirement record; sweep-allowlisted explicitly |
+| D-K9 (BUILD-TIME additions via the halt-trigger-4 mechanism — surfaced in the build report) | docs/plans/conventional-install-pypi-publish.{md,manifest.yaml}; docs/plans/research/harness-landscape-and-roadmap-rerank{,-plan}.md; docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md; docs/FUTURE_IDEAS_DRAFT.md | pypi pair: completed-work plan pair (D-K6 class — §14 register anchors seal SHAs; PB mentions are historical exclusion-list records). Rerank pair: completed research records (2026-05-08) whose PB-submission recommendations are superseded — RETIRED-SCOPE bannered, content verbatim. Promote-multi-channel: PLAN-ONLY pending plan whose PB-derivative pos3 experiment paths are load-bearing migration-source addresses (removal breaks the plan's function) — RETIRED-PROVENANCE bannered + the one cheap PB fixture-option reworded out. FIDRAFT: D-R5's RETIRED markers / pointer rule keep the stems in entry IDs + provenance (renaming IDs breaks cross-references) — file-level allowlist with the header retirement note |
 
 ### D-PBRET.7 — Sweep permanence: ship AC.PBRET.5 as a permanent default-run test, not a one-shot script. AUTONOMOUS.
 
@@ -403,7 +404,38 @@ banner targets (machinery-read).
 SHA register: TBD-AT-SEAL (code …; apply …; seal …) — backfilled per
 `loam amend seal --plan-doc`.
 
-Build-time method decisions (builder's call within D-PBRET.1–8): TBD.
+Build-time method decisions (builder's call within D-PBRET.1–8):
+
+1. **BASELINE re-pinned** `95068b35` → `b739d0f8` (two docs commits landed
+   between plan-authoring and build: the plan pair `a2d84086` + the FIDRAFT
+   capture `b739d0f8` that resolved halt trigger 5) so the seal window
+   carries only this cycle.
+2. **Sweep mechanism:** `git grep -I -i -l` over both stems, compared
+   against SEALED_HISTORY_PREFIXES + a `*/seals/SEAL_COMMIT.*` narrative
+   rule + the REGISTERED_KEEPS register mirror; mutation fixture is a
+   temp `git init` tree proving RED on a stray live mention in either
+   stem, mixed case, while a sealed-history mention stays accounted.
+3. **D-K9 register additions** (halt-trigger-4 mechanism; rows in §10).
+4. **BRC_6 survivor rename:** `construct_is_generic_not_realpb_specific`
+   → `construct_is_generic_not_consumer_specific` (the function NAME
+   carried the stem; AC name/file unchanged); its PB-token genericness
+   loop removed with the package it guarded (D-PBRET.3's removal rule),
+   location assertion retained.
+5. **test_d1 byte-content ROOT-CAUSE ride-along (laddered to
+   AC.PBRET.2):** two pre-existing d1 failures at BASELINE (stale
+   pyproject SHAs — the v1.4.0 rebaseline predates the v1.5.0 lockstep
+   bump) were the SEVENTH recurrence of a drift the test file itself
+   names with its owed fix; executed the named fix (pyproject entries
+   removed from the byte-content sample; AC.D.1.5 ≥15-sample floor kept
+   via two stable module-body replacements) instead of an eighth
+   rebaseline, per the long-term-path weighting.
+6. **Untracked run-evidence remnants** (gitignored transcripts under the
+   deleted tool tree) moved to `/tmp/programbench-revival-retired-2026-06-11`
+   (the blast-radius guard correctly refuses `rm -rf` outside carve-outs;
+   `mv` achieves the ruled deletion from the tree, recoverable until /tmp
+   clears).
+7. **HARP leg executed LAST** among destructive legs per the dispatch's
+   sequencing requirement; no hold message arrived.
 
 ## §15 Backwards-compat verification
 
@@ -437,6 +469,22 @@ Build-time method decisions (builder's call within D-PBRET.1–8): TBD.
    D-PBRET.1 is owner-gated (the ruling itself made it conditional);
    D-PBRET.5 is already RULED; the rest are autonomous-and-recorded.
    No public actions, no financial surface; LOCAL only.
+
+Build-time findings (2026-06-11 build):
+
+7. **Pre-existing default-run failures at BASELINE, neither caused by
+   retirement (Tier-0 proven):** (a) two test_d1 byte-content SHA
+   failures — root-cause-fixed in-band (§14 decision 5); (b)
+   `test_AC_DCG_OA_genuinely_open_question_passes_live` — its
+   "genuinely open question" fixture (frame-kernel dispatch-pack
+   activation timing) was RULED in the live pos3 ledger 2026-06-10, so
+   the gate now CORRECTLY steers on it; the live-coupled fixture went
+   stale by design. Fix needs a design call (live-coupled vs fixture
+   ledger) — OUT of this fence; surfaced as a deferred follow-up.
+8. **Inventory over-listing:** D-R1 listed handsoff-loop `cli.py`, which
+   carries no PB token at HEAD (live grep governed; no edit needed);
+   `behavioral_refine_endtest.py`'s PB-lineage mention was the
+   `AC.RPB.7` precedent citation (reworded).
 
 ## §17 Provenance trail
 

@@ -1,3 +1,12 @@
+> **RETIRED-PROVENANCE BANNER 2026-06-11.** ProgramBench was fully
+> retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). The pos3 experiment-scaffold paths
+> referenced herein (`…/experiments/programbench-derivative/…`) are
+> historical provenance / migration-source addresses for the GENERIC
+> binary-extraction capability this plan proposes — no ProgramBench
+> benchmark work is current or future work, and no PB fixture is to be
+> used in any build off this plan.
+
 # Promote multi-channel extractor + iteration-loop family into canonical loam — plan
 
 **Slug:** `promote-multi-channel-extractor-and-iteration-loop-family`.
@@ -114,7 +123,7 @@ Seven ACs covering both patterns. AC IDs use scope-descriptive `PROMOTE-BIN.*` (
 
 | AC | Outcome | Verification |
 |---|---|---|
-| **AC.PROMOTE-BIN.1 — Binary channels surface** | `loam odd-extract <repo> --binary <path>` accepts a path argument; the extractor invokes three subprocess channels (`subprocess_help`, `subprocess_version`, `subprocess_strings`); each non-empty channel becomes a labeled entry in the `MultiSourceBundle` with the channel-label as `path`. | Unit: bundle-shape test on a fixture binary (the canonical 5 ProgramBench task binaries OR a small loam-internal stub binary — see §11 D-Q.PROMOTE-BIN.1). Outcome-altitude: live extraction against one task binary produces ≥1 objective whose provenance names `subprocess_help`. |
+| **AC.PROMOTE-BIN.1 — Binary channels surface** | `loam odd-extract <repo> --binary <path>` accepts a path argument; the extractor invokes three subprocess channels (`subprocess_help`, `subprocess_version`, `subprocess_strings`); each non-empty channel becomes a labeled entry in the `MultiSourceBundle` with the channel-label as `path`. | Unit: bundle-shape test on a fixture binary (a small loam-internal stub binary — see §11 D-Q.PROMOTE-BIN.1; the retired benchmark's task binaries are no longer a fixture option). Outcome-altitude: live extraction against one task binary produces ≥1 objective whose provenance names `subprocess_help`. |
 | **AC.PROMOTE-BIN.2 — Vacuous-README unblock** | When `is_readme_vacuous(readme_text)` returns True AND `subprocess_help.ok` is True, the extractor proceeds rather than HALTing on zero-objective README. The persona's no-speculative-features constraint becomes provenance-aware: the binary IS the documentation source. | Unit: fixture with a 50-char placeholder README + a help-yielding binary → extraction returns ≥5 objectives whose provenance is `subprocess_help`. Negative: empty README + non-executable binary → still HALTs. |
 | **AC.PROMOTE-BIN.3 — Provenance threading** | Every emitted `Objective` carries a `provenance` string of `+`-joined channel labels derived from `evidence.design_doc_refs` + `evidence.readme_excerpts`. Canonical order: `task-readme`, then channel labels in `BINARY_CHANNEL_LABELS` order. | Unit: extraction against a fixture where README mentions flag X and `--help` also lists flag X → resulting Objective for that flag has `provenance="task-readme+subprocess_help"`. |
 | **AC.PROMOTE-ITER.1 — Iteration-loop substrate** | `VerifierLoop(verifier, max_attempts, retry_call)` runs verify → if-fail-retry → re-verify → cap-and-record loop. Telemetry fields populated per attempt: `attempt_idx`, `verifier_result`, `verifier_signal_tail`, `retry_cost_usd`, `retry_wall_clock_s`. Exhaustion sets `loop_exhausted=True`. | Unit: substrate test with a duck-typed verifier returning fail then ok → loop converges at attempt 2; telemetry shape matches schema. Substrate-only test with always-fail verifier → exhausts at max_attempts. |

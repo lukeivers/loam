@@ -263,7 +263,30 @@ amend machinery's data integrity is what keeps sealed-state claims honest).
 - **Build-artifact note:** the `uv` test runs materialized transient
   setuptools `build/` dirs in three package trees; removed before commit
   (never staged; AC.MCONF.3 diff unaffected).
-- SHA register (source-edit / apply / seal): TBD-AT-SEAL.
+- **SHA register (sealed 2026-06-11, LOCAL only — not pushed):**
+  - plan pair: `475a79ed`
+  - source-edit (four manifests): `4e2d055c`
+  - apply: `3f218a63` (dev-sdlc sidecar + seal-test BASELINE → `a73ff88e`)
+  - seal: `40fba3ef` (post-seal `apply --dry-run` clean per seal output)
+- **AC.MCONF.3 diff audit (at seal):** 9 files — the four target manifests,
+  this plan-doc + its manifest, the sealed narrative
+  (`docs/plans/sealed/manifest-data-conformance-backfill.md`), and the two
+  machinery-written seal-ritual artifacts from the apply auto-commit
+  (`plugins/dev-sdlc/tests/SEAL_COMMIT` sidecar; the 1-line BASELINE
+  constant in `plugins/dev-sdlc/tests/test_no_sealed_amendments.py` — the
+  BASELINE-aware seal anchor, advanced by `loam amend apply` itself, NOT a
+  hand edit; the untouchable DPS1 sweep test is byte-unchanged — empty diff
+  over `plugins/dev-sdlc/tools/loam-amend/`). Conformant per AC.MCONF.3's
+  seal-ritual-artifacts admission.
+- **Seal-mechanics note:** `loam amend seal` HALTed once on the dispatcher's
+  intentionally-uncommitted `docs/FUTURE_IDEAS_DRAFT.md` (dirty-tree guard);
+  resolved by stash → seal → stash-pop, content verified byte-identical by
+  sha256 before/after. Not halt-trigger 5 (no structural docs-only
+  rejection — apply + seal both accepted the zero-source-edit cycle;
+  D-MCONF.4's mild doubt resolved in favor of the standard mechanism).
+- **Final verification at seal HEAD `40fba3ef`:** DPS1 module 19/19 via the
+  production pytest entry-point (AC.MCONF.1 + AC.MCONF.4 — this cycle's own
+  manifest swept clean among them; 18 sibling tests stayed green per §15).
 
 ## §15 Backwards-compat verification
 

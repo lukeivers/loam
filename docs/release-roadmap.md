@@ -252,48 +252,37 @@ Walks the candidates that remain in §4 below at build-time. Each row re-tags cl
 
 ---
 
-### Candidate 1 — `binary-usage-observation-harness` — Loam builds software from minimal input
+### Candidate 1 — `programbench-full-retirement` — Every ProgramBench artefact is retired
 
-**Slug:** `binary-usage-observation-harness`. **Class:** MINOR (END-USER).
+**Slug:** `programbench-full-retirement`. **Class:** PATCH/MIXED (one code amendment cycle + a docs pass). **Replaces the former Candidate 1 `binary-usage-observation-harness`, RETIRED 2026-06-11 by owner ruling** — "Every single thing about ProgramBench should get retired unless it is truly cost prohibitive to do so. All code, projects, ideas, drafts, files, plans, etc. literally everything" (Discord 1514747695972094165; decision record `<pos3>/workspace/.loam/memory/decisions/2026-06-11-programbench-full-retirement.md`). The cancellation predated this entry but was never recorded, which is why the binary-harness candidate kept surfacing as next-build.
 
 #### Objective
 
-> **Loam can take a binary + documentation as input, observe the binary's behavior, reverse-engineer objectives + capabilities + constraints, and produce working source code that passes a behavioral test suite.** The cold-start case — minimal inputs — is the candidate's deliverable.
+> **No live loam artefact treats ProgramBench as current or future work.** PB-purpose code and tests are deleted via the house amendment process; live docs/queue/policy references are removed or marked RETIRED; sealed history (plan-docs, manifests, seal records, experiment reports) is banner-marked RETIRED and never deleted or rewritten.
 
-This is loam against ProgramBench's full input shape: binary + docs, no source. The new component is the binary-usage observation harness.
+#### Plan input (full classified inventory — the build's source of truth)
+
+`docs/plans/research/programbench-retirement-inventory-2026-06-11.md` — four buckets: A ≈ 63 live-code files (≈60 whole-file: `framework/tools/programbench-revival/` tree + 20 PB-purpose test files; 3 entangled files needing surgical edits with exact symbols listed), B = 11 live docs/queue files, C ≈ 27 sealed-history files (RETIRED banners only), D ≈ 45–50 incidental mentions (leave). Verified: deleting the tool tree WITHOUT the A2/A3 test edits breaks the default test run at three named points; hands-off-lifecycle production source has zero PB dependency.
 
 #### Constraints
 
-- Binary-usage observation harness sandboxes execution (Docker-shaped or equivalent safety boundary). Per programbench-loam-benchmark-v0.md §"What this is NOT" — non-trivial.
-- mini-SWE-agent harness compatibility — loam's code-gen pipeline produces output compatible with ProgramBench's evaluation harness.
-- ProgramBench leaderboard submission is **the action of submitting**, not a UI feature. Submission constitutes evidence of this candidate's outcome.
+- Sealed history is never deleted or rewritten (audit trail); RETIRED banners only.
+- AC.BRC.* (generic behavioral-refine-cycle) is LIVE non-PB capability and survives — only `test_AC_BRC_6`'s two PB-coupled assertions retire (inventory finding #1; do not over-delete on the "BRC" name).
+- Default framework test run is GREEN after the amendment (the three named breakage points are in-scope edits).
+- Plan-before-code: plan-author turns the inventory into the formal plan-doc before the build.
 
-#### Acceptance criteria (AC family `AC.BUOH.*`)
+#### Owner calls open at pickup (rule at plan-author gate)
 
-- **AC.BUOH.1 — Binary-usage observation harness.** New component (likely under `framework/` or as a dev-sdlc plugin extension): runs binary with sample inputs, captures stdin/stdout/exit codes/file effects/network behavior, produces structured evidence-row-equivalents for the reverse-ODD pipeline. Sandboxed.
-- **AC.BUOH.2 — Binary-feeder mode for odd-extractor.** odd-extractor accepts evidence rows from the binary harness as a third input source alongside source-files + docs.
-- **AC.BUOH.3 — mini-SWE-agent compatibility.** Loam's code-gen output is consumable by mini-SWE-agent's evaluation harness without manual intervention.
-- **AC.BUOH.4 — ProgramBench submission (Variant B).** Run docs+binary feeder → reverse-ODD → ODD-grounded code-gen on 3-5 ProgramBench tasks. Score: behavioral test pass rate. Submitted to ProgramBench leaderboard. Report at `docs/experiments/programbench-binary-usage-harness-submission.md`.
-- **AC.BUOH.5 — Outcomes-pattern stack documentation.** When users have both `claude -p` subscription AND API-keyed Outcomes access, the pattern document names how to stack ODD authoring + Outcomes runtime grading.
-
-#### Source items
-
-- ProgramBench × loam v0 Variant B (docs + binary-usage feeder)
-- Binary-usage observation harness (programbench-loam-benchmark-v0.md §3)
-- Outcomes-pattern stacking (claude conference features research)
+1. `docs/plans/harness-benchmark-build.md` (HARP / mini-SWE-agent benchmark programme) — inside or outside retirement scope? It is a broader benchmark programme, not PB itself. No default assumed.
+2. Committed run-evidence files (10, in `framework/tools/programbench-revival/**/.run_evidence/`) — delete with the tool dir (recommended; the bucket-C experiment reports remain the audit record) vs preserve.
 
 #### Estimated AI-time
 
-- Binary-usage observation harness: 3-6 hours (sandboxed; new component)
-- mini-SWE-agent compatibility surface: 60-120 min
-- ProgramBench Variant B run on 3-5 tasks: 75-150 min
-- Score aggregation + report + leaderboard submission: 15-30 min
-
-**Total candidate AI-time: 5-10 hours**, midpoint **~7 hours**.
+80–160 min total (code amendment 45–90 + docs pass 20–40 + RETIRED banners 15–30), midpoint ~110 min.
 
 #### Dependencies
 
-- v0.4.0 (code-gen-from-objectives wired; ProgramBench docs-only baseline established as comparison) — SHIPPED.
+- None. Coordinate tree access with any in-flight amendment (serialize builds in the same working tree).
 
 ---
 

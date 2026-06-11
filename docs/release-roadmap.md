@@ -472,6 +472,41 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 ---
 
+### Candidate 7 — `release-flow-partial-publish-repair` — A partial publish is self-repairing
+
+**Slug:** `release-flow-partial-publish-repair`. **Class:** PATCH (DEV). **Scheduling constraint: lands BEFORE the next publish of any class** — queue position does not reflect build-order priority for this entry; it is a publish-gate dependency, not a competing feature build. Inserted 2026-06-11 from the v1.5.0 live incident (owner-directed capture, Discord 1514735212712431887); ordering ratification pending per §7.
+
+#### Objective
+
+> **`loam release` re-run completes a partial publish instead of declaring "nothing to do":** when the tag exists on origin but the GitHub Release is missing, the flow detects and creates the missing Release; release-notes generation finds the plan-doc under the `release-integration-v<X-Y-Z>.md` naming.
+
+#### Constraints
+
+- Idempotent: re-running against a fully published version remains a no-op.
+- GitHub Release creation stays behind the existing `--release` opt-in (public action).
+- No change to gate semantics — only the already-on-origin branch gains the Release-existence check.
+
+#### Acceptance criteria (AC family `AC.RFPR.*`)
+
+- **AC.RFPR.1 — Partial-publish repair.** With tag on origin and no GitHub Release, the release flow (with `--release`) creates the Release with generated notes instead of short-circuiting at "already on origin; nothing to do."
+- **AC.RFPR.2 — Plan-doc locator naming.** `_find_plan_doc` resolves plan-docs named `release-integration-v<X-Y-Z>.md`; notes for such versions carry real §1 + §status content, not "(unavailable)" placeholders.
+- **AC.RFPR.3 — Both-halves publish assertion.** The flow's success/backfill path asserts tag AND Release both exist before reporting the publish complete (outcome-altitude: a deliberately tag-only state run through the flow ends with the Release existing).
+
+#### Source items
+
+- FIDRAFT `F-RELEASE-FLOW-PARTIAL-PUBLISH-NOT-REPAIRABLE` (2026-06-11, v1.5.0 incident — full empirical record)
+- v1.4.0 published Release notes carrying "(unavailable)" placeholders (same locator gap, pre-existing evidence)
+
+#### Estimated AI-time
+
+- Runner repair branch + locator glob + tests: 30-60 min (single amendment cycle)
+
+#### Dependencies
+
+- None (v1.5.0 SHIPPED; touches `framework/tools/loam/src/loam_cli/release/` only).
+
+---
+
 ## §5 Backlog reference
 
 The `maybe-someday` list. Items here are not committed to any version; they activate when their named trigger fires (or stay deferred indefinitely).

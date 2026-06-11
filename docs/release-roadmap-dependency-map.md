@@ -24,7 +24,6 @@ The current §4 priority queue with type classification. Edges from forward-look
 
 | Edge | Stated dep | Type | Evidence / notes |
 |---|---|---|---|
-| **`binary-usage-observation-harness`** ← v0.4.0 | code-gen wired; ProgramBench docs-only baseline | **HARD** | Binary-usage observation harness produces evidence rows that feed the code-gen pipeline shipped in v0.4.0. The candidate's AC family (binary-feeder mode for odd-extractor) literally extends the v0.4.0 evidence-row contract. |
 | **`principle-foundation-structural-enforcement`** ← v0.7.0 | UX surface stable enough to add structural enforcement on top | **SOFT** | This candidate is META-FRAMEWORK class — structural-enforcement substrate. The substrate work (hook surface widening, principle-foundation files) is orthogonal to END-USER UX. The dep reflects "we'd rather not change the substrate while UX is unstable" — sequencing preference, not technical prereq. |
 | **`negative-alignment-detection`** ← `principle-foundation-structural-enforcement` | structural enforcement substrate provides hook surface | **HARD** | Negative-alignment detection consumes the principle-foundation hook surface (the structural checks fire on the same hook events). HARD when principle-foundation has shipped first; if dep order inverts (negative-alignment ships first), the alignment detection ships with a placeholder hook layer + retrofits later — SOFT under that ordering. |
 | **`deep-personalization`** ← v0.8.0 + memory FBE.7 production volume | memory FBE.7 stable + production usage long enough for interaction volume | **MIXED** | Deep-personalization features can be CODED without v0.8.0 in production; only the calibration/empirical-tuning work needs production volume. Code-side SOFT; data-side HARD. v0.8.0 honesty cleanup MINOR shipped (the dep is on the established cleanup baseline + per-component-version discipline; the original v0.8.0 negative-alignment shape never landed and is now folded into the `negative-alignment-detection` candidate). |
@@ -36,7 +35,6 @@ The current §4 priority queue with type classification. Edges from forward-look
 The HARD-only constraint chain in the current §4 queue:
 
 ```
-v0.4.0 [shipped] → binary-usage-observation-harness (HARD)
 v0.7.0 [shipped] → principle-foundation-structural-enforcement (SOFT)
                           ↓
                     negative-alignment-detection (HARD)
@@ -53,9 +51,8 @@ The SOFT-classified work that can run in parallel:
 
 | Stream | Fence | Parallelizable with | Stage |
 |---|---|---|---|
-| `binary-usage-observation-harness` | new component `framework/binary-observation-harness/` + adapter in `framework/scope-of-work/` | `principle-foundation` substrate (no fence overlap) | build |
-| `principle-foundation-structural-enforcement` | hook surface widening (`framework/orchestrator/`, `framework/safety-layer/`) + principle-foundation docs | `binary-usage-observation-harness` | build |
-| `negative-alignment-detection` (CODE only; calibration deferred) | new detection primitive + `framework/odd-extractor/` extension | `binary-usage-observation-harness` | build |
+| `principle-foundation-structural-enforcement` | hook surface widening (`framework/orchestrator/`, `framework/safety-layer/`) + principle-foundation docs | other queue candidates (no fence overlap) | build |
+| `negative-alignment-detection` (CODE only; calibration deferred) | new detection primitive + `framework/odd-extractor/` extension | other queue candidates (no fence overlap) | build |
 | `plugin-suite-expansion` (per-plugin MINOR) | each plugin gets its own `plugins/<name>/` | other candidates (small fence per plugin) | build |
 | BallotPath workspace work | entirely separate workspace `/Users/lukeivers/ballotpath/` | everything in canonical | build |
 | Rebrand-residue sweep | cross-cutting in canonical | nothing else in canonical (race) | build |
@@ -77,7 +74,7 @@ Each candidate's stated SOFT dependencies enable soft-halt declarations like:
 
 > Soft-halted on v0.9.0 publish (HARD HALT class — public action). Continuing on `release-roadmap-priority-queue-restructure` build (fence-clear, parallel-safe per this map). Exit: owner ratifies v0.9.0 publish.
 
-> Soft-halted on `binary-usage-observation-harness` build (waiting for sandbox infrastructure decision). Continuing on `principle-foundation-structural-enforcement` plan-doc authoring (SOFT dep per this map; substrate fence orthogonal to binary-harness fence). Exit: sandbox decision lands.
+> Soft-halted on an owner-gated candidate build (waiting on the gating decision). Continuing on `principle-foundation-structural-enforcement` plan-doc authoring (SOFT dep per this map; orthogonal fence). Exit: the gating decision lands.
 
 The 4-element soft-halt template (item / dep graph / non-blocked work / exit condition) maps directly onto rows from this table.
 

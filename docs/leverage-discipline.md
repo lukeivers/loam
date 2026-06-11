@@ -91,8 +91,7 @@ products (Devin-class, Cursor-class, Replit Agent), and recent papers
 ### 2.2 Real-user feedback
 
 Eric-class signals (one specific user trying to do real work with
-loam), ProgramBench scores (loam's external benchmark target), GitHub
-issues / PRs once the OSS launch lands.
+loam), GitHub issues / PRs once the OSS launch lands.
 
 - **Capture:** every user interaction surfaces a structured note — what
   they tried to do, what loam did, where the translation failed.
@@ -117,11 +116,15 @@ mechanically but not in spirit.
 
 ### 2.4 Benchmark performance shifts
 
-ProgramBench is the primary external benchmark; internal
-fixture-driven tests are the secondary signal.
+No external benchmark is currently designated — the former primary
+external benchmark was retired 2026-06-11 (owner ruling; see the
+retirement plan in `docs/plans/`), and successor selection is an open
+owner-class decision. Internal fixture-driven tests are the current
+signal.
 
-- **Capture:** ProgramBench runs at every minor release-gate; per-minor
-  delta logged.
+- **Capture:** per-minor external-benchmark capture is SUSPENDED
+  pending successor designation; internal fixture-suite deltas are
+  logged per minor.
 - **Surface:** the release-roadmap entry for the next minor records
   the baseline; the retrospective records the delta.
 - **Acts on:** persona + Luke. A regression that crosses a named

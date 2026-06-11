@@ -107,7 +107,7 @@ def _seed_active_thread(root: Path) -> None:
     store.write_episode(
         name="turn/active",
         body=(
-            "ACTIVE: the v0.11.0 ODD-paper corrective and ProgramBench "
+            "ACTIVE: the v0.11.0 ODD-paper corrective and KilnBench "
             "v2 experiment. Owner ruling is pending on the corrective "
             "shape (pos3 task seventy-five)."
         ),
@@ -150,7 +150,7 @@ def test_AC_MSC_2_session_start_payload_carries_active_thread(
         "session-start payload must carry the active-thread marker"
     )
     # The live topic + pending-ruling facts are recoverable.
-    assert "v0.11.0" in text or "ProgramBench" in text, (
+    assert "v0.11.0" in text or "KilnBench" in text, (
         "the active-thread digest must name the live topic"
     )
     assert "pending" in text.lower(), (

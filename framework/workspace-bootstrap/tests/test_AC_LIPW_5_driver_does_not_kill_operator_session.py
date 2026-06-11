@@ -75,7 +75,7 @@ def _isolation(tmp_path: Path) -> IsolationConfig:
     return IsolationConfig(
         claude_config_dir=tmp_path / ".claude-home",
         empty_mcp_config_path=tmp_path / "empty.mcp.json",
-        workspace_slug="pb-subloam-task-1234",
+        workspace_slug="iso-subloam-task-1234",
     )
 
 
@@ -139,7 +139,7 @@ def test_AC_LIPW_5_air_gapped_opt_in_relocates_config(
     iso = IsolationConfig(
         claude_config_dir=tmp_path / ".claude-home",
         empty_mcp_config_path=tmp_path / "empty.mcp.json",
-        workspace_slug="pb-airgap",
+        workspace_slug="iso-airgap",
         air_gapped_config=True,
     )
     env = build_isolated_env(iso, base_env={"PATH": "/usr/bin"})
@@ -169,7 +169,7 @@ def test_AC_LIPW_5_namespaced_slug_cannot_bootout_operator(
     `com.loam.<unique-slug>.<kind>` and cannot bootout the operator's
     namespaced services. The driver also never service_bootstraps."""
     iso = _isolation(tmp_path)
-    assert iso.workspace_slug == "pb-subloam-task-1234"
+    assert iso.workspace_slug == "iso-subloam-task-1234"
     seen: dict = {}
 
     def fake_bootstrap(**kwargs):

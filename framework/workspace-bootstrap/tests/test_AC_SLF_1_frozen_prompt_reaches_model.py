@@ -17,8 +17,8 @@ regardless of how many bracketed-paste fragments it is split into.
 
 Plan: docs/plans/subloam-driver-fix.md  (§3 AC.SLF.1)
 
-Root cause (verified, programbench-step0-rootcause-and-contamination
--2026-05-15.md §A): the OLD submission path wrote the multi-KB frozen
+Root cause (verified 2026-05-15 in the retired benchmark harness's
+step-0 root-cause report §A, archived on the pos3 side): the OLD submission path wrote the multi-KB frozen
 prompt in one os.write, slept a FIXED 0.5 s, then sent ``\\n``
 unconditionally. The real TUI fragments a large write into multiple
 bracketed-paste segments (ESC[200~ … ESC[201~); a ``\\n`` that arrives

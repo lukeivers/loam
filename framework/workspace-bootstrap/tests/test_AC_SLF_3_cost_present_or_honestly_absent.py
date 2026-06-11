@@ -16,8 +16,9 @@
 
 Plan: docs/plans/subloam-driver-fix.md  (§3 AC.SLF.3, decision D-COST)
 
-The interactive driver emits NO machine result envelope (verified,
-programbench-step0-driver-smoke-2026-05-15.md §3 — no result JSON, no
+The interactive driver emits NO machine result envelope (verified
+2026-05-15, retired-benchmark-harness step-0 driver smoke §3,
+archived on the pos3 side — no result JSON, no
 usage fields, no /cost output for a subscription session). D-COST
 therefore resolves AC.SLF.3 to **present-or-honestly-absent**, NOT
 "a cost number always exists". The capture method (chosen here): the

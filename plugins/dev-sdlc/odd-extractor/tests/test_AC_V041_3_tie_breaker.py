@@ -7,8 +7,9 @@ equal confidence, the tie-breaker uses **load-bearing signals**
 (orphan cluster size + objective text length) BEFORE falling back
 to lex alphabetical.
 
-The empirical motivation is the v0.4.0 C4 ProgramBench Task 2
-failure (`docs/experiments/programbench-v0-docs-only.md` §3.4):
+The empirical motivation was the v0.4.0 C4 Task 2 failure in the
+since-retired benchmark experiment (RETIRED 2026-06-11; record:
+`docs/experiments/programbench-v0-docs-only.md` §3.4):
 ``error-handling`` and ``formatting`` candidates tied on every
 v0.4.0 hierarchy dimension; alphabetical selected the
 less-load-bearing ``error-handling``.

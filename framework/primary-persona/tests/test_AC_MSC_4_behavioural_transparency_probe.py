@@ -51,7 +51,7 @@ from loam.primary_persona.session_start_emitter import (
 
 # The known active thread + its pending owner ruling. These are the
 # facts that must survive a session restart.
-_ACTIVE_TOPIC = "v0.11.0 ODD-paper corrective and ProgramBench v2"
+_ACTIVE_TOPIC = "v0.11.0 ODD-paper corrective and KilnBench v2"
 _PENDING_MARKER = "owner ruling pending"
 
 
@@ -140,7 +140,7 @@ def test_AC_MSC_4_cold_session_start_recovers_active_thread(
     assert post_restart, "cold session-start produced empty context"
 
     # The active-thread topic is recoverable.
-    assert "ProgramBench" in post_restart or "v0.11.0" in post_restart, (
+    assert "KilnBench" in post_restart or "v0.11.0" in post_restart, (
         "post-restart session context must name the active thread; "
         f"head={post_restart[:200]!r}"
     )
@@ -165,7 +165,7 @@ def test_AC_MSC_4_before_and_after_restart_carry_same_facts(
     def _has_facts(text: str) -> bool:
         t = text.lower()
         return (
-            ("programbench" in t or "v0.11.0" in t)
+            ("kilnbench" in t or "v0.11.0" in t)
             and "pending" in t
         )
 
@@ -186,7 +186,7 @@ def test_AC_MSC_4_cli_cold_start_emits_recoverable_context(
     assert rc == 0
     out = capsys.readouterr().out
     assert out, "cli_session_start produced no stdout"
-    assert "ProgramBench" in out or "v0.11.0" in out, (
+    assert "KilnBench" in out or "v0.11.0" in out, (
         "the cold-start CLI payload must name the active thread"
     )
     assert "pending" in out.lower(), (
@@ -207,7 +207,7 @@ def test_AC_MSC_4_no_session_end_state_required(tmp_path: Path) -> None:
     assert not (pos / "memory-writes.log").exists()
     text = emit_session_start_context(tmp_path)
     assert "pending" in text.lower() and (
-        "ProgramBench" in text or "v0.11.0" in text
+        "KilnBench" in text or "v0.11.0" in text
     ), (
         "active thread must be recoverable with zero session-end "
         "state — capture is continuous/passive, not session-end-gated"

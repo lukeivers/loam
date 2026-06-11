@@ -16,8 +16,8 @@
 
 Plan: docs/plans/subloam-driver-fix.md  (§3 AC.SLF.2)
 
-Root cause (verified, programbench-step0-rootcause-and-contamination
--2026-05-15.md §B): the OLD ``_count_effective_turns`` counted three
+Root cause (verified 2026-05-15 in the retired benchmark harness's
+step-0 root-cause report §B, archived on the pos3 side): the OLD ``_count_effective_turns`` counted three
 TUI-chrome needles (``❯`` / ``─ primary ─`` / ``/effort``) alongside
 genuine markers and floored at 1, so ``is_multi_turn`` floated True on
 a transcript with ZERO model action — a TUI boot alone satisfied it.

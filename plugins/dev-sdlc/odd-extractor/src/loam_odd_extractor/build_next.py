@@ -563,8 +563,10 @@ def _load_bearing_signal(
     objective-text-length (discriminates category-a ties), then the
     existing alphabetical fallback (still last).
 
-    The empirical motivation is the v0.4.0 C4 ProgramBench Task 2
-    failure: ``error-handling`` vs ``formatting`` candidates tied
+    The empirical motivation was the v0.4.0 C4 Task 2 failure in the
+    since-retired benchmark experiment (RETIRED 2026-06-11; record:
+    ``docs/experiments/programbench-v0-docs-only.md``):
+    ``error-handling`` vs ``formatting`` candidates tied
     on composite_score AND category AND confidence; alphabetical
     selected the less-load-bearing ``error-handling``. With the
     objective-text-length signal, ``formatting`` (the longer, more

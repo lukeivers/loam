@@ -56,7 +56,7 @@ def _isolation(tmp_path: Path) -> IsolationConfig:
     return IsolationConfig(
         claude_config_dir=tmp_path / ".claude-home",
         empty_mcp_config_path=tmp_path / "empty.mcp.json",
-        workspace_slug="pb-subloam-one",
+        workspace_slug="iso-subloam-one",
     )
 
 

@@ -76,9 +76,9 @@ def test_AC_MSC_1_newer_active_thread_in_top_n(tmp_path: Path) -> None:
         store,
         name="turn/old-strong",
         body=(
-            "programbench programbench programbench programbench "
-            "programbench programbench an old answer about "
-            "programbench tuning from weeks ago programbench"
+            "kilnbench kilnbench kilnbench kilnbench "
+            "kilnbench kilnbench an old answer about "
+            "kilnbench tuning from weeks ago kilnbench"
         ),
         when=now - timedelta(days=40),
     )
@@ -89,13 +89,13 @@ def test_AC_MSC_1_newer_active_thread_in_top_n(tmp_path: Path) -> None:
         name="turn/new-active",
         body=(
             "today's active thread: the v0.11.0 corrective and the "
-            "programbench v2 experiment owner ruling is pending"
+            "kilnbench v2 experiment owner ruling is pending"
         ),
         when=now - timedelta(hours=2),
     )
 
     result = store.search(
-        query="programbench v2 active thread",
+        query="kilnbench v2 active thread",
         group_ids=["ws"],
         num_results=2,
     )

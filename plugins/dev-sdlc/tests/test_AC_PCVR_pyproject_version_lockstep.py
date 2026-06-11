@@ -23,10 +23,9 @@ Per ``docs/plans/per-component-pyproject-version-lockstep-regression-closure.md`
   against a deliberately-drifted fixture pyproject in ``tmp_path``, assert the
   helper raises with the corrective-message shape, revert, assert it passes.
 
-The in-scope allowlist EXCLUDES four measurement / experimental harness
+The in-scope allowlist EXCLUDES two measurement / experimental harness
 pyprojects with deliberate ``version = "0.0.0"`` semantics (handsoff-loop,
-loam-spawn-isolation, programbench-revival, programbench-revival/realpb) per
-plan-doc §16 finding #1 ruling. The exclusion is documented in
+loam-spawn-isolation) per plan-doc §16 finding #1 ruling. The exclusion is documented in
 ``docs/release-versioning-policy.md`` ("Per-component pyproject version
 anchor" section).
 
@@ -110,8 +109,6 @@ IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
 EXCLUDED_PYPROJECTS: tuple[str, ...] = (
     "framework/tools/handsoff-loop/pyproject.toml",
     "framework/tools/loam-spawn-isolation/pyproject.toml",
-    "framework/tools/programbench-revival/pyproject.toml",
-    "framework/tools/programbench-revival/realpb/pyproject.toml",
 )
 
 

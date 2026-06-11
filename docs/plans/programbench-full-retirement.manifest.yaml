@@ -19,7 +19,7 @@ plan: docs/plans/programbench-full-retirement.md
 plan_doc_ref: docs/plans/programbench-full-retirement.md
 
 ac_count: 6
-smoke_outcome: "Default framework test run GREEN post-retirement; the case-insensitive PB-stem sweep passes (every hit sealed/bannered or plan-§10-registered) and its mutation fixture proves RED on a stray live mention."
+smoke_outcome: "Default framework test run GREEN post-retirement; case-insensitive PB-stem sweep passes (every hit sealed/bannered or plan-registered); mutation fixture RED on a stray live mention."
 
 # Fence (plan §5): single anchor dev-sdlc + sweep universal admissions,
 # per the per-component-pyproject-lockstep ratified precedent (roadmap

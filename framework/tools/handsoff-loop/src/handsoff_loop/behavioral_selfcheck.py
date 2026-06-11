@@ -17,8 +17,8 @@ AC.BRC.4 / AC.BRC.6).
 
 The hands-off loop's terminal "done" was, from source
 (orchestrator.py:203-244 @ 48418ff), a SINGLE structural-presence
-verify — and the realpb in-loop ``check_command`` was literally
-``"true"`` (arms.py:200), so the loop's keep-going condition was
+verify — and a consumer harness's in-loop ``check_command`` was
+literally ``"true"``, so the loop's keep-going condition was
 satisfied by a no-op.  This module constructs the loop's OWN
 behavioural self-check: a self-constructed *functional* check, derived
 from the task's plain-language objective, that EXERCISES the produced
@@ -55,11 +55,11 @@ WHAT "BEHAVIOURAL" MEANS HERE (AC.BRC.1):
   (Lens 1 — compose the present Claude-native primitive, do not
   re-implement turn drive).
 
-GENERIC, NOT REALPB-SPECIFIC (AC.BRC.6): the same construct serves any
-task driven through the loop.  ``reject_no_op`` makes a ``"true"`` /
+GENERIC, NOT CONSUMER-SPECIFIC (AC.BRC.6): the same construct serves
+any task driven through the loop.  ``reject_no_op`` makes a ``"true"`` /
 no-op / structural-only ``check_command`` a hard error at the seam, so
-the realpb ``"true"`` literal is replaced by routing the in-loop check
-through THIS generic construct — not a realpb-specific hack and not
+the consumer's ``"true"`` literal is replaced by routing the in-loop
+check through THIS generic construct — not a consumer-specific hack and not
 another no-op.
 
 NO Anthropic API key, NO spawn here: this module only BUILDS a command
@@ -98,7 +98,7 @@ class NotABehavioralCheck(ValueError):
 def reject_no_op(check_command: str) -> str:
     """Refuse a no-op / structural-only in-loop ``check_command``.
 
-    AC.BRC.6 — the realpb ``"true"`` literal (arms.py:200) and any
+    AC.BRC.6 — a consumer harness's literal ``"true"`` and any
     other no-op / structural-presence-only command are NOT a
     behavioural self-check.  Returns the command unchanged when it is
     not a recognised no-op; raises ``NotABehavioralCheck`` otherwise.

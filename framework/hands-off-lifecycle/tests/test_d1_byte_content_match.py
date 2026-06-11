@@ -196,71 +196,26 @@ _SAMPLE_FILES = (
      # retire-and-rebaseline per the established pattern; F2-surfaced
      # in the cycle report.
      "ce4dd0b33ea836dfd8699556db0c77e38a775a259e2a1cf62810769078cfbf44"),
-    ("framework/primary-persona/pyproject.toml",
-     # M1e SHA bump: Phase B pyproject restructure
-     # (project name `primary_persona` → `loam-primary-persona`,
-     # package-dir entry, dependencies list rewrite).
-     # FBE.5 SHA bump (description scrub) + FBE.8 SHA bump
-     # (mcp pin annotation comment scrub — drops dev-vocabulary
-     # leakage per HIGH-FBE6.1; pin-rationale prose preserved).
-     # ODD §4 in-band retire-and-rebaseline per
-     # `feedback_loose_AC_text_fix_AC_not_implementation`.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — pyproject's post-FBE.8 state
-     # diverged from the snapshot in a later amendment that did not
-     # rebaseline. Discovery-driven rebaseline.
-     # Wave 1.4 security-hooks-bundle (2026-05-24, amendment #152)
-     # rebaseline: pre-existing drift surfaced by the touched-component
-     # full-sweep — `7b774b1` (per-component-pyproject-version-
-     # lockstep regression closure PATCH) edited this pyproject.toml
-     # without rebaselining the byte-content sample. Discovery-driven
-     # rebaseline; OUT-OF-CYCLE-FENCE but in-band retire-and-rebaseline
-     # per the established pattern in this file. F2 ruthlessly surfaced
-     # in the dispatcher report.
-     # v0.13.0 MINOR publish (2026-05-24) rebaseline: per-component
-     # pyproject version lockstep bumped 0.12.0 -> 0.13.0 in the
-     # release-staging worktree, invalidating this SHA. SECOND
-     # consecutive recurrence of the SAME drift pattern (Wave 1.4 = 1st,
-     # v0.13.0 = 2nd) — per `feedback_workaround_masks_rootcause_urgency`,
-     # the root-cause fix (stop pinning pyproject.toml byte content
-     # because pyprojects MUST mutate every MINOR by design) is
-     # scheduled + surfaced as a FIDRAFT entry by the v0.13.0 release
-     # integrator; this entry is the in-cycle workaround landing.
-     # v0.14.0 MINOR publish (2026-05-29) rebaseline: per-component
-     # pyproject version lockstep bumped 0.13.0 -> 0.14.0 in the
-     # release/v0-14-0 worktree, invalidating this SHA. THIRD
-     # consecutive recurrence of the SAME drift pattern (Wave 1.4 = 1st,
-     # v0.13.0 = 2nd, v0.14.0 = 3rd). The root-cause structural fix
-     # (exclude pyproject.toml from the byte-content sample — they MUST
-     # mutate every MINOR by design, so pinning their bytes enforces an
-     # invariant that contradicts the per-component-version lockstep
-     # discipline) is now OWED + surfaced as a hard F2 finding to the
-     # dispatcher; this entry is the in-cycle workaround landing pending
-     # that dispatched fix.
-     # v1.0.0 release cut (2026-06-01) rebaseline: same shape — per-
-     # component version lockstep bumped 0.14.0 -> 1.0.0 (the owner-
-     # declared major). FOURTH consecutive recurrence of the SAME drift
-     # pattern; the root-cause structural fix (exclude pyproject.toml
-     # from the byte-content sample) remains OWED + re-surfaced as a
-     # hard F2 finding at the 1.0 cut.
-     # FBM correctness cycle (2026-06-09) rebaseline: FIFTH consecutive
-     # recurrence — post-v1.0.0 lockstep bumps (current published
-     # v1.3.0) invalidated this SHA again; pre-existing on the cycle's
-     # plan commit 7f647161, NOT caused by this cycle (it does not
-     # touch any pyproject). The owed root-cause fix (exclude
-     # pyproject.toml from the byte-content sample) is OUTSIDE this
-     # cycle's three-component fence; re-surfaced as a hard F2 finding
-     # in the cycle report. In-band retire-and-rebaseline per the
-     # established pattern.
-     # v1.4.0 MINOR publish (2026-06-10) rebaseline: per-component
-     # version lockstep bumped 1.3.0 -> 1.4.0 (release commit), the
-     # SAME mechanical drift shape as every prior MINOR. SIXTH
-     # consecutive recurrence; the owed root-cause fix (exclude
-     # pyproject.toml from the byte-content sample — pyprojects MUST
-     # mutate every MINOR by design) remains scheduled. In-band
-     # retire-and-rebaseline per the established pattern; F2-surfaced
-     # in the v1.4.0 release report.
-     "d9ce92dae3271557e98bcbf9b8107012ea6ccea590eaeb7af2cf358380084986"),
+    # Replacement samples (2026-06-11, with the pyproject root-cause
+    # fix above): one stable module body per affected component keeps
+    # the AC.D.1.5 floor (>=5 per component x 3 components). SHAs
+    # captured from the tree at capture time (module bodies stable
+    # since the M8 license-governance pass).
+    ("framework/primary-persona/src/loam/primary_persona/contract.py",
+     "1a8cbbe0c38f848e2ca8a7c3eff6646ea90e975192d4771b79b2faffafc6abe5"),
+    ("framework/scope-of-work/src/loam/scope_of_work/store.py",
+     "d1160de54e903dcde05b02b24be642be60c933e4b488a79247b441f04babc84f"),
+    # ROOT-CAUSE FIX (2026-06-11, benchmark-retirement cycle, laddered
+    # to its AC.PBRET.2 default-run-green bar): pyproject.toml
+    # entries REMOVED from the byte-content sample. Pyprojects MUST
+    # mutate every MINOR by design (per-component version lockstep),
+    # so pinning their bytes enforced an invariant contradicting the
+    # lockstep discipline — SEVEN consecutive rebaseline recurrences
+    # (Wave 1.4 -> v1.5.0). The owed structural fix named in this
+    # file since v0.13.0 is hereby executed: byte-content sampling
+    # keeps module bodies only; pyproject version-lockstep is
+    # enforced by its own dedicated test (AC.PCVR.3,
+    # plugins/dev-sdlc/tests/test_AC_PCVR_pyproject_version_lockstep.py).
     # workspace-bootstrap — high-fan-in component.
     ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
      # M1e SHA bump: Phase D entry-point group rebrand in docstring
@@ -325,50 +280,6 @@ _SAMPLE_FILES = (
      # Amendment #144 §16 finding rebaseline: pre-existing drift
      # (NOT caused by amendment #144) — discovery-driven rebaseline.
      "98d9d8f21b754c6ba99cce90426ac2a0d6c37d76d19de6ed56f8b5575f781ed0"),
-    ("framework/scope-of-work/pyproject.toml",
-     # M1e SHA bump: Phase B pyproject restructure
-     # (project name `scope_of_work` → `loam-scope-of-work`).
-     # FBE.5 SHA bump (description scrub at `8032348`) — landed in
-     # FBE.5's source delta but the byte-content sample was not
-     # retired-and-rebaselined at FBE.5 seal; FBE.8 closes the gap.
-     # ODD §4 in-band retire-and-rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — discovery-driven rebaseline.
-     # Wave 1.4 security-hooks-bundle (2026-05-24, amendment #152)
-     # rebaseline: same shape as the primary-persona/pyproject.toml
-     # rebaseline above. `7b774b1` edited this pyproject without
-     # rebaselining. Discovery-driven retire-and-rebaseline; F2
-     # surfaced in the dispatcher report.
-     # v0.13.0 MINOR publish (2026-05-24) rebaseline: same shape as
-     # the primary-persona/pyproject.toml rebaseline above (per-component
-     # version lockstep bumped 0.12.0 -> 0.13.0). SECOND consecutive
-     # recurrence of the SAME drift pattern; root-cause-fix FIDRAFT
-     # entry scheduled by the v0.13.0 release integrator per
-     # `feedback_workaround_masks_rootcause_urgency`.
-     # v0.14.0 MINOR publish (2026-05-29) rebaseline: same shape
-     # (per-component version lockstep bumped 0.13.0 -> 0.14.0). THIRD
-     # consecutive recurrence; root-cause structural fix now OWED +
-     # surfaced as a hard F2 finding to the dispatcher (exclude
-     # pyproject.toml from the byte-content sample).
-     # v1.0.0 release cut (2026-06-01) rebaseline: same shape (per-
-     # component version lockstep bumped 0.14.0 -> 1.0.0, the owner-
-     # declared major). FOURTH consecutive recurrence; root-cause
-     # structural fix still OWED + re-surfaced as a hard F2 finding
-     # at the 1.0 cut.
-     # FBM correctness cycle (2026-06-09) rebaseline: FIFTH consecutive
-     # recurrence — post-v1.0.0 lockstep bumps (current published
-     # v1.3.0) invalidated this SHA; pre-existing on the cycle's plan
-     # commit 7f647161, NOT caused by this cycle. Root-cause fix
-     # (exclude pyproject.toml from the sample) is outside this
-     # cycle's fence; re-surfaced as a hard F2 finding in the cycle
-     # report. In-band retire-and-rebaseline per the established
-     # pattern.
-     # v1.4.0 MINOR publish (2026-06-10) rebaseline: same shape as the
-     # primary-persona/pyproject.toml rebaseline above (lockstep bump
-     # 1.3.0 -> 1.4.0). SIXTH consecutive recurrence; root-cause fix
-     # still owed. In-band retire-and-rebaseline; F2-surfaced in the
-     # v1.4.0 release report.
-     "16ca5923f00fa25d39058086d8e662164935b98dccb0c5a72b540bf56d3fc7c2"),
 )
 
 

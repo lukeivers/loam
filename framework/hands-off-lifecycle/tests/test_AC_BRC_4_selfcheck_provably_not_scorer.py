@@ -17,8 +17,8 @@ constructed check, PROVABLY NOT the graded scorer / independent judge
 / intake judge.
 
 Outcome under test (not method): the behavioural-self-check construct
-is provably distinct from (a) the graded benchmark scorer (the real
-upstream `programbench eval`), (b) the independent held-out
+is provably distinct from (a) any graded external benchmark scorer,
+(b) the independent held-out
 adversarial judge, (c) the loop's own intake faithfulness judge
 (`intake._judge_faithful`); and the frozen-graded `assert_unseen_by`
 freeze-isolation spine is preserved on the behaviouralised briefs.
@@ -45,15 +45,13 @@ MODULE = (
 )
 
 # Substrings that would indicate the self-check imported the EXTERNAL
-# scoring authority / a judge — the AC.RPB.1-class freeze isolation
-# would be destroyed.
+# scoring authority / a judge — the freeze isolation would be
+# destroyed.
 _FORBIDDEN_IMPORT_TOKENS = (
     "verify",            # the frozen graded independent authority
     "scorer",            # the benchmark scorer
     "judge",             # the independent held-out / intake judge
     "intake",            # intake._judge_faithful
-    "structural_floor",  # the realpb floor (the external floor)
-    "programbench",      # the real upstream eval
     "reharden",          # the independent re-harden judge runner
 )
 
@@ -111,8 +109,7 @@ def test_AC_BRC_4_construct_does_not_consume_frozen_acceptance(
     )
     # The command never names the frozen graded check / held-out path.
     cmd = spec.command()
-    for bad in ("held_out", "structural_floor", "programbench",
-                "frozen"):
+    for bad in ("held_out", "frozen"):
         assert bad not in cmd
 
 

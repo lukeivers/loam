@@ -48,7 +48,7 @@ own — routed through the loop's sealed isolation surface
 (goal_drive.build_goal_drive_argv -> _isolation.inject_isolation /
 isolated_env()); this runner adds NO new spawn machinery.  The seal
 sweep COLLECTS but SKIPS the end-test behind HANDSOFF_RUN_BRC=1 (the
-AC.RPB.7 / GR.5 / AC.B.5 precedent — the captured verdict artefact is
+GR.5 / AC.B.5 precedent — the captured verdict artefact is
 the durable fact; re-spawning real `claude` to flip a test assertion
 would itself be the retry-to-green the plan forbids).
 """

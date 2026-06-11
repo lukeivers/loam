@@ -349,8 +349,8 @@ def _behavioralize(
 
     with the loop's OWN behavioural self-check (AC.BRC.1 / AC.BRC.6).
 
-    The structural-presence / ``"true"`` (arms.py:200) signal is
-    replaced by the generic construct — NOT a realpb-specific hack and
+    The structural-presence / literal-``"true"`` signal is
+    replaced by the generic construct — NOT a consumer-specific hack and
     NOT another no-op.  The construct imports no scorer/judge
     (AC.BRC.4 — provable by the import test); the frozen graded
     acceptance is never consumed here.

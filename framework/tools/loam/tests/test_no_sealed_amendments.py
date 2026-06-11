@@ -46,7 +46,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 # behind this slice's apply; advancing to the immediate pre-build tip bounds
 # the diff window to THIS slice's loam-cli changes (the standard "advance
 # sidecar + BASELINE" seal pattern).
-BASELINE = "7f647161c47f0082c53f33de7db8ce6997b500d2"
+BASELINE = "f76164a4"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

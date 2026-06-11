@@ -1,0 +1,82 @@
+schema_version: 3
+amendment:
+  # Slug-identified (schema v3); no number pre-allocated
+  # (feedback_version_numbers_at_release_time). Class: PATCH/MIXED (DEV)
+  # — one code amendment cycle + a docs pass (roadmap §4 Candidate 1).
+  # BUILD GATE: D-PBRET.1 (HARP verdict, plan §10) is owner-gated; the
+  # build executes every other leg and holds the HARP leg until the
+  # ruling is recorded (plan §6 trigger 6).
+  slug: programbench-full-retirement
+  title: "ProgramBench full retirement — no live loam artefact treats ProgramBench as current or future work: the programbench-revival tool tree (40 tracked files incl. both pyprojects + committed run-evidence, DELETE ruled) and the 20 PB-purpose tests are deleted; BRC_6 is trimmed to its two generic survivors and PCVR/LIPW_4 surgically PB-freed with the default framework test run GREEN; live docs/queue/policy (roadmap, dependency map, FIDRAFT, leverage-discipline, versioning policy) carry no PB-as-pending-work; sealed history is banner-marked RETIRED and never rewritten; incidental mentions are removed per the widened owner ruling with every kept mention justified in the plan §10 register; a permanent case-insensitive sweep test enforces closure structurally. HARP (harness-benchmark-build.md) disposition per owner-ratified verdict (plan recommendation: KILL, five Tier-0 evidence legs). Owner rulings Discord 1514747695972094165 + 1514752072900284416. LOCAL only."
+
+# BASELINE: 95068b35 — canonical main tip at plan-authoring. Builder
+# re-walks to the canonical-clean pre-this-amendment HEAD at apply time
+# if main moved.
+baseline: "95068b35"
+
+plan: docs/plans/programbench-full-retirement.md
+plan_doc_ref: docs/plans/programbench-full-retirement.md
+
+ac_count: 6
+smoke_outcome: "Default framework test run GREEN post-retirement; the production-entry-point sweep (case-insensitive programbench/realpb stems over the tracked tree) passes with every hit inside sealed/bannered history or the plan §10 justified-keep register, and its mutation fixture proves it fails on an injected stray live mention."
+
+# Fence (plan §5): single anchor dev-sdlc + sweep universal admissions,
+# per the per-component-pyproject-lockstep ratified precedent (roadmap
+# §2 — many-component sweep shape). Touched component surfaces
+# (hands-off-lifecycle, workspace-bootstrap, primary-persona,
+# handsoff-loop, odd-extractor) are test/comment/fixture-only and ride
+# the framework//plugins/ universal prefixes; programbench-revival has
+# no seal sidecar of its own. Sealed-history content changes beyond
+# banners are a fence breach -> halt (plan §6.2).
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - framework/
+    - plugins/
+    - docs/plans/
+    - docs/experiments/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/release-roadmap-dependency-map.md
+    - docs/release-versioning-policy.md
+    - docs/leverage-discipline.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/programbench-full-retirement.md
+  body: |
+    # programbench-full-retirement — apply ladder
+
+    Roadmap §4 Candidate 1. Plan:
+    `docs/plans/programbench-full-retirement.md`.
+
+    Executes the 2026-06-11 owner ruling (Discord
+    1514747695972094165): every ProgramBench artefact retired unless
+    truly cost-prohibitive, with the three follow-on calls RULED
+    (Discord 1514752072900284416) — HARP conditional-on-usefulness
+    (plan D-PBRET.1 verdict executed as owner-ratified), run-evidence
+    DELETED with the tool tree, bucket-D incidental mentions REMOVED
+    unless genuinely expensive with every keep justified in the plan
+    §10 register.
+
+    Shape: framework/tools/programbench-revival/ deleted whole; the
+    20 PB-purpose hands-off-lifecycle tests deleted; BRC_6 trimmed to
+    its two generic survivors (generic AC.BRC.* capability preserved
+    — three PB-coupled tests retired, an inventory miscount corrected
+    at plan §16.1); PCVR + LIPW_4 surgically PB-freed; live
+    docs/queue/policy edits; sealed history banner-marked RETIRED,
+    content otherwise byte-unchanged; a permanent case-insensitive
+    sweep test enforces closure structurally (AC.PBRET.5,
+    outcome-altitude with a mutation-detection fixture).
+
+    AC family AC.PBRET.1-6 (plan §4). Ladders to roadmap §4
+    Candidate 1 -> Lens 0 protection floor (a cancelled candidate
+    kept resurfacing as next-build because the cancellation was never
+    recorded into the artefacts agents read) -> AC.PO.2.

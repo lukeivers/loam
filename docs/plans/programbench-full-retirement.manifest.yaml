@@ -9,10 +9,11 @@ amendment:
   slug: programbench-full-retirement
   title: "ProgramBench full retirement — no live loam artefact treats ProgramBench as current or future work: the programbench-revival tool tree (40 tracked files incl. both pyprojects + committed run-evidence, DELETE ruled) and the 20 PB-purpose tests are deleted; BRC_6 is trimmed to its two generic survivors and PCVR/LIPW_4 surgically PB-freed with the default framework test run GREEN; live docs/queue/policy (roadmap, dependency map, FIDRAFT, leverage-discipline, versioning policy) carry no PB-as-pending-work; sealed history is banner-marked RETIRED and never rewritten; incidental mentions are removed per the widened owner ruling with every kept mention justified in the plan §10 register; a permanent case-insensitive sweep test enforces closure structurally. HARP (harness-benchmark-build.md) disposition per owner-ratified verdict (plan recommendation: KILL, five Tier-0 evidence legs). Owner rulings Discord 1514747695972094165 + 1514752072900284416. LOCAL only."
 
-# BASELINE: 95068b35 — canonical main tip at plan-authoring. Builder
-# re-walks to the canonical-clean pre-this-amendment HEAD at apply time
-# if main moved.
-baseline: "95068b35"
+# BASELINE: b739d0f8 — canonical-clean pre-this-amendment HEAD at build
+# time (re-pinned from plan-authoring tip 95068b35; the two intervening
+# commits are this plan pair a2d84086 + the FIDRAFT capture b739d0f8 that
+# resolved halt trigger 5). Plan §14 decision 1.
+baseline: "b739d0f8"
 
 plan: docs/plans/programbench-full-retirement.md
 plan_doc_ref: docs/plans/programbench-full-retirement.md

@@ -285,3 +285,36 @@ framework/egress-consent/src/loam/egress_consent/<gate-file>.py:<GateClass>`,
   protection-matrix new-component precedent.
 - `extra_allowed_prefixes` EMPTY; universal admissions = `docs/plans/` + `CLAUDE.md`.
 - Touched-component test suite GREEN; the AC tests above all pass.
+
+## §11 — §status: SEALED + SHIPPED (backfilled 2026-06-11, Tier-0 from the git ref graph)
+
+*This section was backfilled 2026-06-11 — the cycle sealed 2026-06-02 but the
+plan-doc was left without a closure record, which the plan-state tracker
+misread as "partially built." All SHAs below re-derived from the git ref
+graph at backfill time (`feedback_published_state_only_from_git_refs`), never
+from prose.*
+
+### Commit SHAs
+
+- Apply (manifest + new-component sidecar): `a41a74cd` (2026-06-02).
+- Code commit: `2304dea4` — Slice 1, the fail-closed never-leak core + the
+  bug-report consumer, all 13 AC test files.
+- Seal commit: `ffb99af2` (narrative at
+  `framework/egress-consent/seals/SEAL_COMMIT.egress-consent-core-and-bug-report`;
+  sidecar `framework/egress-consent/tests/SEAL_COMMIT` = `2304dea4`).
+- Release state (verified from git refs): the seal is an ancestor of tag
+  `v1.1.0` — the slice **SHIPPED PUBLIC in v1.1.0** (tagged 2026-06-03) and is
+  contained in every later tag through `v1.5.0`.
+
+### Verification at backfill (2026-06-11, HEAD)
+
+- Full fenced suite `framework/egress-consent/tests/` — **45 passed** at HEAD,
+  covering all slice-1 ACs (AC.EG-CORE.1–5, AC.EG-REVIEW.1–2, AC.BR.1–4) plus
+  both outcome-altitude ACs (★ AC.EG-S.1, ★ AC.BR-S.1) and the seal/secret
+  invariant tests.
+- §9 (FM.SILENT-EGRESS matrix binding) stayed DEFERRED in this slice as planned,
+  and was subsequently closed in its own separate protection-matrix fence:
+  `502f9254` (2026-06-02) re-binds the FM.SILENT-EGRESS row to the sealed
+  egress-consent gate — the recommended follow-on of §9, executed as a distinct
+  cycle exactly as this plan prescribed. It is recorded here for traceability
+  only; it is not part of this slice's fence.

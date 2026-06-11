@@ -18,7 +18,10 @@ plan: docs/plans/session-clear-safety-tracker-register-and-first-run-update-pari
 plan_doc_ref: docs/plans/session-clear-safety-tracker-register-and-first-run-update-parity.md
 
 ac_count: 14
-smoke_outcome: "An existing, already-initialized, never-seeded workspace run through the production update entry-point (no pre-arranged state) ends with its objective-tracker populated + the session-start digest priority-ordered for open loops (not recency); an owner-pending objective is representable + surfaced as an open loop awaiting the owner (never as done); a registered state-mutating setup step is discovered + idempotently replayed on update + a failing step surfaces non-silently. AC.SCS-R1.{1,2,3,4,S} + AC.SCS-R2.{1,2,3,S} + AC.SCS-G.{1,2,3,4,S} green against real test output."
+# Compressed to the 200-char production cap by the
+# manifest-data-conformance-backfill cycle; the full 575-char original is
+# recoverable at 5e086286 (facts unchanged, expression compressed).
+smoke_outcome: "Existing never-seeded workspace via the production update path: tracker backfilled; digest priority-ordered; owner-pending surfaced as open, never done; setup steps replayed idempotently."
 
 # Union component fence (D-SCS.1/D-SCS.3 ratify per sub-amendment at build).
 # Sub-amendment 1 (R2): seal anchor framework/objective-tracker/ — the

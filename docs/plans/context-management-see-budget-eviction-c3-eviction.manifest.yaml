@@ -1,14 +1,16 @@
-schema_version: 1
+schema_version: 3
 amendment:
-  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
-  # Lands after Cycle 2 (c2-budget) seals. Do NOT pre-bake.
-  number: null
+  # Slug-identified (schema v3); no number pre-allocated per
+  # feedback_version_numbers_at_release_time. Lands after Cycle 2 (c2-budget)
+  # seals. Do NOT pre-bake.
   slug: context-management-see-budget-eviction-c3-eviction
   title: "Context-management Cycle 3 — eviction discipline: a discoverable `context-hygiene` SKILL encoding the three runtime-legal doors (input-discipline / fork-by-default / externalize-early) that together produce the EFFECT of evicting content that was never resident — the achievable substitute for the runtime-forbidden `strike out message X` on the subscription path. Gates the highest-leverage fork lever on an empirical probe (AC.CTXEVICT.S) verifying the research §7 UNVERIFIED claim that fork tool-call tokens do NOT leak into the caller's `context_window` reading. Single-component fence on `plugins/loam-skills/`. Composes with `loam-spawn-isolation` + `precompact-hook` + Cycle 2's >60% trigger. Minor's last cycle → HARD-smoke ride-along."
 
-# baseline: walked at apply-time from the canonical-clean pre-this-amendment HEAD
-# (Cycle 2's seal + §14 backfill commit is the predecessor). Do NOT pre-bake.
-baseline: null
+# baseline: PROVISIONAL — pinned to 2662245c (the v1.5.0 release-prep commit
+# that authored this stub: its provenance pin). Re-walked at apply time from
+# the canonical-clean pre-this-amendment HEAD (Cycle 2's seal + §14 backfill
+# commit is the predecessor), per the established pattern.
+baseline: "2662245c"
 
 plan: docs/plans/context-management-see-budget-eviction-c3-eviction.md
 

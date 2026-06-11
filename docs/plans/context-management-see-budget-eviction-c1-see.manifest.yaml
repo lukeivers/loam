@@ -1,18 +1,25 @@
-schema_version: 1
+schema_version: 3
 amendment:
-  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
-  # Global counter sits at ~#183 as of 2026-06-05; the apply-time number is the
-  # next available post-WD-discipline-framework-source-guard. Do NOT pre-bake.
-  number: null
+  # slug-identified (schema v3); number NOT pre-allocated at plan/build time
+  # (feedback_version_numbers_at_release_time). The v1 draft of this manifest
+  # carried `number: null`, which schema v1 rejects — schema v3 is the shape
+  # that actually expresses apply-time numbering, so this cycle ships on v3
+  # (same as the egress-consent + insession-subagent new-component seals).
   slug: context-management-see-budget-eviction-c1-see
   title: "Context-management Cycle 1 — SEE layer: a stdlib-only statusline script that parses Claude Code's stdin `context_window` JSON every turn and writes the live occupancy reading to `<workspace>/.loam/context-meter.json`, plus a `read()` production entry-point returning the live reading or a fail-open `unavailable` sentinel. New `framework/context-management/` component (mirrors `usage-window-guard`'s live-read + fail-open + outcome-altitude shape). The sensor loam is missing today (grep: zero `context_window` hits in framework/plugins). Subscription-compatible, zero API cost. Independently shippable."
 
-# baseline: walked at apply-time per the #142 D-PASH.BASELINE-WALK pattern from
-# the canonical-clean pre-this-amendment HEAD. Pin the immediate-prior commit so
-# the BASELINE..HEAD diff is narrow to this cycle's surface.
-baseline: null
+# BASELINE: fa422412 — canonical loam main tip at plan-authoring / source-edit
+# time (`docs(claude-md): add genericized operating-discipline doctrine`). This
+# NEW component's first seal fences the BASELINE..<seal> diff against it; the
+# seal-test sidecar pins the same SHA.
+baseline: "fa422412"
 
 plan: docs/plans/context-management-see-budget-eviction-c1-see.md
+plan_doc_ref: docs/plans/context-management-see-budget-eviction-c1-see.md
+
+ac_count: 4
+
+smoke_outcome: "cold 85%+ envelope, no pre-staged state: real statusLine entry writes .loam/context-meter.json whose occupancy equals the measured %; absent context_window gives unavailable sentinel + exit 0"
 
 seal_description: |
   Context-management Cycle 1 — SEE layer (the context-occupancy sensor).
@@ -58,6 +65,7 @@ seal_description: |
 
 components:
   - name: context-management
+    new_component: true            # first-seal; no pre-existing sidecar to advance
     seal_test: framework/context-management/tests/test_no_sealed_amendments.py
     sidecar: framework/context-management/tests/SEAL_COMMIT
     frozen_baseline: false

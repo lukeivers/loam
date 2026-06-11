@@ -1,14 +1,16 @@
-schema_version: 1
+schema_version: 3
 amendment:
-  # number: assigned at apply-time per feedback_version_numbers_at_release_time.
-  # Lands after Cycle 1 (c1-see) seals. Do NOT pre-bake.
-  number: null
+  # Slug-identified (schema v3); no number pre-allocated per
+  # feedback_version_numbers_at_release_time. Lands after Cycle 1 (c1-see)
+  # seals. Do NOT pre-bake.
   slug: context-management-see-budget-eviction-c2-budget
   title: "Context-management Cycle 2 — context budget: occupancy-vs-ceiling-with-reserves math (`remaining = window − reserve_out − reserve_work − occupied`, NOT the token-budget `/n` even-pacing formula per research §5.2), a threshold classifier (<60% / 60–85% / >85% / >92%), and the wiring that feeds the MEASURED occupancy number into the existing `strategic-compact` SKILL's decision rubric — retiring its `utilization isn't directly exposed as a number → heuristic only` honest-limit (SKILL.md:143-144/171/254). Two-component fence: `framework/context-management/` (budget) + `plugins/loam-skills/` (strategic-compact edit). Subscription-compatible. Depends on Cycle 1's `read()` sensor."
 
-# baseline: walked at apply-time from the canonical-clean pre-this-amendment HEAD
-# (Cycle 1's seal + §14 backfill commit is the predecessor). Do NOT pre-bake.
-baseline: null
+# baseline: PROVISIONAL — pinned to 2662245c (the v1.5.0 release-prep commit
+# that authored this stub: its provenance pin). Re-walked at apply time from
+# the canonical-clean pre-this-amendment HEAD (Cycle 1's seal + §14 backfill
+# commit is the predecessor), per the established pattern.
+baseline: "2662245c"
 
 plan: docs/plans/context-management-see-budget-eviction-c2-budget.md
 

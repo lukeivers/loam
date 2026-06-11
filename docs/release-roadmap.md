@@ -271,10 +271,11 @@ Walks the candidates that remain in §4 below at build-time. Each row re-tags cl
 - Default framework test run is GREEN after the amendment (the three named breakage points are in-scope edits).
 - Plan-before-code: plan-author turns the inventory into the formal plan-doc before the build.
 
-#### Owner calls open at pickup (rule at plan-author gate)
+#### Owner calls — RULED 2026-06-11 (Discord 1514752072900284416)
 
-1. `docs/plans/harness-benchmark-build.md` (HARP / mini-SWE-agent benchmark programme) — inside or outside retirement scope? It is a broader benchmark programme, not PB itself. No default assumed.
-2. Committed run-evidence files (10, in `framework/tools/programbench-revival/**/.run_evidence/`) — delete with the tool dir (recommended; the bucket-C experiment reports remain the audit record) vs preserve.
+1. `docs/plans/harness-benchmark-build.md` (HARP / mini-SWE-agent benchmark programme) — **CONDITIONAL: keep IF genuinely useful to us, otherwise kill.** ("If the harness is genuinely useful to us then we can keep it but otherwise kill it.") The plan-author gate runs a Tier-0 usefulness assessment (is any live loam capability consuming or planned to consume it; does it serve a current objective) and rules via that test, recommendation surfaced to owner with the plan summary.
+2. Committed run-evidence files — **DELETE** with the tool dir (owner accepted the recommended default; bucket-C experiment reports remain the audit record).
+3. **Bucket D widened (supersedes the inventory's "leave" recommendation):** incidental passing mentions (~45–50) are REMOVED too, unless removal of a given mention is genuinely expensive (e.g., would require editing sealed history, or a disproportionate edit for a trivial mention) — expensive ones stay with a one-line justification in the plan. ("I don't want the passing mentions left tho unless removing them is expensive to do.") Sealed history (bucket C) stays banner-marked only, per owner ("I don't mind leaving the sealed stuff but everything else should go").
 
 #### Estimated AI-time
 

@@ -309,3 +309,101 @@ Proposed consolidation: **two bundles** instead of eight follow-ons.
 - **F-LOAM-TIMED-VETO-AUTONOMY — bake the "propose-then-proceed-on-timer" methodology into loam as a first-class harness primitive.** Captured 2026-05-30 (Luke TG 13085 approved the methodology + TG 13087 "I think we could work that into loam also right?"). The pattern (now a pos3 persona memory rule, `feedback_propose_then_proceed_on_timer.md`): the persona surfaces a recommendation + a decision, sets a **bounded owner-veto window** (a timer), and **proceeds autonomously on the confident default if no response by the timer** — owner keeps the veto, the work keeps moving; owner-class actions (public/irreversible/financial/ship-gate/scope-redefinition) still hard-gate. **Why it's a loam fit (lenses):** Lens 2 (primary-persona toolkit) — a reusable "timed-veto autonomy" mechanism any loam persona can invoke instead of either blocking indefinitely OR proceeding with no veto window; Lens 1 (Claude-leverage) — composes directly on the ScheduleWakeup / CronCreate timer primitives (no re-implementation). **Proposed shape (needs the full 7-lens treatment + plan-before-code as a Lane-A sealed-component build):** (a) a documented persona-design pattern in the loam corpus (the lightweight half — propagate the rule into loam's persona-design guidance so it's not just a pos3-Ren habit); (b) a structured helper/primitive: `propose_and_proceed(recommendation, action, veto_window, owner_class=False)` that surfaces the proposal, schedules the veto-window timer, and fires the action on expiry unless vetoed or owner_class (which routes to hard-gate ASK-FIRST). Must encode the owner-class discriminator (the operational-objective / critical-call test). **Composes with:** the pos3 memory rule (already live as Ren's behavior — owner gets the benefit NOW); `feedback_strict_autonomy_no_pause_for_authorized_work`; `feedback_no_closing_line_permission_asks` (this is its proactive bounded form); ASK-FIRST-on-public-actions (the gate). **AI-time band:** lightweight doc-propagation ~15-30 min; the structured primitive ~1 sealed-component cycle (60-120 min) with lens treatment. **Status:** capture-only; Lane A loam-dev (queue behind current cause-coord engine build). Activation gate: next loam-dev session OR owner prioritization. The methodology is ALREADY ACTIVE as Ren's persona behavior; this FIDRAFT is about productizing it into the harness for any persona.
 
 - **F-RELEASE-FLOW-PARTIAL-PUBLISH-NOT-REPAIRABLE — `loam release` cannot repair its own partial publish: when the tag exists on origin but the GitHub Release was never created, re-running short-circuits at "already on origin; nothing to do" and never checks/creates the Release; SIBLING: the notes generator's plan-doc locator globs `docs/plans/v<X-Y-Z>-*.md` and misses the `release-integration-v<X-Y-Z>.md` naming, so notes degrade to "(unavailable)".** Captured 2026-06-11 from the v1.5.0 live incident (owner screenshot Discord 1514730485035696128: repo page showed v1.4.0 "Latest" a day after v1.5.0 "SHIPPED PUBLIC"). **Empirical:** (1) `git ls-remote` showed tag v1.5.0 on origin at `fc4210dd`, but `gh release list` showed v1.4.0 as Latest — the Release-create step never ran (or failed silently) during the v1.5.0 publish; (2) `loam release v1.5.0 --dry-run --plan-doc docs/plans/release-integration-v1-5-0.md` reported all 9 gates GREEN then "v1.5.0 already on origin at fc4210dd; nothing to do" — no detection of the missing Release half; (3) `notes.generate_notes(Path('.'), 'v1.5.0')` emitted "(unavailable: no plan-doc found at `docs/plans/v1-5-0-*.md`)" for §1+§verdicts because `_find_plan_doc` doesn't know the release-integration naming — v1.4.0's published Release notes show the same "(unavailable)" placeholders for the same reason; (4) recovery was manual: hand-import the notes module with PYTHONPATH spanning framework/tools/loam/src + plugins/dev-sdlc/tools/loam-amend/src (cross-package import: gates.py imports loam_amend.plan_locator), splice §1 + §13 from the real plan-doc into the generated body (the docstring's sanctioned "manual edit-pass"), then `gh release create v1.5.0 --notes-file ... --verify-tag` after explicit owner go (public action). v1.5.0 now shows Latest (created 2026-06-11T20:57:37Z). Owner F2 on the recovery ergonomics: "so many commands, back and forth, errors, kludging in opt directories... awful" — the manual path is unacceptable as the standing recovery. **Proposed shape:** (a) release runner's already-on-origin branch additionally checks `gh release view <tag>` and creates the missing Release when absent (idempotent repair — re-run completes a partial publish); (b) `_find_plan_doc` accepts the `release-integration-v<X-Y-Z>.md` naming (or the glob widens to any plan-doc whose §status names the version); (c) optional: post-publish gate asserting tag AND Release both exist before declaring SHIPPED PUBLIC, so the partial state can't silently persist a day. **Composes with:** `feedback_published_state_only_from_git_refs` (the tag-level check passed while the user-visible Releases surface was stale — "published" needs BOTH refs and the Release object when the flow promises one), `feedback_workaround_masks_rootcause_urgency` (the manual recovery is the workaround; this capture is the root-cause schedule), F-SEAL-TOOL-§14-BACKFILL-COUPLED-TO-DRY-RUN (sibling shape: a load-bearing post-step silently skipped when an earlier check short-circuits). **AI-time band:** single amendment cycle, ~30-60 min (runner branch + locator glob + tests for the repair path and the release-integration naming). **Status:** capture-only — HIGH ergonomic severity (every future partial publish repeats the awful manual path until fixed). Activation gate: next loam-dev release-tooling amendment; recommended BEFORE the next MINOR publish.
+
+## F-LOAM-PLAN-CRUD — `loam plan`: one continuous surface for work-stream lifecycle (2026-06-11)
+
+Owner ask (Discord 1514735880391102606, 2026-06-11): "one continuous place to
+create, update, change, delete, etc for work streams... we just always use
+loam plan, and that aligns to whatever the current backend process is."
+Pain: work-stream state is juggled across plan-docs, manifests, the roadmap
+§4 queue, workstream-queue.yaml, the task list, FIDRAFT, and decision records
+— building "from everywhere." Shape: a `loam plan` CLI verb (sibling to
+`loam amend` / `loam release`) as the STABLE user-facing front; backend
+process stays swappable behind it. Lens 0/2 fit: this is translation-layer
+work — user brings WHAT (the work item), loam owns HOW (which surface it
+lands on). Derivation line: composes with F4 (the verb tightens scope at the
+interface while leaving backend method free); INSTANCE of the prime-directive
+translation pattern. Needs an ODD plan-doc before any build.
+
+## F-FRONTDESK-SPLIT — channel-listener/worker session split (2026-06-11)
+
+From responsiveness analysis (workspace/.scratch/claude-output/
+loam-responsiveness-analysis-2026-06-11.md §2 Option G): a lightweight
+always-available session holds the channel MCP, acks/triages instantly,
+routes substantive work to backgrounded workers. Largest-build option;
+deferred — ship A+B+D+E composite first; build this only if pain persists.
+Derivation: composes with feedback_luke_prefers_long_term_path (captured for
+the long-term path, not built now).
+
+## F-PLANSTATE-FALSE-PARTIAL — plan-state contributor reports shipped work as "partially built" (2026-06-11)
+
+The keep-pace [plan-state] contributor labeled the slice2-swarm plan
+"partially built (2 build/seal commits)" while its seal (a315ed0b) is an
+ancestor of public tag v1.1.0 — shipped 2026-06-03. The banner claims
+"derived live from git, never from plan prose," but the verdict contradicts
+the git ref graph; likely commit-count heuristic + stale `<backfill>`
+placeholders in the plan-doc. Fed a false build-dispatch premise 2026-06-11
+(builder's Tier-0 re-derive caught it; doc backfilled in 70302d17).
+Fix: derive built-state from seal-commit tag-ancestry (git tag --contains),
+treat unresolved `<backfill>` as doc-staleness signal, regression fixture =
+the slice2 case. Derivation line: INSTANCE of
+feedback_published_state_only_from_git_refs (the structural-enforcement
+promotion of that rule, applied to the keep-pace surface itself).
+
+## F-CLAUDE-LEVERAGE-PROGRAM — primitive-preference doctrine + living capability knowledge, pushed to users (2026-06-11)
+
+Owner directive (Discord 1514741531687256226, 2026-06-11) — NOT a one-or-two-
+feature adoption plan; a standing program with four legs:
+(1) PREFER-THE-PRIMITIVE DOCTRINE — loam always knows and prefers an
+existing Claude command/primitive over doing the work directly or building
+its own equivalent ("they definitely spent way more time and tokens and
+people on than anything we can build"). Lens 1 hardened from research lens
+to operating preference, enforced/checkable at dispatch + plan time.
+(2) NAMED ADOPTIONS — /goal and /loop used consistently and effectively,
+called out by the owner specifically.
+(3) CURRENCY PROCESS — a recurring process keeping the capability knowledge
+up to date (the 2026-06-11 gap analysis found CLAUDE_CAPABILITIES.md 7 weeks
+stale + factually wrong on subagent recursion; the refresh routine never
+shipped — this is the structural fix).
+(4) LLM-LEVERAGE KNOWLEDGE CORPUS, PUSHED — a continuously-updated body of
+best-current knowledge on getting the most from LLMs / Claude / Claude Code,
+distributed TO loam users ~weekly without each user pulling it themselves;
+owner explicitly open to mechanisms other than version updates (channels to
+evaluate: plugin marketplace auto-update, skills-pack releases, a knowledge
+MCP/feed, scheduled cloud routines fetching a published corpus).
+Owner framing of why: "the literal core of all of loam is helping users do
+better at leveraging AI without having to learn about how to do it
+themselves."
+Inputs: claude-primitives-gap-analysis-2026-06-11.md (pos3 .scratch/
+claude-output). Needs a program-level plan-doc (slices: doctrine wiring,
+/goal+/loop adoption, currency automation, corpus + distribution).
+Derivation line: DIRECT INSTANCE of Lens 0 prime directive + Lens 1; the
+currency process composes with feedback_workaround_masks_rootcause_urgency
+(stale snapshot bit us live today); distribution leg must respect
+egress-consent + ASK-FIRST-on-public for anything published.
+
+## F-RESPONSIVENESS-COMPOSITE-LOWPRI — sentinel/nudge/continuation-yield + ack-first (2026-06-11)
+
+Owner triage (Discord 1514741531687256226): read-receipts (ackReaction)
+enabled NOW; the remaining responsiveness options from
+loam-responsiveness-analysis-2026-06-11.md — B (pending-inbound sentinel +
+PreToolUse safe-pause nudge), E (autonomy-continuation yields to pending
+inbound), D (ack-first turn shape), F (Stop-stack measurement), C
+(backgrounded-dispatch discipline) — go into the work stream at LOWER
+priority, held until we see whether read-receipts + current changes are
+good enough. Not scheduled; re-evaluate on owner signal of continued pain.
+
+## F-STUB-MANIFEST-SWEEP-PRECOMMIT — validate release-prep stubs before committing (2026-06-11)
+
+Carried from two sources the same day: manifest-data-conformance cycle plan
+§10 F2.2 (the four non-conformant manifests traced to release-prep stub
+authoring after rules tightened) and release-flow-partial-publish-repair
+D-RFPR.3 (explicitly ruled OUT of that fence: gate-semantics freeze + no
+release-prep tooling exists in loam_cli to hang it on). Shape: wherever
+release-prep authors manifest stubs, run the production manifest sweep over
+them before the commit lands (pre-commit-style or in the release-prep flow
+itself). Recurrence surface is proven (4 files, AC.DPS1.13 RED at HEAD for
+~5 weeks unnoticed). Derivation line: INSTANCE of
+feedback_structural_enforcement_on_recurrence; composes with the
+release-flow fence map (lands wherever release-prep tooling eventually
+lives).

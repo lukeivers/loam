@@ -1,0 +1,66 @@
+schema_version: 3
+amendment:
+  # Slug-identified (schema v3); no number pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: manifest-data-conformance-backfill
+  title: "Manifest data-conformance backfill — close the AC.DPS1.13 manifest-sweep RED at HEAD by re-expressing four non-conformant docs/plans manifests under the production validator's rules, with the sweep test byte-unchanged: the three context-management manifests (release-prep stubs from 2662245c; c1 restored byte-identical to its sealed-branch v3 record at 58c3c401, c2/c3 bumped to slug-identified schema v3 with a real provenance-pinned provisional baseline) and the session-clear-safety master manifest (575-char smoke_outcome compressed to a <=200-char single line preserving all four named outcome facts). Docs/data-only fence; zero source edits; zero test edits; LOCAL only."
+
+# BASELINE: a73ff88e — canonical main tip at plan-authoring. Builder re-walks
+# to the canonical-clean pre-this-amendment HEAD at apply time if main moved.
+baseline: "a73ff88e"
+
+plan: docs/plans/manifest-data-conformance-backfill.md
+plan_doc_ref: docs/plans/manifest-data-conformance-backfill.md
+
+ac_count: 4
+smoke_outcome: "Full DPS1 module via the production pytest entry-point at HEAD: 19/19 green; sweep test byte-unchanged; the four manifests express the same recorded facts conformantly; diff is docs/plans-only."
+
+# Seal anchor with ZERO source edits (D-MCONF.4): the sweep test that flips
+# RED->GREEN belongs to dev-sdlc's loam-amend suite; every edited file rides
+# the docs/plans/ universal admission. Touching dev-sdlc source is a fence
+# breach -> halt. On structural rejection of a docs-only cycle by
+# `loam amend apply`, halt trigger 5's direct-commit fallback applies.
+components:
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files: []
+
+narrative:
+  target: docs/plans/sealed/manifest-data-conformance-backfill.md
+  body: |
+    # manifest-data-conformance-backfill — apply ladder
+
+    Data-conformance fix cycle. Plan:
+    `docs/plans/manifest-data-conformance-backfill.md`.
+
+    Closes the AC.DPS1.13 sweep RED at HEAD a73ff88e: three
+    context-management manifests carried pre-v3 draft shape
+    (`schema_version: 1` + `number: null` + `baseline: null` — the
+    baseline-null failure was masked by first-error-only validation) and
+    the session-clear-safety master manifest carried a 575-char
+    `smoke_outcome` over the 200-char cap live since
+    dev-pattern-simplifications-2 (df3f50f6, 2026-05-04).
+
+    Fix shape (plan §10): c1 restored byte-identical to its sealed-branch
+    record (58c3c401 on build/context-management-c1-see — also dissolves
+    the latent same-path merge conflict with main's 2662245c stub); c2/c3
+    re-expressed as slug-identified schema v3 with provisional baseline
+    pinned to their authoring commit 2662245c; smoke_outcome compressed
+    preserving all four named outcome facts (full text recoverable at
+    5e086286).
+
+    AC family AC.MCONF.1-4 (plan §4); AC.MCONF.1 is outcome-altitude
+    (production pytest entry-point, 19/19, no pre-arranged state, empty
+    diff over the loam-amend tool tree). Sweep test untouchable (hard
+    halt). Facts-unchanged is an AC, not a hope: per-file fact-diff
+    narrated in §14.
+
+    Ladders to AC.DPS1.13's standing guarantee -> AC.PO.2 (the amend
+    machinery's data integrity keeps sealed-state claims honest).

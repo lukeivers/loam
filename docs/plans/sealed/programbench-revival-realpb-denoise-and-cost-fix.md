@@ -1,3 +1,9 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This document is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work.
+
 # ProgramBench-revival real-PB harness — submission-build dependency determinism + disposition cost-recording fix (de-noise + measurement-honesty, semantics frozen)
 
 > **Status (corrected 2026-05-18 pre-publish, Tier-0):** SEALED — seal `bfe76fc` (authoritative §14 register; source-edit/BASELINE `541a19b`, apply `7691f71`; STATE.md change-log 2026-05-16). The build cycle ran, sealed against the `workspace-bootstrap` fence, and ships in this release push (`bfe76fc` is an ancestor of the pushed `main` tip). _Prior state (superseded, retained for audit trail): "sub-plan-doc (plan-only — NO code, NO build, NO seal; the build is a separate owner-gated step)." Authored 2026-05-16 before the build; went stale at seal — corrected here pre-publish so the public artefact does not ship a false plan-only status._

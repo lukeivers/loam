@@ -1,3 +1,9 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This document is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work.
+
 # v0.4.0 Cycle 4 — ProgramBench v0 docs-only baseline (Variant A)
 
 **Status:** finalized at cycle-dispatch time per `plan-docs-author` SKILL master-vs-sub-plan trim discipline.

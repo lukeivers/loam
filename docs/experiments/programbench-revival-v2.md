@@ -1,3 +1,12 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This report is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work. The reproducibility substrate
+> (`framework/tools/programbench-revival/`, incl. committed run-evidence)
+> was deleted at retirement, so harness paths referenced herein no longer
+> exist in the live tree.
+
 # ProgramBench-revival v2 — does loam materially beat a bare LLM at hands-off task execution?
 
 *Report authored 2026-05-16. The deliverable a

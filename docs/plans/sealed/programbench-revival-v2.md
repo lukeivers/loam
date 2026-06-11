@@ -1,3 +1,9 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This document is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work.
+
 # ProgramBench-revival v2 — does loam materially beat a bare LLM at hands-off task execution?
 
 **Status (corrected 2026-05-18 pre-publish, Tier-0):** SEALED — seal `e273966` (authoritative register; source-edit/BASELINE `fd0eda4`, manifest apply `08a7b94`, §14-backfill `44eebad`; STATE.md change-log 2026-05-16). The measurement was built + LOCAL-sealed against the `workspace-bootstrap` fence and ships in this release push (`e273966` is an ancestor of the pushed `main` tip). Computed verdict: `loam-does-not-materially-beat-baseline` — a first-class plan-success honest-negative, reported straight (see §14 + `docs/experiments/programbench-revival-v2.md`). _Prior state (superseded, retained for audit trail): "**Class:** ODD-shaped measurement-experiment plan, plan-only (no code in this artefact)." Authored 2026-05-16 before the build; went stale at seal — corrected here pre-publish so the public artefact does not ship a false plan-only status._

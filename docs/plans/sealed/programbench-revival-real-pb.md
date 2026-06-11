@@ -1,3 +1,9 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This document is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work.
+
 # ProgramBench-revival (REAL public ProgramBench) — does the sealed loop materially beat a bare LLM on the real benchmark, independently judged?
 
 **Status (corrected 2026-05-18 pre-publish, Tier-0):** SEALED — seal `5694ff2` (authoritative §14 register; source-edit/BASELINE `240d367`, apply `aa1715d`, §9-backfill/amendment-BASELINE `f7497f7`; STATE.md change-log 2026-05-16, parent of `programbench-revival-realpb-denoise-and-cost-fix`). The measurement harness was built + LOCAL-sealed against the `workspace-bootstrap` fence and ships in this release push (`5694ff2` is an ancestor of the pushed `main` tip). The dispatcher-owned full-subset real-PB measurement run is the env-gated AC.RPB.7 follow-on (collect-but-skip in the seal; not a build-completeness gate). _Prior state (superseded, retained for audit trail): "**Class:** ODD-shaped measurement-experiment plan, plan-only (no code in this artefact)." Authored 2026-05-16 before the build; went stale at seal — corrected here pre-publish so the public artefact does not ship a false plan-only status._

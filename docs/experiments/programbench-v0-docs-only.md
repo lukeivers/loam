@@ -1,3 +1,12 @@
+> **RETIRED 2026-06-11 — ProgramBench full retirement.** ProgramBench was
+> fully retired by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`). This report is sealed history —
+> preserved verbatim as the audit record; nothing in it is current or
+> future work. The reproducibility substrate
+> (`framework/tools/programbench-revival/`, incl. committed run-evidence)
+> was deleted at retirement, so harness paths referenced herein no longer
+> exist in the live tree.
+
 # ProgramBench v0 — docs-only baseline (Variant A vs direct claude -p)
 
 **Status:** v0.4.0 Cycle 4 deliverable. Substrate experiment for AC.V040.4 / AC.V040C4.{1-7}.

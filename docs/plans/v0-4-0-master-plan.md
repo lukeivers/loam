@@ -1,3 +1,9 @@
+> **RETIRED-SCOPE BANNER 2026-06-11.** This master plan is a completed
+> historical record. The ProgramBench-related work referenced herein was
+> retired 2026-06-11 by owner ruling (Discord 1514747695972094165; plan
+> `docs/plans/programbench-full-retirement.md`); nothing PB-related in this
+> document is current or future work. Content below is preserved verbatim.
+
 # v0.4.0 master plan — Loam ships working code from extracted objectives
 
 **Status:** master plan-doc; plan-before-code per `feedback_plan_before_code`. Authored 2026-05-08 (Sonnet, master-plan-author dispatch). **Plan-only — owner ratification gate before any cycle dispatch.**

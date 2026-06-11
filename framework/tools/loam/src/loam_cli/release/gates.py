@@ -209,7 +209,24 @@ def _find_plan_doc(
     # non-dev modes).
     from loam_amend.plan_locator import find_plan_doc_by_slug_glob
 
-    return find_plan_doc_by_slug_glob(repo_root, slug)
+    found = find_plan_doc_by_slug_glob(repo_root, slug)
+    if found is not None:
+        return found
+    # AC.RFPR.2 (D-RFPR.1): release-side fallback for the
+    # ``release-integration-v<X-Y-Z>.md`` naming (the shape the
+    # v1.5.0 incident hit — notes degraded to "(unavailable)" because
+    # the slug glob requires the slug as filename PREFIX). The
+    # fallback lives HERE, release-side, so the shared loam_amend
+    # locator stays release-naming-free (it also serves
+    # amendment-cycle resolution, where release-integration docs are
+    # not amendment plan-docs). Sealed-first, mirroring the shared
+    # locator's D-T1RS.GLOB-PRIORITY ordering.
+    plans_dir = repo_root / "docs" / "plans"
+    for base in (plans_dir / "sealed", plans_dir):
+        candidate = base / f"release-integration-{slug}.md"
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def _extract_section_4_body(body: str) -> str | None:

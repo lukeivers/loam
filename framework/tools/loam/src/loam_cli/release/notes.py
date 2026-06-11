@@ -122,7 +122,10 @@ def _filter_noise(lines: list[str]) -> list[str]:
 
 
 def generate_notes(
-    repo_root: Path, version: str
+    repo_root: Path,
+    version: str,
+    *,
+    plan_doc: Path | None = None,
 ) -> str:
     """Return the full markdown notes body for ``gh release create``.
 
@@ -132,6 +135,14 @@ def generate_notes(
     2. **AC verdicts** — plan-doc §status / §13 body.
     3. **Commits** — ``git log --oneline <prev-seal>..<this-seal>``
        with D-V060.4 noise filtering.
+
+    Per AC.RFPR.2 (D-RFPR.2): *plan_doc*, when provided, is the
+    explicit plan-doc path (the runner threads its ``--plan-doc``
+    argument through — pre-RFPR the flag never reached notes
+    generation and notes degraded even when the operator named the
+    doc). When omitted, the implicit ``_find_plan_doc`` lookup runs,
+    which also resolves the ``release-integration-v<X-Y-Z>.md``
+    naming.
 
     On any source-missing condition, the relevant section emits a
     short ``(unavailable: ...)`` note rather than failing — the
@@ -143,7 +154,7 @@ def generate_notes(
     parts.append("")
 
     # §1 — outcome shape
-    plan_doc = _find_plan_doc(repo_root, version)
+    plan_doc = _find_plan_doc(repo_root, version, plan_doc=plan_doc)
     if plan_doc is None:
         parts.append("## Outcome shape")
         parts.append("")

@@ -1,6 +1,8 @@
 # release-flow-partial-publish-repair — sub-plan-doc
 
-Status: sub-plan-doc — BUILD-READY pending dispatcher ratification.
+Status: SEALED 2026-06-11 — code `3253be11` + `eaeb5929`; apply
+  `f83ce7e0`; seal `df924cd6`. AC.RFPR.1-4 GREEN (full loam-cli suite
+  189 passed). LOCAL only — not pushed.
 WD: /Users/lukeivers/loam (canonical loam; LOCAL only, NO push).
 Class: PATCH (DEV). **Scheduling constraint (carried from roadmap §4
   Candidate 7): this PATCH lands BEFORE the next publish of any class —
@@ -276,7 +278,57 @@ ref was green while the user-visible Releases page was stale for a day).
 
 ## §14 Method-decision register (populated at build + seal time)
 
-(empty at plan-authoring)
+SHA register (sealed 2026-06-11):
+
+- Code: `3253be11` (AC.RFPR.2 — gates fallback + notes `plan_doc`
+  param) + `eaeb5929` (AC.RFPR.1/.3/.4 — runner already-on-origin
+  rework + both-halves reporting + dry-run guard + 4 AC test files).
+- Apply: `f83ce7e0` (loam-cli BASELINE + SEAL_COMMIT → `f76164a4`).
+- Seal: `df924cd6`. Post-seal `apply --dry-run`: clean.
+
+Build-time method decisions (builder's call, within the ratified
+D-RFPR.1-5):
+
+- M-RFPR.a — Release-existence detection via `gh release view <tag>`
+  exit status (`_gh_release_exists`, runner.py), behind the same
+  `shutil.which("gh")` guard as `_gh_release_create`. Any of the
+  §4-named alternative mechanisms would satisfy AC.RFPR.1; `view` is
+  the smallest read-only probe.
+- M-RFPR.b — Both-halves failure reporting = `INCOMPLETE` print +
+  `rc=1` from `runner.run`, catching `CalledProcessError` /
+  `FileNotFoundError` around the Release half on BOTH the repair and
+  fresh-publish paths (pre-fix the fresh path propagated an uncaught
+  exception). `PublishOutcome` shape unchanged (no new field needed —
+  rc + `gh_release_created` carry the assertion).
+- M-RFPR.c — `idempotent_noop` on the already-on-origin branch is now
+  `rc == 0 and not gh_release_created`: a repair run did real work and
+  is not reported as a no-op; the fully-published re-run keeps
+  `idempotent_noop=True` (AC.RFPR.4). Existing AC.V060.3 idempotency
+  test semantics unchanged (no-`--release` path identical).
+- M-RFPR.d — Dry-run on the already-on-origin branch prints the
+  standard `format_backfill_preview` block (same surface as the
+  fresh-path dry-run) instead of committing; `apply_backfill` receives
+  the real `dry_run` flag (closes the runner.py:286 `dry_run=False`
+  literal per D-RFPR.4).
+- M-RFPR.e — Test gh fake is a stateful `FakeGh` at the
+  `runner.subprocess.run` seam (view/create against an in-memory
+  release set; non-`gh` calls pass through to real subprocess so git
+  keeps working); shared by the AC.RFPR.1/.3/.4 modules. No test
+  touches the real `gh` binary or any real remote (halt trigger 4
+  respected; remotes are tmp-path bare repos).
+
+Seal-ritual record (plan §6 trigger 6, autonomous per the
+manifest-data-conformance §14 precedent): `loam amend seal` HALTed on
+the dispatcher's intentionally-dirty `docs/FUTURE_IDEAS_DRAFT.md` →
+stash → seal GREEN → stash-pop; sha256 verified byte-identical before
+and after (`87c8db01…bafbf`). No other dirty state was present at
+seal.
+
+Backwards-compat (§15): full loam-cli suite 189 passed at `eaeb5929`
+(pre-apply) — includes test_AC_V060_3_tag_and_push.py, test_AC_BACKFL.py,
+test_AC_SDPD_plan_doc_flag.py, test_AC_V060_4_release_notes.py.
+`plugins/dev-sdlc/` diff over the cycle: empty (verified in the cycle
+diff — only `framework/tools/loam/` + `docs/plans/` paths).
 
 ## §15 Backwards-compat verification
 

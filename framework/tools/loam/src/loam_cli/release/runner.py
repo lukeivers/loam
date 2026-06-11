@@ -184,6 +184,27 @@ def _commit_and_push_backfill(
     return True, True
 
 
+def _gh_release_exists(repo_root: Path, tag: str) -> bool:
+    """True iff a GitHub Release exists for *tag* (``gh release
+    view`` exit status; AC.RFPR.1 detection half).
+
+    Tests monkeypatch ``subprocess.run`` + ``shutil.which`` so this
+    never reaches the real ``gh`` binary (plan §6 halt trigger 4).
+    """
+    if shutil.which("gh") is None:
+        raise FileNotFoundError(
+            "gh CLI not found on PATH; install gh + authenticate "
+            "before passing --release."
+        )
+    proc = subprocess.run(
+        ["gh", "release", "view", tag],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    return proc.returncode == 0
+
+
 def _gh_release_create(
     repo_root: Path, tag: str, notes_body: str
 ) -> None:
@@ -275,19 +296,35 @@ def run(
             check=False,
         )
         remote_sha = ls.stdout.split()[0] if ls.stdout.strip() else "?"
-        print(
-            f"{tag} already on {_REMOTE} remote at {remote_sha}; "
-            "nothing to do."
-        )
+        if create_release:
+            print(
+                f"{tag} already on {_REMOTE} remote at {remote_sha}; "
+                "checking GitHub Release half."
+            )
+        else:
+            print(
+                f"{tag} already on {_REMOTE} remote at {remote_sha}; "
+                "nothing to do."
+            )
         # Post-failure-recovery: still run the backfill in case a
         # prior run pushed the tag but failed before backfill landed
         # (per AC.BACKFL.4 — idempotent on already-current state).
+        # Per AC.RFPR.4 (D-RFPR.4): *dry_run* is honored — pre-RFPR
+        # this leg hardcoded dry_run=False and could commit AND push
+        # backfill edits during a --dry-run.
         backfill_result = post_publish_backfill.apply_backfill(
-            repo_root, version, tag, remote_sha, dry_run=False
+            repo_root, version, tag, remote_sha, dry_run=dry_run
         )
         backfill_committed = False
         backfill_pushed = False
-        if backfill_result.edits_applied > 0:
+        if dry_run:
+            print()
+            print(
+                post_publish_backfill.format_backfill_preview(
+                    backfill_result
+                )
+            )
+        elif backfill_result.edits_applied > 0:
             print(
                 f"post-publish backfill: applied "
                 f"{backfill_result.edits_applied} edit(s) "
@@ -301,19 +338,59 @@ def run(
                 "post-publish backfill: no edits needed (state already "
                 "current)."
             )
+        # Partial-publish repair (AC.RFPR.1) + both-halves assertion
+        # (AC.RFPR.3, scoped to --release runs per D-RFPR.5): when
+        # the operator asked for a Release, "tag on origin" alone is
+        # NOT a complete publish — detect the missing Release half
+        # and repair it (or report it on --dry-run).
+        rc = 0
+        gh_release_created = False
+        if create_release:
+            try:
+                if _gh_release_exists(repo_root, tag):
+                    print(
+                        f"GitHub Release for {tag} already exists — "
+                        "publish complete (tag + Release)."
+                    )
+                elif dry_run:
+                    print(
+                        f"DRY-RUN: GitHub Release for {tag} missing; "
+                        "would create it with generated notes "
+                        "(partial-publish repair)."
+                    )
+                else:
+                    notes_body = notes.generate_notes(
+                        repo_root, version, plan_doc=plan_doc
+                    )
+                    _gh_release_create(repo_root, tag, notes_body)
+                    gh_release_created = True
+                    print(
+                        f"created missing GitHub Release for {tag} "
+                        "(partial-publish repair) — publish complete "
+                        "(tag + Release)."
+                    )
+            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+                # AC.RFPR.3: a Release-half failure is reported as
+                # incomplete, never as success.
+                print(
+                    f"publish INCOMPLETE: tag {tag} on {_REMOTE} but "
+                    f"the GitHub Release half failed ({exc}). Re-run "
+                    f"`loam release {version} --release` to repair."
+                )
+                rc = 1
         # Still emit the post-ship proposal — the operator may be
         # reading this output to plan the next cycle.
         proposal = post_ship.build_proposal(repo_root, version)
         print()
         print(post_ship.format_proposal(proposal))
         return PublishOutcome(
-            rc=0,
+            rc=rc,
             gate_results=gate_results,
             tag_created=False,
             tag_pushed=False,
             branch_pushed=False,
-            gh_release_created=False,
-            idempotent_noop=True,
+            gh_release_created=gh_release_created,
+            idempotent_noop=(rc == 0 and not gh_release_created),
             proposal=proposal,
             backfill=backfill_result,
             backfill_committed=backfill_committed,
@@ -422,13 +499,34 @@ def run(
             "current)."
         )
 
-    # 5. Optional GitHub Release (AC.V060.4).
+    # 5. Optional GitHub Release (AC.V060.4) with both-halves
+    #    completeness reporting (AC.RFPR.3, --release runs only per
+    #    D-RFPR.5). The notes call threads the explicit plan-doc
+    #    through (AC.RFPR.2 / D-RFPR.2 — pre-RFPR this call was bare
+    #    and --plan-doc never reached notes generation).
+    rc = 0
     gh_release_created = False
     if create_release:
-        notes_body = notes.generate_notes(repo_root, version)
-        _gh_release_create(repo_root, tag, notes_body)
-        gh_release_created = True
-        print(f"created GitHub Release for {tag}")
+        notes_body = notes.generate_notes(
+            repo_root, version, plan_doc=plan_doc
+        )
+        try:
+            _gh_release_create(repo_root, tag, notes_body)
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            # AC.RFPR.3: the tag half alone is never reported as a
+            # complete publish; a Release-half failure is incomplete.
+            print(
+                f"publish INCOMPLETE: tag {tag} pushed but the GitHub "
+                f"Release create failed ({exc}). Re-run "
+                f"`loam release {version} --release` to repair."
+            )
+            rc = 1
+        else:
+            gh_release_created = True
+            print(
+                f"created GitHub Release for {tag} — publish complete "
+                "(tag + Release)."
+            )
 
     # 6. Post-ship review (AC.V060.6).
     proposal = post_ship.build_proposal(repo_root, version)
@@ -436,7 +534,7 @@ def run(
     print(post_ship.format_proposal(proposal))
 
     return PublishOutcome(
-        rc=0,
+        rc=rc,
         gate_results=gate_results,
         tag_created=tag_created,
         tag_pushed=True,

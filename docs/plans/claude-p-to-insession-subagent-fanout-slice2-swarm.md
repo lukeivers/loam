@@ -340,16 +340,35 @@ Slice 1 / the parent plan §9 and gates Slice 3, not this seal.)
 
 ### Commit SHAs
 
-(backfilled at seal time)
+(backfilled 2026-06-11 — Tier-0 re-derived from the git ref graph; the cycle
+sealed 2026-06-02 but this section was left at `<backfill>`)
 
 - BASELINE: `34daa5a2` (Slice 1's apply commit — the workspace-bootstrap sidecar
   tip after Slice 1).
-- Code commit: `<backfill>`.
-- Apply (sidecar/BASELINE bump): `<backfill>`.
-- Seal commit: `<backfill>`.
-- LOCAL seal only — NOT pushed. The minor ships as its own release later under
-  owner gate.
+- Code commit: `0135cbc3` (2026-06-02 — plan + manifest + `orchestrator.py`
+  conversion + dispatcher-seam exports in `__init__.py` +
+  `test_AC_SWARM_insession_subagent_swarm.py`).
+- Apply (sidecar/BASELINE bump): `8c604897`.
+- Seal commit: `a315ed0b` (narrative landed at
+  `framework/hands-off-lifecycle/seals/SEAL_COMMIT.claude-p-to-insession-subagent-fanout-slice2-swarm`;
+  sidecar advanced to the apply commit `8c604897`).
+- Release state (verified from git refs, NOT prose): the seal is an ancestor of
+  tag `v1.1.0` — the slice **SHIPPED PUBLIC 2026-06-03 in v1.1.0** under the
+  owner-authorized release run (STATE.md v1.1.0 entry names `0135cbc3` in the
+  supporting-foundation list). Contained in every tag since (v1.2.0–v1.5.0).
 
 ### Verification (Tier-0)
 
-(backfilled at seal time)
+(backfilled 2026-06-11, verified at HEAD `2662245c`-era main)
+
+- `framework/tools/handsoff-loop/tests/test_AC_SWARM_insession_subagent_swarm.py`
+  — **7 passed** (AC.SWARM.1–.4 surfaces).
+- `framework/workspace-bootstrap/tests/test_no_sealed_amendments.py` — **2
+  passed** (fence integrity at HEAD; three later amendments — handsoff-tpi6,
+  general-build-from-intent, v1.5.0 prep — have re-sealed over the same anchor
+  since, each re-validating the fence).
+- Sidecar chain: apply `8c604897` set SEAL_COMMIT to BASELINE `34daa5a2`; seal
+  `a315ed0b` advanced it to `8c604897`; later seals have since advanced it
+  further (current tip `21422aa4`).
+- Ancestry: `git merge-base --is-ancestor a315ed0b v1.1.0` → true;
+  `git tag --contains a315ed0b` → v1.1.0, v1.2.0, v1.3.0, v1.4.0, v1.5.0.

@@ -105,7 +105,9 @@ the dispatcher overrides):** D-CLP.1 enforcement shape → **layered
 (plan-time section + dispatch-time structural check)**; D-CLP.2 → **native
 `/goal` first, bespoke retained only where native can't reach**; D-CLP.3 →
 **revive locked-δ scoped down, defer β**; D-CLP.4 ★OWNER-facing → **plugin
-marketplace auto-update**, per-publish owner gate initially; D-CLP.5 →
+marketplace auto-update**, per-publish owner gate initially — **RATIFIED by
+owner 2026-06-11 ("I'm good with the plugin marketplace auto update thing",
+Discord 1514753768175042771)**; D-CLP.5 →
 **demote `CLAUDE_CAPABILITIES.md` to an index over the corpus**.
 
 **F2 on scope realism:** Slices 1–3 are honest single-cycle-to-double-cycle

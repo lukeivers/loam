@@ -655,26 +655,56 @@ def _dispatch_setup_hook_stanza(loam_root: Path) -> dict[str, Any]:
     }
 
 
+def _primitive_check_guard_stanza(loam_root: Path) -> dict[str, Any]:
+    """Return the PreToolUse envelope for the prefer-the-primitive
+    dispatch-time check (claude-leverage program, DOCTRINE slice,
+    D-DOC.2).
+
+    Matcher ``Task`` — the same matcher ``agent_guard.py`` +
+    ``dispatch_setup_hook.py`` use; the three share the matcher and run
+    sequentially per Claude Code's deterministic-order semantics. The
+    guard is stdlib-only at import (plus its sibling ``_gate_helpers`` +
+    ``primitive_check_matchers``); cold-start cost is bounded by the
+    Python-startup envelope, and its fire path is file-reads-free
+    (regex over the prompt only — AC.CLP-DOC.7).
+    """
+    script = _resolve_gate_script(loam_root, "primitive_check_guard.py")
+    return {
+        "matcher": "Task",
+        "hooks": [
+            {
+                "type": "command",
+                "command": f"{sys.executable} {script}",
+                "async": False,
+                "timeout": 5,
+            }
+        ],
+    }
+
+
 def _maybe_merge_pre_tool_use(
     *, loam_root: Path, settings_path: Path
 ) -> None:
     """Invoke ``merge_pre_tool_use`` fail-soft.
 
     Multi-contributor as of structural-enforcement A4 + M4 (amendment
-    #85): the outer PreToolUse list carries five contributors in
-    order — A2's objective-binding gate, A3's TDD-guard, A4's Bash-
-    guard, A4's Agent-guard, M4's dispatch_setup_hook. Claude Code
-    admits multiple matcher entries under one event and evaluates
-    them sequentially per matcher; A2 + A3 share the
+    #85) + the claude-leverage DOCTRINE slice (D-DOC.2): the outer
+    PreToolUse list carries six contributors in order — A2's
+    objective-binding gate, A3's TDD-guard, A4's Bash-guard, A4's
+    Agent-guard, M4's dispatch_setup_hook, and the prefer-the-primitive
+    check. Claude Code admits multiple matcher entries under one event
+    and evaluates them sequentially per matcher; A2 + A3 share the
     ``Edit|Write|MultiEdit`` matcher and run sequentially (A2 deny
-    short-circuits A3); A4_bash fires on ``Bash``; A4_task and M4
-    share the ``Task`` matcher and run sequentially per Claude
-    Code's deterministic-order semantics — A4_task runs first
-    (refusal gate); M4 runs second (always-allows; authors disk-side
-    gates). Plan §9 risk #1 documents the wasted-side-effect trade-
-    off when A4 denies; AC.DSA.4 idempotency mitigates re-fire.
+    short-circuits A3); A4_bash fires on ``Bash``; A4_task, M4, and the
+    primitive-check guard share the ``Task`` matcher and run
+    sequentially per Claude Code's deterministic-order semantics —
+    A4_task runs first (refusal gate); M4 runs second (always-allows;
+    authors disk-side gates); the primitive-check guard runs third on
+    the Task matcher (independent deny/warn/allow — D-DOC.2). Plan §9
+    risk #1 documents the wasted-side-effect trade-off when A4 denies;
+    AC.DSA.4 idempotency mitigates re-fire.
 
-    All five gate scripts are co-located with hands-off-lifecycle's
+    All six gate scripts are co-located with hands-off-lifecycle's
     hooks; no lazy-import probe is needed. A settings.json write
     failure must not regress first-run (locked plan §5 fail-closed
     direction mirrors here).
@@ -688,6 +718,7 @@ def _maybe_merge_pre_tool_use(
                 _bash_guard_stanza(loam_root),
                 _agent_guard_stanza(loam_root),
                 _dispatch_setup_hook_stanza(loam_root),
+                _primitive_check_guard_stanza(loam_root),
             ],
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5

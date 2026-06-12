@@ -181,6 +181,14 @@ _LOAM_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "bash_guard.py",
     "agent_guard.py",
     "dispatch_setup_hook.py",
+    # claude-leverage program DOCTRINE slice (D-DOC.2): the
+    # dispatch-time primitive-check guard — sixth PreToolUse sibling,
+    # Task matcher (shares the Task matcher with agent_guard +
+    # dispatch_setup_hook; runs sequentially per Claude Code's
+    # deterministic-order semantics). Marker MUST appear here so a
+    # re-merge over a stanza pos-v2 already wrote does NOT treat the
+    # primitive-check inner hook as user-authored.
+    "primitive_check_guard.py",
     # Wave 1 ECC absorption (2026-05-24, security-hooks-bundle):
     # three new always-on PreToolUse safety-layer hooks. Each is a
     # separate inner-hook entry in the stanza (matcher independence —

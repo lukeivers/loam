@@ -412,13 +412,14 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     # discoverable on disk.
     pre_tool_use = data["hooks"]["PreToolUse"]
     # Multi-contributor as of structural-enforcement A4 (amendment
-    # #72) + M4 (amendment #85): the outer PreToolUse list carries
-    # A2's objective-binding gate FIRST, A3's TDD-guard SECOND, A4's
-    # Bash-guard THIRD, A4's Agent-guard FOURTH, M4's
-    # dispatch_setup_hook FIFTH (per amendment #85 plan §4
-    # AC.OSS-M4.3). ODD §4 in-band rebaseline of the count assertion;
-    # the amendment intentionally extends the stanza list by one.
-    assert len(pre_tool_use) == 5
+    # #72) + M4 (amendment #85) + the claude-leverage DOCTRINE slice
+    # (D-DOC.2): the outer PreToolUse list carries A2's objective-
+    # binding gate FIRST, A3's TDD-guard SECOND, A4's Bash-guard THIRD,
+    # A4's Agent-guard FOURTH, M4's dispatch_setup_hook FIFTH, and the
+    # prefer-the-primitive check SIXTH. ODD §4 in-band rebaseline of
+    # the count assertion; the DOCTRINE slice intentionally extends the
+    # stanza list by one (5 → 6).
+    assert len(pre_tool_use) == 6
     assert (
         "objective_binding_gate.py"
         in pre_tool_use[0]["hooks"][0]["command"]
@@ -435,6 +436,10 @@ def test_T4_rewritten_settings_preserves_user_keys_across_self_retire(
     assert (
         "dispatch_setup_hook.py"
         in pre_tool_use[4]["hooks"][0]["command"]
+    )
+    assert (
+        "primitive_check_guard.py"
+        in pre_tool_use[5]["hooks"][0]["command"]
     )
     backups = list(fresh_workspace.glob(".claude/settings.json.user-backup-*"))
     assert backups, "user-authored PreToolUse hook was not backed up"

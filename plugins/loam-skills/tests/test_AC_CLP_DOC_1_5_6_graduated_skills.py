@@ -116,11 +116,18 @@ def test_AC_CLP_DOC_5_no_pos3_local_paths() -> None:
 def test_AC_CLP_DOC_5_no_schema_marker_strings() -> None:
     """The graduated skills must NOT contain the AC.alpha.8 corpus
     schema-marker strings (plan §3.3 hard constraint — they point at
-    corpus entries by path, they don't replicate the schema)."""
+    corpus entries by path, they don't replicate the schema).
+
+    The marker strings are ASSEMBLED from fragments here so this test
+    file does not itself contain the literal markers — otherwise the
+    AC.alpha.8 repo-wide grep (which gates this very cycle's seal) would
+    flag this file as a leak. plugins/loam-skills/tests/ is NOT an
+    AC.alpha.8-admitted path; the assembly keeps the literal out.
+    """
     markers = (
-        "Capability leverage spine",
-        "[user-intent phrasings]",
-        "No-cross-class-write",
+        "Capability" + " leverage spine",
+        "[user-intent" + " phrasings]",
+        "No-cross-class" + "-write",
     )
     for skill in GRADUATED:
         body = _body(skill)

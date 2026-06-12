@@ -431,3 +431,12 @@ feedback_workaround_masks_rootcause_urgency (the per-halt option-(a)
 correctives are the workaround; this is the root cause, scheduled at the
 2nd recurrence — we are at the 5th) + composes with the approved
 amendment-speedups memory (modifies its narrow-test-scope clause).
+
+## F-LOAM-AMEND-DASH-M — `python -m loam_amend.cli` silently no-ops (2026-06-12)
+
+Surfaced by the guard-floor builder: the module lacks a `__main__` execution
+path, so `-m` invocations exit silently successful having done nothing —
+a silent-no-op trap for any agent or user who reaches for the idiom. Fix:
+add `__main__.py` (or main-guard) + a test that `-m` performs real work or
+errors loudly. Tiny PATCH-class ergonomics; INSTANCE of the protection
+floor (silent no-op = lying success).

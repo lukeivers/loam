@@ -240,3 +240,28 @@ pos3, outside this fence).
 ## §14 Method-decision register (populated at build + seal time)
 
 - D-GFLOOR.1/2/3/4 ruled above at plan time.
+- Build-time measurement (Tier-0, build machine): production floor
+  at HEAD discovers 42 targets (26 fence + 16 sweep-class: 15 files
+  + the protection-matrix dir), zero stale patterns, zero red,
+  **19.6s wall** via the production per-target invocation path.
+  Single batched pytest invocation is not viable: cross-component
+  `tests.conftest` basename collision (reproduced plain AND under
+  `--import-mode=importlib`).
+- Existing-suite impact: full loam-amend suite (322 tests incl. the
+  16 new AC.GFLOOR tests) green; dev-sdlc + loam component suites
+  green (534 passed, 7 skipped) with zero adaptation beyond the 7
+  `--scoped-sweep` call-site removals and the AC.D-sa.3 supersession
+  documented in D-GFLOOR.3.
+- The malformed-registry halt (`guard-floor-registry-invalid`) is
+  laddered under AC.GFLOOR.3's never-silently-shrink outcome family
+  (a present-but-unreadable registry is the same degradation class
+  as a stale pattern).
+- Residual `--scoped-sweep` strings outside live docs: two
+  hands-off-lifecycle seal-narrative history files
+  (`seals/SEAL_COMMIT.true-first-run`, `tests/SEAL_COMMIT.notes`) —
+  historical records of past seals, out of this fence, intentionally
+  untouched (analogous to sealed plan history); plus the explanatory
+  removal comments in cli.py/test_seal.py.
+- Out-of-repo follow-up surfaced to dispatcher (D-GFLOOR.4): the
+  pos3 memory item `feedback_amendment_dispatch_speedups` needs its
+  narrow-test-scope clause annotated with the floor modification.

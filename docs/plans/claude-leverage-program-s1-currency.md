@@ -379,13 +379,37 @@ overlay + contradiction cases added. F4: HIGH.
   `feedback_spawned_claude_must_isolate_telegram_plugin`,
   `feedback_dispatch_explicit_loam_amend_apply`.
 
+## §13 §status (recorded at build, 2026-06-11/12 UTC)
+
+**Dispatcher-level gate applied on top of this plan (2026-06-11):** NO
+live cloud routine / launchd agent / any persistent scheduler entry was
+created or activated during this cycle. The component ships so that
+activation is a single documented command
+(`framework/tools/capability-refresh/cadence/ACTIVATION.md`); **LIVE
+activation is OWNER-GATED and PENDING** (precedent: the
+refusal-watchdog persistence ruling,
+`2026-06-11-refusal-watchdog-persistent-service-keep.md`).
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.CLP-CUR.1 | **GREEN** | Recursion claim corrected in `docs/capability-corpus/claude-code/background-agents.md` (2.1.172 / 5 levels; changelog re-fetched live at build). Repo-wide grep clean (`test_AC_CLP_CUR_1_2_reference_surface.py`). Build-time finding: the live sub-agents docs PAGE still carried the superseded no-recursion sentence on 2026-06-11 (docs lag) — the changelog is release truth; named in the corpus entry + sources.yaml. |
+| AC.CLP-CUR.2 | **GREEN** | `docs/CLAUDE_CAPABILITIES.md` demoted in place to a 65-line index/redirect; no four-section entries remain; guarded by the same test file. |
+| AC.CLP-CUR.3 | **GREEN-pending-activation** (loose-AC note, named per dispatch — not a silent rewording) | The refresh + cadence binding EXIST and are verified: one full live cycle ran through the production CLI (6/6 sources, run 2026-06-12T00:39:55Z), cadence-class selection tested, binding artefacts shipped (routine spec + launchd plists + one-command activation). The AC's "recurring … unattended" leg cannot honestly be claimed GREEN until the owner activates the binding (dispatcher gate above). |
+| AC.CLP-CUR.4 ★ | **PENDING (post-seal checkpoint, pending-activation)** | The mechanic verified live through the production path at build: changelog snapshot rewound to a pre-2.1.173 baseline → next production-CLI cycle surfaced the real 2.1.173 upstream block as a review-class pending-delta with no manual content work; steady state restored. The real-cadence observation runs after owner-gated activation; roadmap row carries the pending-observation marker. |
+| AC.CLP-CUR.5 | **GREEN** | All 5 entry-kind entries stamped fresh `source_fetch_ts` + `source_status: current` by the live run; stale-marking + last-good-ts retention + recovery covered by `test_AC_CLP_CUR_5_*`. |
+| AC.CLP-CUR.6 | **GREEN** | D-CUR.4 partition: fixture per the AC (one body change + one new claim + one removal) → re-projection auto-landed, new claim + removal surfaced as pending-delta; overlay-touch + curated-divergence + watch-source cases covered (`test_AC_CLP_CUR_6_*`). |
+| AC.CLP-CUR.7 | **GREEN** | Structural guard (`resolve_entry_path` / `resolve_state_path`): Class B unreachable; adversarial manifest (Class B target, traversal, absolute path) refused with Class B byte-identical; production CLI exits 3 on refusal (`test_AC_CLP_CUR_7_*`). |
+| AC.CLP-CUR.S | **GREEN at seal** | First-seal fence test at BASELINE 266aa93c; `allowed_prefixes`/`allowed_files` bindings parse for the loam-amend reader. |
+
+Component tests: **24/24 GREEN** (`framework/tools/capability-refresh/tests/`).
+
 ## §14 Method-decision register (populated at build + seal)
 
 | ID | Decision | Builder narrative (at build) | SHA (at seal) |
 |---|---|---|---|
-| D-CUR.1 | Placement: `framework/tools/capability-refresh/` | _pending_ | _pending_ |
-| D-CUR.2 | Cadence binding chosen (routine vs fallback) + live-verification result | _pending_ | _pending_ |
-| D-CUR.3 | Final source manifest contents (URLs + cadence classes) | _pending_ | _pending_ |
-| D-CUR.4 | Delta-partition implementation shape | _pending_ | _pending_ |
-| D-CUR.5 | §3.1 fix landed; handoff notes recorded for Slice 2 | _pending_ | _pending_ |
-| AC.CLP-CUR.4 ★ | Post-seal cadence-cycle observation | _pending (post-seal checkpoint)_ | _pending_ |
+| D-CUR.1 | Placement: `framework/tools/capability-refresh/` | Executed as ratified: new tools-adjacent component, first-seal, peer shape to `loam-acceptance-smoke` (pyproject + src + tests + the cadence/scripts dirs). Python ≥3.9-compatible, PyYAML the only dependency. | _pending_ |
+| D-CUR.2 | Cadence binding chosen (routine vs fallback) + live-verification result | Cloud routine PRIMARY, confirmed FIT at docs level (live fetch of `/docs/en/routines` 2026-06-11: Pro/Max subscription path, no API key, cron min 1 h, repo write via owner's GitHub connection with `claude/`-prefix branch default — kept as a second protection layer). launchd fallback SHIPPED (two plists). Session-cron ruled out as authored. **CREATION/ACTIVATION NOT performed — owner-gated per the dispatcher gate (plan §13)**; activation is one documented command per mechanism (`cadence/ACTIVATION.md`). | _pending_ |
+| D-CUR.3 | Final source manifest contents (URLs + cadence classes) | `docs/capability-corpus/sources.yaml` (corpus-adjacent home — sources describe corpus entries; workspace-overridable via `--sources`): changelog watch (high-velocity, release truth) + sub-agents/hooks/commands/routines entry sources (high-velocity) + scope-of-work internal (on-merge). Every URL fetched live at build; the plan's `/docs/en/interactive-mode` hypothesis for /loop was WRONG at live check (page doesn't cover /loop) — `/docs/en/commands` verified instead; `/docs/en/routines` verified for /schedule. Seed `internal:` labels replaced with real URLs by the first live run. | _pending_ |
+| D-CUR.4 | Delta-partition implementation shape | Deterministic: difflib opcodes over normalised statement units. insert→new-claim, delete→removal, replace at similarity ≥0.6→re-projection (auto-land candidate), <0.6→contradiction-suspect. Auto-land applies ONLY by verbatim in-place substitution in the entry's projected body region; a match inside the `[user-intent phrasings]` overlay demotes to overlay-touch (review), no verbatim match demotes to curated-divergence (review) — curated content is never mechanically guessed. Watch sources: all deltas review-class by construction. Review items → `pending-deltas/<date>-<id>.md` + structured `last-run.json`. | _pending_ |
+| D-CUR.5 | §3.1 fix landed; handoff notes recorded for Slice 2 | §3.1 IN-SLICE: corpus claim corrected + snapshot demoted (commit 1). §3.2 + §3.3 DEFERRED with the named handoffs exactly as authored (plan §7.3/§7.4) — no fence widening. Build-time F2 finding for Slice 2's plan-author: the upstream sub-agents docs page itself still contradicted the changelog on 2026-06-11; per-entry projections must treat the changelog watch as release truth on conflicts. | _pending_ |
+| AC.CLP-CUR.4 ★ | Post-seal cadence-cycle observation | _pending (post-seal checkpoint; pending owner-gated activation — mechanic verified live at build, plan §13)_ | _pending_ |

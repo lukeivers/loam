@@ -590,6 +590,12 @@ The four-amendment program is the minimum that addresses all three locked requir
 
 ## 7bis. Currency mechanism design (locked by Luke 2026-04-26)
 
+> **Forward-pointer (2026-06-11):** δ's intent realised by
+> claude-leverage-program Slice 1 (`framework/tools/capability-refresh/`;
+> plan `docs/plans/claude-leverage-program-s1-currency.md`); the stale
+> substrate bindings below were re-derived there (cloud routine primary /
+> launchd fallback; cadence table unchanged).
+
 Both classes must stay current. The mechanisms are structurally different; this section names each one and the cross-class invariants.
 
 ### 7bis.1 Class A currency — deterministic projection refresh

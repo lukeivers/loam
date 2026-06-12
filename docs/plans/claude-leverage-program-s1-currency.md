@@ -416,6 +416,16 @@ ruled guard-list completion as a CURRENCY follow-up — corrective commit
 `b5df9cbf` extends ADMITTED_PREFIXES minimally to exactly that surface.
 No content moved; no semantic change to this plan.
 
+**Second post-seal corrective (2026-06-12, note-only — cycle still sealed
+at `c41f9473`):** the same fence gap also left a live retired-benchmark
+stem in a capability-refresh BASELINE-history docstring, caught by
+dev-sdlc's AC.PBRET.5 retirement sweep at the broken-suite-family-fixes
+seal —
+corrective commit `c6d82eb4` rewords the docstring (no logic change). Both
+correctives are instances of the narrow-fence/sibling-sweep gap recorded
+as FIDRAFT F-SEAL-GUARD-SWEEP-FLOOR (guard-sweep floor at every seal).
+No semantic change to this plan.
+
 ## §14 Method-decision register (populated at build + seal)
 
 | ID | Decision | Builder narrative (at build) | SHA (at seal) |

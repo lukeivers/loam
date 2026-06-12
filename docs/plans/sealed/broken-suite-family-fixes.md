@@ -252,8 +252,11 @@ limit stall → small commits + cheap resume).
 ## §14 Method-decision register (populated at build + seal time)
 
 SHA register: plan pair `fd48f1a5` (BASELINE); family-1 fixes
-`aec03c7d`; families-2-4 fixes `299b3a42`; apply TBD-AT-APPLY; seal
-TBD-AT-SEAL.
+`aec03c7d`; families-2-4 fixes `299b3a42`; apply `8d4b4b9a`; §14
+build-time register `ab36166d`; finding-5 corrective `c6d82eb4`;
+inventory-red-1 corrective `f179f57d`; finding-6 corrective
+`bc4c244d`; seal `6cfbfb19`; machinery §14 SHA backfill `0feaa666`;
+finding-6 parity completion `7db736c7`.
 
 Build-time method decisions:
 
@@ -293,6 +296,25 @@ Build-time method decisions:
    loam-mode 72p/1s; odd-extractor BANDS_3+OREK_1 17p + C3_3 live
    green); the combined single-invocation run executes at the sealed
    tip post-seal and is recorded here.
+6. **AC.SUITEFIX.S RECORDED at the sealed tip (2026-06-12, post-seal
+   close-out pass, repo venv, no pre-arranged state): all seven
+   suites GREEN via their production entry-points** — spawn-isolation
+   27p/1s; heavy-b-migrate 21p; loam-acceptance-smoke 22p;
+   upgrade-merge-resolver 2p; odd-extractor 942p/2s (live legs
+   included, 1377.68s); loam-amend 308p; loam-mode 72p/1s — total
+   1394 passed / 4 skipped, zero failures. **Named finding (F2,
+   loose-AC-text class): the AC's literal "one combined invocation"
+   is structurally impossible** — pytest refuses the seven dirs in
+   one process (module-name collision: loam-acceptance-smoke's NEW
+   conftest.py — this cycle's own 1b cure — and loam-mode's
+   conftest both import as `tests.conftest`; reproduced under
+   default AND `--import-mode=importlib`, two attempts, stopped per
+   three-strikes). The AC's substance (every suite green at the
+   sealed tip, production entry-points, one pass) is verified by
+   the seven back-to-back per-suite invocations above; the AC-text
+   gap is surfaced to the dispatcher rather than silently reworded
+   (the plan is sealed; per feedback_loose_AC_text_fix_AC_not_implementation
+   the text fix is owner/dispatcher-gated).
 
 Verification evidence (Tier-0, this cycle):
 
@@ -302,6 +324,47 @@ Verification evidence (Tier-0, this cycle):
   (8×BANDS_3 + 1×OREK_1; live legs green); loam-amend FBMT1 smoke
   ValueError (`relative_to` across dated dirs); loam-mode 1F/71P/1S
   (four cross-mode refs).
+
+## §16b Seal-halt findings register (mirror of pos3 task #11 notes)
+
+The first seal invocation (2026-06-12) halted at the test phase on two
+guard reds, both inventoried by the 36-file guard-breach sweep
+(`pos3 .scratch/claude-output/guard-breach-inventory-2026-06-12.md`);
+the close-out pass resolved both and completed the seal:
+
+- **Finding 5 — currency-cycle docstring stem (AC.PBRET.5).** The
+  CURRENCY cycle (`c41f9473`) left a live retired-benchmark stem in a
+  capability-refresh BASELINE-history docstring; its narrow fence never
+  ran the dev-sdlc sweep. RESOLVED pre-dispatch: corrective `c6d82eb4`
+  (reword, no logic change). Cross-noted in the currency plan's
+  post-seal follow-up notes.
+- **Inventory red #1 — this plan's own parent-context citation
+  (AC.PBRET.5).** The plan pair (`fd48f1a5`) cited its PB-retirement
+  parent plan by live path, tripping the retirement sweep. RESOLVED:
+  `f179f57d` adds the D-K10 `REGISTERED_KEEPS` entry (test-side
+  register; the parent plan's §10 register is sealed history —
+  D-K9 precedent: entry + build-report surfacing). Inert post-seal
+  (this plan now lives under `docs/plans/sealed/`).
+- **Finding 6 — loam-acceptance-smoke fence `allowed_files` dead code
+  (AC.SMOKE.S).** The fence test's offender check consulted only
+  `allowed_prefixes`; `allowed_files` was never read (broken-by-design
+  guard premise), and the four batch-sanctioned cross-component
+  test/conftest paths were admitted nowhere. RESOLVED per dispatcher
+  ruling: `bc4c244d` wires `allowed_files` into the offender check
+  (sibling parity: primary-persona / dev-sdlc / workspace-bootstrap)
+  + file-precise admission of the four exact paths (NOT prefix-broad).
+  Post-seal completion `7db736c7`: the post-seal `apply --dry-run`
+  (which includes tracked-dirty paths) red-ed on in-flight
+  `docs/FUTURE_IDEAS_DRAFT.md` capture state — admitted file-precisely,
+  matching all three siblings verbatim; dry-run then clean 4/4
+  components.
+- **Guard floor at close-out:** the full inventory guard set re-run
+  Tier-0 post-fix — 41 individually-invoked guard files GREEN +
+  protection-matrix suite GREEN (42 tests); superset of the
+  inventory's 36-file floor; zero red.
+- **Root-cause line:** findings 5/6 + inventory red #1 are instances
+  of the narrow-fence/sibling-sweep gap captured as FIDRAFT
+  F-SEAL-GUARD-SWEEP-FLOOR (guard-sweep floor at every seal).
 
 # broken-suite-family-fixes — four pre-existing broken-test families GREEN
 

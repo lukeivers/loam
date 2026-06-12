@@ -437,6 +437,12 @@ Build-time method decisions (builder's call within D-PBRET.1–8):
 7. **HARP leg executed LAST** among destructive legs per the dispatch's
    sequencing requirement; no hold message arrived.
 
+### Commit SHAs
+
+- Amendment commit: `86848e29faf1177fc4f6f8f0e4f26f8058e40a90` —
+  `chore(amend): programbench-full-retirement manifest+apply — dev-sdlc BASELINE+sidecar bump to b739d0f`
+- Seal commit: `e7323f2cf189bf6a2c2941bff83d3499dde002e9` —
+  `chore(seals): programbench-full-retirement — dev-sdlc at 86848e2`
 ## §15 Backwards-compat verification
 
 - Default framework test run GREEN (AC.PBRET.2): in particular

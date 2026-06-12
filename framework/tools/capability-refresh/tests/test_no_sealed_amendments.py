@@ -34,7 +34,7 @@ test. Post-seal, tests/SEAL_COMMIT carries the exact SHA.
 
 BASELINE history:
   - 266aa93c — HEAD of main at sub-plan authoring (the
-    programbench-retirement STATE/roadmap backfill tip); the plan +
+    benchmark-retirement STATE/roadmap backfill tip); the plan +
     manifest commit 6ea2e6b5 is inside the window under docs/plans/.
 """
 

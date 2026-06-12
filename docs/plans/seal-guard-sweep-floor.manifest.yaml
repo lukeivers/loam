@@ -1,0 +1,45 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: seal-guard-sweep-floor
+  title: "seal-guard-sweep-floor — mandatory cross-component GUARD-SWEEP FLOOR at every seal (location-agnostic fence-test discovery + repo-local pattern registry docs/plans/guard-floor.yaml with loud staleness; --scoped-sweep removed; breach blocked at the introducing cycle)"
+
+# BASELINE: 1fe3c31a — the plan-doc commit (the commit immediately
+# preceding this cycle's source-edit commits), per the house pattern
+# (broken-suite-family-fixes manifest comment).
+baseline: "1fe3c31a"
+
+plan: docs/plans/seal-guard-sweep-floor.md
+plan_doc_ref: docs/plans/sealed/seal-guard-sweep-floor.md
+
+components:
+  - name: dev-sdlc
+    new_component: false           # loam-amend src (guard_floor.py, seal.py, cli.py) + tests
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: loam
+    new_component: false           # doc-only: README `loam amend` section (sweep semantics + flag removal)
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. docs/plans/
+# carries the plan pair AND the new guard-floor.yaml registry
+# (D-GFLOOR.1: the registry deliberately lives in universally-
+# admitted space so future registry edits never breach any fence).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: docs/plans/sealed/seal-guard-sweep-floor.md
+
+ac_count: 8

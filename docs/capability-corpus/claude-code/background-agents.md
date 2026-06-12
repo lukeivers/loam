@@ -10,7 +10,13 @@ interactive. Three composable mechanisms:
    subagent via the `Task` tool (also surfaced as the
    general-purpose agent / `/agents` slash command). The
    subagent runs a scope-only prompt, has its own tool
-   surface, and reports back when done.
+   surface, and reports back when done. Sub-agents can spawn
+   their own sub-agents — nesting up to 5 levels deep — since
+   Claude Code 2.1.172 (changelog-verified live 2026-06-11;
+   supersedes the earlier no-recursion limit. The sub-agents
+   docs page still carried the older no-recursion statement
+   on 2026-06-11 — docs lag; the changelog is the
+   release-truth source for shipped behaviour).
 2. **`run_in_background` Bash.** The Bash tool's
    `run_in_background: true` parameter starts a long-running
    shell command that streams output for later retrieval —

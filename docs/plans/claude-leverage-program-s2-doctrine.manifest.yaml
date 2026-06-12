@@ -1,0 +1,126 @@
+schema_version: 1
+amendment:
+  number: 185  # Next sequential amendment. Highest manifest counter on disk
+               # is 184 (claude-leverage-program-s1-currency). The builder
+               # CONFIRMS the exact number at `loam amend apply` against the
+               # live counter (feedback_version_numbers_at_release_time —
+               # never pre-bake a number that drifts).
+  slug: claude-leverage-program-s2-doctrine
+  title: "Claude-leverage program Slice 2 — DOCTRINE: prefer-the-primitive made operational and checkable (D-CLP.1 layered enforcement delivered). Graduates the three pos3 prototype skills into plugins/loam-skills under their existing names — claude-feature-awareness re-cut as a THIN catalogue-lookup over docs/capability-corpus/ (NO independently-maintained capability claims — the structural fix for gap-analysis §3.2 staleness; the corpus, kept current by Slice 1's capability-refresh machinery, is the single claims surface), tool-selection-rubric (seven-decision framework, capability facts replaced by corpus pointers, residual facts live-verified at build), and primitive-rationale-check (the primitive-rationale: audit-trail discipline) — and rewrites the loam-skills README from disk (gap-analysis §3.3 fix; meta-decision-haiku labeled planned-not-yet-packaged per the sealed lsk1 F3 ruling, not deleted). Lands the dispatch-time structural check: a NEW PreToolUse hook (Task matcher) in plugins/dev-sdlc/hooks/, fifth sibling to the A2/A3/A4 guard family — inspects every Agent-dispatch prompt for bespoke-equivalent work-shapes via matcher data whose every row names its corpus entry (bidirectional coverage guard makes corpus↔check drift observable; no frozen list, no second claims surface); two-tier posture: high-precision bespoke match without a primitive-rationale: line → DENY naming the primitive + the one-line fix; lower-confidence match → allow + systemMessage warn; the primitive-rationale: line IS the escape hatch AND the audit record (primitive-rationale: bespoke — <reason> is valid; emergency-off env/sentinel, logged); every fire NDJSON-logged per the sibling guard format; fire path file-reads only — NO network, NO LLM, NO API key; wired into bootstrapped workspaces via first_run_settings.py marker+stanza (A4 agent-guard precedent — the hands-off-lifecycle admission, scoped to exactly that wiring + tests). Adds the plan-time leg: plan-docs convention + plan template gain a REQUIRED 'Primitive check' section (this cycle's own plan-doc §2bis is the first conforming instance). ★ outcome-altitude AC.CLP-DOC.2: a deliberately-bespoke dispatch through the production PreToolUse path produces the observable check event with no pre-arranged state. Pre-seal ride-along: primary-persona's AC.α.8 capability-content guard (skills/hook carry NO schema-marker strings; primary-persona stays OUT of the fence)."
+
+# BASELINE: a8bbc3f7c74dfb35b6d4443ebc15535a206560fe — HEAD of main at
+# sub-plan authoring (F-LOAM-AMEND-DASH-M fidraft capture). The builder
+# CONFIRMS against the actual predecessor tip at apply time.
+baseline: "a8bbc3f7c74dfb35b6d4443ebc15535a206560fe"
+
+plan: docs/plans/claude-leverage-program-s2-doctrine.md
+
+components:
+  # The dispatch-time check + matcher data + its tests + the plan-time
+  # convention/template edits (plan-docs.md + templates/plan/) all live
+  # in this tree.
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # The three graduated skills + README rewrite (gap-analysis §3.3 fix)
+  # + any test extensions the existing LSK/SKTRI derived-from-disk
+  # suites genuinely require (plan halt trigger 6 guards loose-AC edits).
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # ADMITTED FOR THE SETTINGS WIRING ONLY (plan D-DOC.7): the new hook's
+  # marker string + PreToolUse stanza entry in
+  # framework/hands-off-lifecycle/hooks/first_run_settings.py + minimal
+  # test extension — exactly the A4 agent-guard wiring mechanism.
+  # Verified at plan time: _LOAM_PRE_TOOL_USE_COMMAND_MARKERS is the
+  # single shipped wiring surface; without it the hook never reaches a
+  # bootstrapped workspace and AC.CLP-DOC.2's no-pre-arranged-state leg
+  # fails by construction. Any hands-off-lifecycle edit beyond this
+  # intent is out-of-scope drift — seal-diff review enforces.
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc + status
+# surfaces only. NO docs/capability-corpus/ admission (the corpus is OUT
+# of this fence — a corpus-claim discrepancy found at build surfaces as a
+# Slice-1 pending-delta question per plan §8.1, never a silent edit). NO
+# primary-persona admission (AC.α.8 interaction handled by content
+# constraints + pre-seal ride-along per plan §3.3; if that fails →
+# plan halt trigger 5, halt and surface, never widen silently).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/claude-leverage-program-s2-doctrine.md
+  body: |
+    # Claude-leverage program Slice 2 — DOCTRINE — apply ladder
+
+    Second of four slices under the master plan
+    `docs/plans/claude-leverage-program.md`. Delivers D-CLP.1 (RULED at
+    master: layered enforcement — doctrine text alone has already failed
+    in this workspace per feedback_structural_enforcement_on_recurrence):
+    when loam (persona or dispatched agent) is about to do work directly
+    or build a bespoke equivalent of a catalogued Claude primitive, an
+    observable check fires on the production path. Consumes Slice 1's
+    sealed currency machinery (seal c41f9473) as the catalogue the check
+    consults, and lands Slice 1's two named D-CUR.5 handoffs.
+
+    This amendment:
+      1. Graduates the pos3 prototype trio into plugins/loam-skills
+         (catalog → decide → record): claude-feature-awareness re-cut as
+         a thin lookup over docs/capability-corpus/ with NO independent
+         capability claims (the gap-analysis §3.2 structural fix — the
+         corpus is the one refresh-kept claims surface);
+         tool-selection-rubric with facts re-verified live at build +
+         corpus pointers; primitive-rationale-check documenting the
+         audit-trail line the new hook enforces. README rewritten from
+         disk (§3.3 fix; meta-decision-haiku labeled
+         planned-not-yet-packaged per the sealed lsk1 F3 ruling).
+         (AC.CLP-DOC.1, .5, .6)
+      2. Lands the dispatch-time structural check: PreToolUse hook on the
+         Task matcher in plugins/dev-sdlc/hooks/ (fifth sibling of the
+         guard family, same envelope + NDJSON audit + dev-mode
+         short-circuit + fail-open-on-error). Two-tier posture: precise
+         bespoke-equivalent match without a primitive-rationale: line →
+         DENY naming the primitive + the one-line fix; low-confidence →
+         allow + systemMessage warn. The rationale line IS the hatch and
+         IS the audit record; emergency-off env/sentinel is logged.
+         Matcher data rows each name their corpus entry; a bidirectional
+         coverage guard makes corpus↔check drift observable (a
+         refresh-added entry without coverage turns the suite red — no
+         frozen list). Fire path: file-reads only, no network, no LLM,
+         within the AC.CLP-DOC.7 latency bound; Task-matcher scoping adds
+         zero cost to all other tool calls. (AC.CLP-DOC.2 ★, .4, .7, .8)
+      3. Wires the hook for bootstrapped workspaces via the
+         first_run_settings.py marker+stanza (A4 precedent) — the sole
+         reason hands-off-lifecycle is in this fence.
+      4. Adds the plan-time leg: plan-docs convention + plan template
+         carry a REQUIRED "Primitive check" section; this cycle's plan-doc
+         §2bis is the first conforming instance. (AC.CLP-DOC.3)
+      5. Pre-seal ride-alongs per the F-SEAL-GUARD-SWEEP-FLOOR lesson:
+         primary-persona's AC.α.8 capability-content guard (skill/hook
+         content carries no schema-marker strings) + touched components'
+         full suites. (AC.CLP-DOC.S)
+
+    Out with named handoffs: pos3 prototype retirement (workspace chore,
+    dispatcher-side); the runtime/persona-path check for NORMAL-USE
+    workspaces (master §2 row 4 "second" — own cycle); a plan-lint hook
+    (named escalation if plan-time non-adherence recurs); the
+    /goal-vs-bespoke RULING (Slice 3's).
+
+    NO public-action steps; NO Anthropic API key anywhere. BASELINE
+    a8bbc3f7 — HEAD at sub-plan authoring; counter 185 next free; builder
+    confirms both at apply time.

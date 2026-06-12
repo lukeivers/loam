@@ -14,6 +14,7 @@ A plan-doc is a Markdown file at `docs/plans/<slug>.md`. Each plan has:
 - **§4 Acceptance criteria** — table of AC IDs + outcome + verification. Each AC outcome-shaped + deterministic + one-test-per-criterion.
   - **AC ID convention (per 2026-05-09 ratification Telegram 10644):** scope-descriptive, NOT version-packed. Use a short scope abbreviation derived from the work's purpose (e.g., `AC.NTU.1` for non-tech-user surface; `AC.RBPH1.1` for rebrand-Phase-1; `AC.SW.1` for split-worktrees; `AC.OSS-M6b0.1` for OSS-publish M6b.0 sub-amendment). Do NOT use `AC.V<major><minor><patch>.<n>` form (e.g., `AC.V070.1`) — the version number derives at build-time per Q2 ratification, so AC IDs that pre-bake the version require renaming when the version derives differently. Scope-descriptive IDs survive the version derivation step intact. **Historical AC.V<XYZ>.<n> IDs in already-shipped amendments stay as-is** — no retroactive renaming (locked decision).
 - **§5 Sealed-component fence** — the components this amendment touches.
+- **Primitive check (REQUIRED when the plan introduces a new mechanism)** — a named section (a short table or bullet list) naming, for each new mechanism the plan introduces, the native Claude / Claude Code primitive considered and chosen, OR `bespoke — <reason>` when a bespoke equivalent is deliberately preferred. This is the plan-time leg of the prefer-the-primitive doctrine (claude-leverage program, D-CLP.1 layered enforcement: plan-time named section + dispatch-time structural check + corpus-fed catalogue). The dispatch-time check (a PreToolUse `Task` guard in the dev-sdlc plugin) catches a rationale-less bespoke dispatch downstream; this section catches it at plan time. Consult `claude-feature-awareness` (the corpus catalogue) + `tool-selection-rubric` (the seven-decision framework) when filling it. A plan that introduces no new mechanism may state "Primitive check: no new mechanism introduced." Plan-time non-adherence recurring is the named escalation to a plan-lint hook (`feedback_structural_enforcement_on_recurrence`).
 - **§6 Halt triggers** — conditions under which the builder stops + surfaces.
 - **§7 Ship shape** — sub-amendment series shape (if applicable) + commit ladder.
 - **§14 Method-decision register** — per-decision narrative, populated post-build.
@@ -28,6 +29,7 @@ When a master plan splits into sub-amendments (M1.rename's M1a..M1g, M6's M6a/M6
 
 - References the master plan-doc + ratifies any owner rulings already issued at master-plan time.
 - Declares the sub-amendment's specific scope (subset of master's surface).
+- Carries the REQUIRED **Primitive check** section (inherited from §1) when it introduces a new mechanism — naming the native primitive chosen or the `bespoke — <reason>`.
 - Carries its own AC family (e.g. AC.OSS-M6b0.\* extends the master's AC.OSS-M6.\* family).
 - Carries its own halt triggers + ship shape.
 - Carries its own §14 register populated at sub-amendment build time.

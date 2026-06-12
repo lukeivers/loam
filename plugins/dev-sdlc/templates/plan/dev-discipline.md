@@ -18,6 +18,11 @@ required:
   - DECISIONS_SUMMARY
   - HALT_FINDINGS
 optional:
+  PRIMITIVE_CHECK: |
+    _Name each new mechanism this plan introduces → the native Claude /
+    Claude Code primitive chosen, OR `bespoke — <reason>`. If no new
+    mechanism is introduced, state "no new mechanism introduced."
+    Consult `claude-feature-awareness` + `tool-selection-rubric`._
   COMPANIONS: ""
   ANCESTOR_RECORD: ""
   STATUS_LINE: ""
@@ -73,6 +78,20 @@ Dev-discipline work. **NOT** a sealed-component amendment. No `loam amend` manif
 ## 6. Hard constraints
 
 {{HARD_CONSTRAINTS}}
+
+---
+
+## 6bis. Primitive check (REQUIRED when a new mechanism is introduced)
+
+Per the prefer-the-primitive doctrine (claude-leverage program,
+D-CLP.1). For each new mechanism this plan introduces, name the native
+Claude / Claude Code primitive considered and chosen, OR
+`bespoke — <reason>` when a bespoke equivalent is deliberately
+preferred. Consult `claude-feature-awareness` (corpus catalogue) +
+`tool-selection-rubric` (seven-decision framework). If the plan
+introduces no new mechanism, state "no new mechanism introduced."
+
+{{PRIMITIVE_CHECK}}
 
 ---
 

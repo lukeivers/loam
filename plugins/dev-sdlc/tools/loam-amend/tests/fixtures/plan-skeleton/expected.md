@@ -65,6 +65,24 @@ Lens 3 fixture body.
 
 ---
 
+## 6bis. Primitive check (REQUIRED when a new mechanism is introduced)
+
+Per the prefer-the-primitive doctrine (claude-leverage program,
+D-CLP.1). For each new mechanism this plan introduces, name the native
+Claude / Claude Code primitive considered and chosen, OR
+`bespoke — <reason>` when a bespoke equivalent is deliberately
+preferred. Consult `claude-feature-awareness` (corpus catalogue) +
+`tool-selection-rubric` (seven-decision framework). If the plan
+introduces no new mechanism, state "no new mechanism introduced."
+
+_Name each new mechanism this plan introduces → the native Claude /
+Claude Code primitive chosen, OR `bespoke — <reason>`. If no new
+mechanism is introduced, state "no new mechanism introduced."
+Consult `claude-feature-awareness` + `tool-selection-rubric`._
+
+
+---
+
 ## 7. Out of scope (explicit)
 
 - Fixture out-of-scope item.

@@ -132,13 +132,14 @@ LOCAL only — never pushed.
 - Source/test commits: 7a76fb4e (fix + AC.PSTATE.1-3 tests), 51114e69
   (AC.PSTATE.4-5 OA re-grounding)
 - Apply commit: b7fc83d3
-- Seal commit: PENDING — first halt (§16b finding 3, AC.α.8 breach)
-  RESOLVED 2026-06-12 per dispatcher ruling (a): corrective commit
+- Seal commit: **8671fd89** (2026-06-12, third invoke GREEN; clean
+  tree, sidecars at 0989fc27). First halt (§16b finding 3, AC.α.8
+  breach) RESOLVED per dispatcher ruling (a): corrective commit
   b5df9cbf (currency-cycle guard-list completion; primary-persona
-  sweep GREEN, 1191 passed / 1 skipped / 0 failed). Seal re-invoke
-  then HALTED on a SECOND pre-existing sweep failure (§16b finding
-  4, hands-off-lifecycle AC.DCG.OA live-premise rot); re-invoke
-  `loam amend seal` after the dispatcher rules on finding 4.
+  sweep GREEN, 1191 passed / 1 skipped / 0 failed). Second halt
+  (§16b finding 4, hands-off-lifecycle AC.DCG.OA live-premise rot)
+  RESOLVED per dispatcher ruling (a-durable): corrective plan
+  7adb7e93 + corrective commit 0989fc27 (see finding 4 below).
 - D-PSTATE.1: implemented as `_latest_evidence_is_seal()` checking
   `seal_evidence[0]`'s subject for the `chore(seals): ` prefix
   (evidence is newest-first by git-log order; HEAD-reachability by
@@ -244,3 +245,21 @@ LOCAL only — never pushed.
    then re-invoke this seal; (a-quick) swap in a question that is open
    in the ledger today (rots again on its ruling); or (b) a separate
    corrective cycle on the decision-claim-guard plan first.
+
+   **RESOLVED 2026-06-12 — dispatcher ruled option (a-durable).**
+   Corrective plan docs/plans/dcg-oa-open-question-fixture-derivation.md
+   (commit 7adb7e93, AC.DCGFIX.1-2); corrective commit 0989fc27 (NEW
+   commit, attributed as decision-claim-guard follow-up, finding-3
+   precedent — fence-internal test-only corrective inside this cycle's
+   seal window). The test now derives its open question from the live
+   ledger at test time: leg A uses a non-ruled record's own question
+   (status read from the record file, independent of the module under
+   test); leg B (the live path today — all 29 records ruled)
+   synthesizes a subject of two absence-verified nonces + one ordinary
+   word, structurally below the guard's >=2-token resolution
+   threshold. Hands-off-lifecycle suite GREEN after fix: 723 passed,
+   5 skipped, 0 failed. Seal re-invoke (third) GREEN: seal 8671fd89.
+   This partially closes broken-suite item 5 (pos3 task #11): the
+   DCG.OA rot is fixed durably; the other family items
+   (archived-manifest-path suites, odd-extractor, FBMT1, loam-mode)
+   remain task #11 scope, untouched per dispatch constraint.

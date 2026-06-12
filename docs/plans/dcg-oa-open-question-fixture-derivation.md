@@ -78,8 +78,11 @@ is never swept into the corrective commit (explicit-path staging only).
 
 ## §14 Method-decision register
 
-- Plan commit: (backfilled below)
-- Corrective commit: (backfilled below)
+- Plan commit: 7adb7e93
+- Corrective commit: 0989fc27 (picked up by the plan-state seal
+  re-invoke, seal 8671fd89; AC.DCGFIX.2 verified — DCG suite 21
+  passed, full component suite 723 passed / 5 skipped / 0 failed,
+  rotted fixture grep count 0)
 - Leg selection at build time: live ledger holds 29 records, ALL
   `status: ruled` — leg B (synthesized-absent) is the live path today;
   leg A exercises automatically whenever a non-ruled record exists.

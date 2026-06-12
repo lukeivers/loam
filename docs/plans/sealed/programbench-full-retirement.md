@@ -512,3 +512,32 @@ Build-time findings (2026-06-11 build):
   manifest schema v3 exemplar
   docs/plans/release-flow-partial-publish-repair.manifest.yaml.
 - Conventions: plugins/dev-sdlc/docs/conventions/plan-docs.md.
+
+# programbench-full-retirement — apply ladder
+
+Roadmap §4 Candidate 1. Plan:
+`docs/plans/programbench-full-retirement.md`.
+
+Executes the 2026-06-11 owner ruling (Discord
+1514747695972094165): every ProgramBench artefact retired unless
+truly cost-prohibitive, with the three follow-on calls RULED
+(Discord 1514752072900284416) — HARP conditional-on-usefulness
+(plan D-PBRET.1 verdict executed as owner-ratified), run-evidence
+DELETED with the tool tree, bucket-D incidental mentions REMOVED
+unless genuinely expensive with every keep justified in the plan
+§10 register.
+
+Shape: framework/tools/programbench-revival/ deleted whole; the
+20 PB-purpose hands-off-lifecycle tests deleted; BRC_6 trimmed to
+its two generic survivors (generic AC.BRC.* capability preserved
+— three PB-coupled tests retired, an inventory miscount corrected
+at plan §16.1); PCVR + LIPW_4 surgically PB-freed; live
+docs/queue/policy edits; sealed history banner-marked RETIRED,
+content otherwise byte-unchanged; a permanent case-insensitive
+sweep test enforces closure structurally (AC.PBRET.5,
+outcome-altitude with a mutation-detection fixture).
+
+AC family AC.PBRET.1-6 (plan §4). Ladders to roadmap §4
+Candidate 1 -> Lens 0 protection floor (a cancelled candidate
+kept resurfacing as next-build because the cancellation was never
+recorded into the artefacts agents read) -> AC.PO.2.

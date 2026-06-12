@@ -61,6 +61,7 @@ a condition is met, rather than chaining shorter sleeps.
 ## Source
 
 ```
-source_url: internal:claude-code-session-skills-list:2026-04-28
-source_fetch_ts: 2026-04-28T00:00:00Z
+source_url: https://code.claude.com/docs/en/commands
+source_fetch_ts: 2026-06-12T00:40:42Z
+source_status: current
 ```

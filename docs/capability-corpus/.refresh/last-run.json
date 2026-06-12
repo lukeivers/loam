@@ -1,0 +1,63 @@
+{
+  "run_ts": "2026-06-12T00:40:42Z",
+  "cadence_class": "high-velocity",
+  "sources_manifest": "/Users/lukeivers/loam/docs/capability-corpus/sources.yaml",
+  "dry_run": false,
+  "sources": [
+    {
+      "id": "claude-code-changelog",
+      "kind": "watch",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+      "cadence": "high-velocity",
+      "entry": null,
+      "status": "unchanged",
+      "auto_landed": [],
+      "review": [],
+      "pending_delta": null
+    },
+    {
+      "id": "claude-code-subagents",
+      "kind": "entry",
+      "url": "https://code.claude.com/docs/en/sub-agents",
+      "cadence": "high-velocity",
+      "entry": "claude-code/background-agents.md",
+      "status": "unchanged",
+      "auto_landed": [],
+      "review": [],
+      "pending_delta": null
+    },
+    {
+      "id": "claude-code-hooks",
+      "kind": "entry",
+      "url": "https://code.claude.com/docs/en/hooks",
+      "cadence": "high-velocity",
+      "entry": "claude-code/hooks.md",
+      "status": "unchanged",
+      "auto_landed": [],
+      "review": [],
+      "pending_delta": null
+    },
+    {
+      "id": "claude-code-loop",
+      "kind": "entry",
+      "url": "https://code.claude.com/docs/en/commands",
+      "cadence": "high-velocity",
+      "entry": "claude-code/loop.md",
+      "status": "unchanged",
+      "auto_landed": [],
+      "review": [],
+      "pending_delta": null
+    },
+    {
+      "id": "claude-code-schedule",
+      "kind": "entry",
+      "url": "https://code.claude.com/docs/en/routines",
+      "cadence": "high-velocity",
+      "entry": "claude-code/schedule.md",
+      "status": "unchanged",
+      "auto_landed": [],
+      "review": [],
+      "pending_delta": null
+    }
+  ]
+}

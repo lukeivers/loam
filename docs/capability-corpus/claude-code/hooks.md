@@ -86,6 +86,7 @@ correct.
 ## Source
 
 ```
-source_url: internal:claude-code-update-config-skill-description:2026-04-28
-source_fetch_ts: 2026-04-28T00:00:00Z
+source_url: https://code.claude.com/docs/en/hooks
+source_fetch_ts: 2026-06-12T00:40:42Z
+source_status: current
 ```

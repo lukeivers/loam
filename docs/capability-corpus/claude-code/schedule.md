@@ -68,6 +68,7 @@ the local machine — it works while Claude Code is closed.
 ## Source
 
 ```
-source_url: internal:claude-code-session-skills-list:2026-04-28
-source_fetch_ts: 2026-04-28T00:00:00Z
+source_url: https://code.claude.com/docs/en/routines
+source_fetch_ts: 2026-06-12T00:40:42Z
+source_status: current
 ```

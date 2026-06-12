@@ -89,5 +89,6 @@ that binding structural.
 
 ```
 source_url: internal:framework/scope-of-work/docs/api-reference.md
-source_fetch_ts: 2026-04-28T00:00:00Z
+source_fetch_ts: 2026-06-12T00:39:55Z
+source_status: current
 ```

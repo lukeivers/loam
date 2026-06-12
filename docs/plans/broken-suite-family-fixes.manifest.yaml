@@ -1,0 +1,104 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: broken-suite-family-fixes
+  title: "broken-suite-family-fixes — four pre-existing broken-test families GREEN via un-rottable premise repair (PROMO_6 seal-bounded fence window + sealed manifest path; nested-tool conftest src-path resolution; odd-extractor BANDS_3 post-KEEL re-point + OREK_1 ACTIVE_MINOR derivation + live-variance robustness; FBMT1 live-date derivation; loam-mode cross-mode reference scrub at source, allowlist stays empty)"
+
+# BASELINE: ac61137e — canonical loam HEAD (main) at plan-authoring
+# time (docs(plans): plan-state seal SHA backfill + DCG fixture-
+# derivation register backfill). Builder re-walks if HEAD moves before
+# apply.
+baseline: "ac61137e"
+
+plan: docs/plans/broken-suite-family-fixes.md
+
+components:
+  - name: dev-sdlc
+    new_component: false           # tests-only (odd-extractor + loam-amend suites)
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: loam-acceptance-smoke
+    new_component: false           # tests-only (new conftest.py)
+    seal_test: framework/tools/loam-acceptance-smoke/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam-acceptance-smoke/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    new_component: false           # two skill .md de-pathing edits (family 4)
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: workspace-bootstrap
+    new_component: false           # anchor for framework/tools/ nested-suite test edits
+                                   # (telegram-5-fix precedent; live allowed_prefixes
+                                   # admit framework/tools/)
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - README.md
+    - docs/CLAUDE_CAPABILITIES.md
+
+narrative:
+  target: docs/plans/sealed/broken-suite-family-fixes.md
+  body: |
+    # broken-suite-family-fixes — four pre-existing broken-test families GREEN
+
+    Per docs/plans/broken-suite-family-fixes.md. Four broken-test
+    families — inventoried by the 2026-06-11 PB-retirement cycle +
+    plan-state §16b finding 4 (pos3 task #11), all Tier-0 re-reproduced
+    pre-baseline this cycle — repaired by making each rotted premise
+    un-rottable, never by loosening an assertion:
+
+    1a. loam-spawn-isolation PROMO_6: the fence test pinned the
+    archived manifest path (moved to docs/plans/sealed/ by amendment
+    #143) AND diffed BASELINE..HEAD — unbounded above, so post-seal
+    history falsely tripped the fence. Cure = the sibling TPI_6 house
+    pattern: sealed manifest path + seal-commit upper bound
+    (sidecar → pinned ca7f7157 → HEAD fallback). The §1a/§1b/§1c
+    byte-unchanged protective assertions unchanged in substance.
+
+    1b. heavy-b-migrate / loam-acceptance-smoke /
+    upgrade-merge-resolver: collection-time ModuleNotFoundError (tool
+    packages not installed; no in-suite src-path resolution). Cure =
+    conftest sys.path insertion (handsoff-loop / capability-refresh
+    precedent) — fresh-checkout-proof, no interpreter mutation.
+
+    2. odd-extractor: BANDS_3 re-pointed to the post-KEEL-P1
+    documentation contract (methodology §6 band restatement + the
+    relocation pointer + relocated mechanics markers in
+    adapter-conventions.md — every pre-rewrite marker still asserted
+    at its current canonical home); OREK_1 version premise derived
+    from docs/ACTIVE_MINOR (PCVR-anchored); the live-LLM variance
+    test made variance-robust per D-SUITEFIX.4 (NOT deleted, NOT
+    blanket-skipped).
+
+    3. loam-amend FBMT1 smoke: hardcoded authoring-date ref_time
+    (2026-05-21) put the two episodes in different UTC date dirs →
+    relative_to ValueError every day since. Cure = derive the second
+    episode's reference time from the FIRST episode's live on-disk
+    dated location at test time (DCG_OA cure shape).
+
+    4. loam-mode AC.F3: four path-shaped provenance citations in
+    always-loaded artefacts (two primary-persona skills, README.md,
+    docs/CLAUDE_CAPABILITIES.md) referenced dev-only paths. Scrubbed
+    at source by de-pathing the citations (provenance prose kept);
+    KNOWN_CROSS_MODE_DEBT stays EMPTY; no loam-mode test edited.
+
+    ACs: AC.SUITEFIX.1 (spawn-isolation), .2 (three nested suites
+    fresh-checkout-proof), .3 (odd-extractor), .4 (loam-amend), .5
+    (loam-mode, allowlist empty), .S ★ outcome-altitude (all suites
+    green in one combined production-entry-point run at the sealed
+    tip). ZERO production-source changes.

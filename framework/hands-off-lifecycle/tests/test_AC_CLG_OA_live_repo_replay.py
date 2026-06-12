@@ -17,11 +17,20 @@ replayed against PRODUCTION machinery and caught: against the LIVE
 repo with NO pre-arranged state, through the production gate entry
 point,
 
-  (a) a draft asserting that a real, partially-built plan "isn't
+  (a) a draft asserting that a real, evidence-backed plan "isn't
       planned / doesn't exist" produces a steer citing that plan's
-      real evidence;
+      real evidence + REAL build-state;
   (b) a draft asserting a genuinely-sealed item is sealed produces NO
       steer.
+
+RE-GROUNDED by plan-state-false-partial-fix (AC.PSTATE.5): the replay
+no longer requires the live repo to carry a partially-sealed plan —
+that requirement was an artefact of the false-partial defect (the
+seal-reachability verdict flips the legacy-narrative plans to sealed,
+and the live repo may legitimately have zero partials). The 06-09
+failure shape (denying work that exists) is steered for ANY
+evidence-backed plan, sealed or partial; the steer carries whichever
+build-state is real.
 
 No fixtures, no injected query — the gate reaches the live Slice-1
 plan-state surface, which derives from the live git ref graph. Skips
@@ -76,19 +85,33 @@ def _pick(plans, state: str) -> tuple:
     return None, ""
 
 
+def _pick_evidence_backed(plans) -> tuple:
+    """A (plan, topic) pair with REAL build evidence (sealed or
+    partial — AC.PSTATE.5: the 06-09 replay must not depend on the
+    live repo carrying a partial plan)."""
+    for plan in plans:
+        if not plan.seal_evidence:
+            continue
+        topic = _clean_slug_words(plan.slug)
+        if len(topic.split()) >= 3:
+            return plan, topic
+    return None, ""
+
+
 @pytest.mark.skipif(
     not (_LIVE_LOAM / "docs" / "plans").is_dir(),
     reason="live loam repo absent on this host; outcome-altitude target unavailable",
 )
 def test_AC_CLG_OA_the_0609_failure_is_caught_live() -> None:
-    """(a) — the false negative about a real partially-built plan is
-    steered with that plan's real evidence, through gate()."""
+    """(a) — the false negative about a real evidence-backed plan is
+    steered with that plan's real evidence + real build-state,
+    through gate()."""
     from loam_cli.audit.plan_state import derive_plan_states
 
     plans = derive_plan_states("loam")
     assert plans
-    target, topic = _pick(plans, "partially-sealed")
-    assert target is not None, "the live repo must carry a partial plan"
+    target, topic = _pick_evidence_backed(plans)
+    assert target is not None, "the live repo must carry an evidence-backed plan"
 
     draft = f"As far as I can tell, the {topic} work isn't planned and doesn't exist."
     result = gate(draft)  # the production entry point, live ground truth
@@ -105,8 +128,9 @@ def test_AC_CLG_OA_the_0609_failure_is_caught_live() -> None:
     assert (
         target.slug in details or target.title in details
     ), f"the steer must cite the real plan's evidence; got: {details}"
-    assert "partially-sealed" in details, (
-        f"the steer must carry the REAL build-state; got: {details}"
+    assert target.build_state in details, (
+        f"the steer must carry the REAL build-state "
+        f"({target.build_state!r}); got: {details}"
     )
 
 

@@ -1,0 +1,47 @@
+# loam GUARD-SWEEP FLOOR registry (sweep-class members).
+#
+# Consumed by `loam amend seal` at EVERY seal (docs/plans/
+# seal-guard-sweep-floor.md, D-GFLOOR.1 / AC.GFLOOR.2): each pattern
+# is resolved against TRACKED files at seal time; every resolved
+# target runs in addition to the fenced suite and the
+# convention-discovered fence tests. A pattern resolving to ZERO
+# tracked files HALTS the seal (AC.GFLOOR.3 — staleness is loud,
+# never silent), so keep patterns current when a guard moves.
+#
+# Patterns are fnmatch-style globs over repo-relative paths; a
+# trailing `/` names a directory (one pytest invocation over the
+# whole directory). `guard_class` is operator documentation.
+#
+# Fence tests (test_no_sealed_amendments.py / test_cross_cutting.py)
+# are NOT listed here — they are convention-discovered automatically
+# (AC.GFLOOR.1). Adding a new cross-component guard class = one
+# pattern entry here; this file lives under docs/plans/ (universally
+# admitted in every manifest) so registry edits never breach a fence.
+#
+# Class list per the 2026-06-12 guard-breach inventory (11 classes;
+# classes 1-2 are the convention-discovered fence/cross-cutting
+# tests, classes 3-11 below).
+
+schema_version: 1
+
+patterns:
+  - pattern: "plugins/dev-sdlc/tests/test_AC_PBRET_*.py"
+    guard_class: "banned-stem sweep — ProgramBench retirement (class 3)"
+  - pattern: "framework/primary-persona/tests/test_AC_alpha_8_*.py"
+    guard_class: "capability-schema-marker admitted-path sweep (class 4)"
+  - pattern: "plugins/dev-sdlc/tools/loam-amend/tests/test_AC_DPS1_*.py"
+    guard_class: "manifest conformance sweep — all manifests validate (class 5)"
+  - pattern: "framework/hands-off-lifecycle/tests/test_AC_DCG_*.py"
+    guard_class: "decision-claim guard incl. live ledger replay (class 6)"
+  - pattern: "framework/hands-off-lifecycle/tests/test_AC_CLG_*.py"
+    guard_class: "claim-language guard incl. live repo replay (class 7)"
+  - pattern: "plugins/dev-sdlc/tests/test_AC_PCVR_*.py"
+    guard_class: "pyproject version lockstep sweep (class 8)"
+  - pattern: "plugins/dev-sdlc/tests/test_AC_PMR_3_*.py"
+    guard_class: "dev-mode manifest roots resolve on disk (class 9)"
+  - pattern: "framework/protection-matrix/tests/"
+    guard_class: "protection-matrix catalogue suite (class 10)"
+  - pattern: "framework/tools/loam-spawn-isolation/tests/test_AC_PROMO_6_*.py"
+    guard_class: "spawn-isolation fence integrity (class 11)"
+  - pattern: "framework/tools/handsoff-loop/tests/test_AC_TPI_5_*.py"
+    guard_class: "telegram-marker fence integrity (class 11)"

@@ -409,3 +409,23 @@ itself). Recurrence surface is proven (4 files, AC.DPS1.13 RED at HEAD for
 feedback_structural_enforcement_on_recurrence; composes with the
 release-flow fence map (lands wherever release-prep tooling eventually
 lives).
+
+## F-SEAL-GUARD-SWEEP-FLOOR — cross-component guard sweeps must run at EVERY seal (2026-06-12)
+
+Pattern proven FIVE times in one night (2026-06-11/12): a cycle lands content
+that breaches a SIBLING component's guard test, but its narrow fence (the
+approved narrow-test-scope speedup) never runs that sweep — the breach
+surfaces only at the NEXT cycle's seal, halting an innocent build. Instances:
+currency cycle c41f9473 breached primary-persona AC.α.8 (8 paths) AND
+dev-sdlc AC.PBRET.5 (docstring stem), both caught by later seals (plan-state
+8671fd89 chain; suite-fix batch fd48f1a5 chain); DCG_OA fixture rot caught
+the same way; plan-state plan §16b findings 3/4 name the identical shape.
+Fix shape: the seal ritual gains a GUARD-SWEEP FLOOR — a designated fast
+list of cross-component protection sweeps (AC.α.8, AC.PBRET.5-class banned-
+stem sweeps, manifest conformance, DCG gates) that runs at every seal
+regardless of fence, in addition to the fenced suite. Narrow-scope speedup
+survives for everything else. Derivation: INSTANCE of
+feedback_workaround_masks_rootcause_urgency (the per-halt option-(a)
+correctives are the workaround; this is the root cause, scheduled at the
+2nd recurrence — we are at the 5th) + composes with the approved
+amendment-speedups memory (modifies its narrow-test-scope clause).

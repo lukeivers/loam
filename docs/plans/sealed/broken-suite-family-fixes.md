@@ -351,3 +351,10 @@ fresh-checkout-proof), .3 (odd-extractor), .4 (loam-amend), .5
 (loam-mode, allowlist empty), .S ★ outcome-altitude (all suites
 green in one combined production-entry-point run at the sealed
 tip). ZERO production-source changes.
+
+### Commit SHAs
+
+- Amendment commit: `bc4c244d9a3bb9fbd9b038cfb0ac7f6ad974e157` —
+  `fix(loam-acceptance-smoke): finding-6 — wire allowed_files into smoke-fence offender check (sibling parity) + file-precise admission of the four batch-sanctioned framework/tools paths`
+- Seal commit: `6cfbfb19a4b4db82c9bd8c2bf7d005f20d24692a` —
+  `chore(seals): broken-suite-family-fixes — dev-sdlc+loam-acceptance-smoke+primary-persona+workspace-bootstrap at bc4c244`

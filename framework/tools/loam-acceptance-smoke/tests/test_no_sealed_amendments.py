@@ -70,6 +70,11 @@ allowed_files = {
     "docs/odd-methodology.md",
     "README.md",
     "docs/CLAUDE_CAPABILITIES.md",
+    # Sibling parity (dev-sdlc / primary-persona / workspace-bootstrap
+    # all admit it): in-flight FIDRAFT capture state — the post-seal
+    # apply --dry-run includes tracked-dirty paths and red-ed on it
+    # (broken-suite-family-fixes post-seal halt, 2026-06-12).
+    "docs/FUTURE_IDEAS_DRAFT.md",
     # broken-suite-family-fixes batch — file-precise admissions of the
     # four cross-component test/conftest edits that cycle sanctioned
     # (plan §2 scope; finding-6 corrective). NOT prefix-broad.

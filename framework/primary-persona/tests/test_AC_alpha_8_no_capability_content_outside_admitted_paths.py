@@ -70,6 +70,20 @@ ADMITTED_PREFIXES = (
     # framework/primary-persona/seals/ — not capability content but
     # references the schema in narrative prose.
     "framework/primary-persona/seals/",
+    # claude-leverage-program-s1-currency (seal c41f9473) sanctioned
+    # surface: the capability-refresh component implements the Class A
+    # projection + the D-CUR.4 overlay partition, so its source/tests/
+    # README reference the schema markers as mechanism, not as
+    # capability content (component fence per the currency manifest).
+    "framework/tools/capability-refresh/",
+    # docs/CLAUDE_CAPABILITIES.md was demoted in place to an
+    # index/redirect over the corpus by the currency cycle
+    # (AC.CLP-CUR.2); its redirect text references the schema markers.
+    "docs/CLAUDE_CAPABILITIES.md",
+    # docs/STATE.md is the currency plan's named status-file target;
+    # its change-log entry describes the D-CUR.4 partition and quotes
+    # the marker in narrative prose.
+    "docs/STATE.md",
 )
 
 

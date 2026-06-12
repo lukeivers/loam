@@ -39,7 +39,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BASELINE = "4475a910"
+BASELINE = "fd48f1a5"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -59,8 +59,18 @@ allowed_prefixes = (
     "framework/tools/loam-acceptance-smoke/",
     "docs/plans/",
     "docs/experiments/",
+    "framework/primary-persona/",
+    "framework/workspace-bootstrap/",
+    "plugins/dev-sdlc/",
 )
-allowed_files = {"CLAUDE.md", "docs/STATE.md", "docs/odd-in-loam.md", "docs/odd-methodology.md"}
+allowed_files = {
+    "docs/odd-in-loam.md",
+    "docs/STATE.md",
+    "CLAUDE.md",
+    "docs/odd-methodology.md",
+    "README.md",
+    "docs/CLAUDE_CAPABILITIES.md",
+}
 
 
 def _seal_commit() -> str:

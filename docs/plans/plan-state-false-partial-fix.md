@@ -132,9 +132,13 @@ LOCAL only — never pushed.
 - Source/test commits: 7a76fb4e (fix + AC.PSTATE.1-3 tests), 51114e69
   (AC.PSTATE.4-5 OA re-grounding)
 - Apply commit: b7fc83d3
-- Seal commit: PENDING — seal HALTED on a pre-existing sweep failure
-  (§16 finding 3); re-invoke `loam amend seal` after the dispatcher
-  rules on the AC.α.8 breach.
+- Seal commit: PENDING — first halt (§16b finding 3, AC.α.8 breach)
+  RESOLVED 2026-06-12 per dispatcher ruling (a): corrective commit
+  b5df9cbf (currency-cycle guard-list completion; primary-persona
+  sweep GREEN, 1191 passed / 1 skipped / 0 failed). Seal re-invoke
+  then HALTED on a SECOND pre-existing sweep failure (§16b finding
+  4, hands-off-lifecycle AC.DCG.OA live-premise rot); re-invoke
+  `loam amend seal` after the dispatcher rules on finding 4.
 - D-PSTATE.1: implemented as `_latest_evidence_is_seal()` checking
   `seal_evidence[0]`'s subject for the `chore(seals): ` prefix
   (evidence is newest-first by git-log order; HEAD-reachability by
@@ -188,3 +192,55 @@ LOCAL only — never pushed.
    docs/CLAUDE_CAPABILITIES.md + docs/STATE.md) ratified as a CURRENCY
    follow-up, then re-invoke this seal; or (b) a separate corrective
    cycle on the CURRENCY plan first.
+
+   **RESOLVED 2026-06-12 — dispatcher ruled option (a)** (basis:
+   loose-AC/stale-guard analog of
+   feedback_loose_AC_text_fix_AC_not_implementation; the currency plan
+   sanctioned the surface, so the guard list completes, the content
+   doesn't move). All 8 paths Tier-0-verified inside the currency
+   plan's sanctioned surface before admitting: 7 of 8 carry the marker
+   at currency seal c41f9473 and none at its baseline 266aa93c
+   (component fence framework/tools/capability-refresh/ + the demoted
+   docs/CLAUDE_CAPABILITIES.md, both in the currency manifest); the
+   8th (docs/STATE.md, a currency universal_paths file + its named
+   status-file target) gained the marker in the currency §14-backfill
+   change-log entry 5e66b9ef describing D-CUR.4. Corrective commit
+   b5df9cbf (NEW commit, attributed as currency follow-up).
+   Primary-persona sweep GREEN after fix: 1191 passed, 1 skipped, 0
+   failed.
+
+4. **Seal HALTED AGAIN (2026-06-12) — second pre-existing sweep
+   failure, NOT caused by this cycle: hands-off-lifecycle AC.DCG.OA
+   live-premise rot.** The finding-3 re-invoke of `loam amend seal`
+   passed loam-cli + primary-persona, then failed in
+   hands-off-lifecycle:
+   `tests/test_AC_DCG_OA_live_ledger_gate_replay.py::test_AC_DCG_OA_genuinely_open_question_passes_live`
+   (1 failed, 722 passed, 5 skipped). The test's "genuinely open
+   question" fixture — the frame-kernel dispatch-pack activation
+   timing in pos3 — was authored 2026-06-09 21:54 CDT (aecb8e47) when
+   that question WAS open; the live pos3 decision ledger RULED it
+   2026-06-10 10:36 CDT
+   (workspace/.loam/memory/decisions/2026-06-09-when-does-the-frame-kernel-dispatch-pack-hook-activate-live-.md,
+   status: ruled), so the decision-claim gate now CORRECTLY steers on
+   the fixture sentence and the test's premise is rotted — the gate is
+   right, the fixture is stale. Tier-0: this cycle's
+   hands-off-lifecycle diff (12cd606b..b5df9cbf) touches only
+   test_AC_CLG_OA_live_repo_replay.py + the SEAL_COMMIT sidecar —
+   fully disjoint from the DCG test; the first seal attempt (finding
+   3) halted at primary-persona before ever reaching this suite, which
+   is why it surfaces only now. Same disease this cycle's
+   AC.PSTATE.4-5 cured in two OTHER tests (live-OA premise rot), but
+   re-grounding the AC.DCG.OA fixture maps to no AC.PSTATE.* (ODD
+   §2.5) and the fixture-choice judgment belongs to the decision-claim
+   guard cycle's AC surface (aecb8e47). Cycle state at halt: corrective
+   b5df9cbf + this backfill committed; seal WIP (3 SEAL_COMMIT
+   sidecars modified + untracked
+   docs/plans/sealed/plan-state-false-partial-fix.md) left uncommitted
+   in-tree exactly as `loam amend seal` left it for re-invoke.
+   Proposed resolutions for dispatcher ruling: (a-durable, preferred)
+   re-ground the fixture to DERIVE a genuinely-open question from the
+   live ledger at test time (premise can't rot again — the same shape
+   AC.PSTATE.4-5 used), ratified as a decision-claim-guard follow-up,
+   then re-invoke this seal; (a-quick) swap in a question that is open
+   in the ledger today (rots again on its ruling); or (b) a separate
+   corrective cycle on the decision-claim-guard plan first.

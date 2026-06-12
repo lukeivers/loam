@@ -403,6 +403,19 @@ refusal-watchdog persistence ruling,
 
 Component tests: **24/24 GREEN** (`framework/tools/capability-refresh/tests/`).
 
+**Post-seal follow-up note (2026-06-12, note-only — cycle sealed at
+`c41f9473`):** this cycle's fence did not run primary-persona's sweep, so
+primary-persona's AC.α.8 guard
+(`test_AC_alpha_8_no_capability_content_outside_admitted_paths.py`) was
+left with a stale ADMITTED_PREFIXES list relative to this cycle's
+sanctioned `[user-intent phrasings]` surface (the capability-refresh
+component tree, the demoted `docs/CLAUDE_CAPABILITIES.md`, the
+`docs/STATE.md` change-log entry). Surfaced at the
+plan-state-false-partial-fix seal (its plan §16b finding 3); dispatcher
+ruled guard-list completion as a CURRENCY follow-up — corrective commit
+`b5df9cbf` extends ADMITTED_PREFIXES minimally to exactly that surface.
+No content moved; no semantic change to this plan.
+
 ## §14 Method-decision register (populated at build + seal)
 
 | ID | Decision | Builder narrative (at build) | SHA (at seal) |

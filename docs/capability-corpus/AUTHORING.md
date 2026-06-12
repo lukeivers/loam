@@ -56,7 +56,13 @@ amendment lands the automation.
     when public; `internal:<path>` when sourced from in-repo
     docs or in-session skill descriptions);
   - `source_fetch_ts:` ISO-8601 timestamp of when the source
-    was fetched / read for this projection.
+    was fetched / read for this projection;
+  - `source_status:` maintained by the refresh tool
+    (`framework/tools/capability-refresh/`): `current` after a
+    successful fetch; `stale (<reason>; marked <ts>)` when the
+    last fetch failed — a stale entry is never silently
+    presented as current. Absent on entries the refresh has
+    not yet touched.
 
 ## Class A-prime — pos-v2 harness primitives
 
@@ -137,6 +143,35 @@ operational rule **Lean on the corpus** is the hook. Pre-β,
 the persona uses the Read tool to fetch corpus-doc paths.
 Post-β, the same convention runs against
 `mcp__knowledge__resources/read`.
+
+## Refresh machinery — sources, snapshots, pending-deltas
+
+Class A currency is delivered by
+`framework/tools/capability-refresh/` (claude-leverage-program
+Slice 1; the δ refresh automation this guide anticipated). Its
+data surfaces inside the corpus root:
+
+- `sources.yaml` — the source manifest: which upstream each
+  entry projects from + its locked cadence class
+  (high-velocity ≈ daily, long-form ≈ weekly, on-merge for
+  Class A-prime). Sources are data — workspace-overridable.
+- `.refresh/snapshots/<source-id>.txt` — verbatim-normalised
+  upstream mirrors used as diff baselines. Machine state, NOT
+  reference docs: an upstream's own stale or wrong sentence
+  appearing in a mirror is upstream's reality, not a corpus
+  claim.
+- `.refresh/last-run.json` — the structured delta of the most
+  recent run (per-source status + auto-land/review partition).
+- `pending-deltas/<date>-<source-id>.md` — review-class
+  upstream changes surfaced for human/persona review: new
+  claims, removals, `[user-intent phrasings]` overlay touches,
+  contradiction-suspects, curated divergences. These NEVER
+  auto-land (D-CUR.4 — the protection-floor guard). Reviewing
+  one means editing the entry (or spine index) deliberately,
+  then deleting the pending-delta file.
+
+Auto-land is confined to same-statement body re-projections,
+`source_fetch_ts` stamps, and stale-markings.
 
 ## No-cross-class-write — invariant
 

@@ -1,0 +1,56 @@
+# Capability-corpus source manifest — consumed by
+# framework/tools/capability-refresh/ (D-CUR.3; sources are DATA, not
+# code; a workspace overrides by passing --sources to the CLI).
+#
+# Every URL verified live 2026-06-11 at build time (plan §8.1):
+#   - changelog raw URL: fetched (latest 2.1.173; recursion claim @ 2.1.172)
+#   - /docs/en/sub-agents: fetched (NOTE: page still carried the
+#     superseded no-recursion sentence on 2026-06-11 — docs lag; the
+#     changelog watch source is the release-truth signal)
+#   - /docs/en/hooks: fetched (live hooks reference)
+#   - /docs/en/commands: fetched (documents /loop)
+#   - /docs/en/routines: fetched (documents /schedule + routines)
+#   - internal scope-of-work api-reference: on disk
+#
+# Cadence classes are LOCKED (research §7bis.1, 2026-04-26):
+# high-velocity ~ daily, long-form ~ weekly, on-merge for Class A-prime
+# (merge-triggered; declared as data now, trigger binding future work).
+schema_version: 1
+sources:
+  # Corpus-wide release-truth watcher: every delta is review-class by
+  # construction (new changelog entries = new claims -> pending-delta).
+  # This is the AC.CLP-CUR.4 signal path for upstream capability changes.
+  - id: claude-code-changelog
+    kind: watch
+    url: https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md
+    cadence: high-velocity
+
+  - id: claude-code-subagents
+    kind: entry
+    entry: claude-code/background-agents.md
+    url: https://code.claude.com/docs/en/sub-agents
+    cadence: high-velocity
+
+  - id: claude-code-hooks
+    kind: entry
+    entry: claude-code/hooks.md
+    url: https://code.claude.com/docs/en/hooks
+    cadence: high-velocity
+
+  - id: claude-code-loop
+    kind: entry
+    entry: claude-code/loop.md
+    url: https://code.claude.com/docs/en/commands
+    cadence: high-velocity
+
+  - id: claude-code-schedule
+    kind: entry
+    entry: claude-code/schedule.md
+    url: https://code.claude.com/docs/en/routines
+    cadence: high-velocity
+
+  - id: harness-scope-of-work
+    kind: entry
+    entry: harness/scope-of-work.md
+    url: internal:framework/scope-of-work/docs/api-reference.md
+    cadence: on-merge

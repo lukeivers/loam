@@ -1,0 +1,81 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: plan-state-false-partial-fix
+  title: "plan-state false-partial fix — sealed verdict from seal-reachability, not archive presence"
+
+# BASELINE: 12cd606b — canonical loam HEAD (main) at plan-authoring time
+# (docs(currency): STATE + roadmap register rows — Slice 1 CURRENCY sealed).
+baseline: "12cd606b"
+
+plan: docs/plans/plan-state-false-partial-fix.md
+
+components:
+  - name: loam-cli
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: primary-persona
+    new_component: false           # tests-only re-grounding (AC.PSTATE.4)
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: hands-off-lifecycle
+    new_component: false           # tests-only re-grounding (AC.PSTATE.5)
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true          # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/plan-state-false-partial-fix.md
+  body: |
+    # plan-state false-partial fix — sealed verdict from seal-reachability
+
+    Per docs/plans/plan-state-false-partial-fix.md. The keep-pace
+    [plan-state] contributor reported fully-sealed-and-shipped plans as
+    "partially built" (Tier-0-proven 2026-06-11, four false build-dispatch
+    premises; live reproduction at plan time found the class is 18 plans):
+    the derivation granted the `sealed` verdict ONLY on sealed-archive
+    presence (docs/plans/sealed/<slug>.md), so every plan sealed before the
+    narrative-target archive convention reported `partially-sealed` forever
+    — seal commits were collected as evidence but never consulted for the
+    verdict.
+
+    THE FIX (D-PSTATE.1 — latest-evidence-seal-reachability): a plan is
+    `sealed` when its doc is in the sealed archive OR when its newest
+    slug-named evidence commit in the HEAD-reachable subject history is a
+    completed `chore(seals): <slug>` commit. Tag-ancestry was REJECTED as
+    the predicate (it would false-positive every sealed-local-awaiting-
+    publish plan; build-state is a seal-commit fact, publish-state is the
+    tag-ancestry question). "Newest evidence" (not "any seal") keeps
+    multi-cycle plans honest: a new apply after a prior seal re-enters
+    `partially-sealed`.
+
+    ACs: AC.PSTATE.1 (seal-reachability verdict, fixture), AC.PSTATE.2
+    (in-flight behavior preserved, fixture), AC.PSTATE.3 ★ outcome-altitude
+    (production derive_plan_states("loam") against the LIVE repo derives
+    the four dispatch-named regression fixtures — slice2-swarm,
+    deep-role-research-provider, egress-consent-core-and-bug-report,
+    dev-pattern-simplifications-1 — as sealed, independently git-verified),
+    AC.PSTATE.4 (live surfacing/query never report a seal-reachable plan
+    as partially built; re-grounded AC.PSI.OA test), AC.PSTATE.5 (the
+    06-09 claim-guard live replay holds without requiring a live partial
+    plan; re-grounded AC.CLG.OA test).
+
+    Fence: loam-cli (source+tests); primary-persona + hands-off-lifecycle
+    (tests-only OA re-grounding). Derivation line: INSTANCE of
+    feedback_published_state_only_from_git_refs applied to the keep-pace
+    surface itself (FIDRAFT F-PLANSTATE-FALSE-PARTIAL).

@@ -123,7 +123,7 @@ def _load_registry_patterns(registry_path: Path) -> list[str]:
         schema_version: 1
         patterns:
           - pattern: "plugins/dev-sdlc/tests/test_AC_PBRET_*.py"
-            guard_class: "banned-stem sweep (ProgramBench retirement)"
+            guard_class: "banned-stem sweep (retired-benchmark references)"
 
     ``guard_class`` is operator documentation; only ``pattern`` is
     consumed. Raises :class:`GuardFloorRegistryError` on any shape

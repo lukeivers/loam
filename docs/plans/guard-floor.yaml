@@ -26,7 +26,7 @@ schema_version: 1
 
 patterns:
   - pattern: "plugins/dev-sdlc/tests/test_AC_PBRET_*.py"
-    guard_class: "banned-stem sweep — ProgramBench retirement (class 3)"
+    guard_class: "banned-stem sweep — retired-benchmark references (class 3)"
   - pattern: "framework/primary-persona/tests/test_AC_alpha_8_*.py"
     guard_class: "capability-schema-marker admitted-path sweep (class 4)"
   - pattern: "plugins/dev-sdlc/tools/loam-amend/tests/test_AC_DPS1_*.py"

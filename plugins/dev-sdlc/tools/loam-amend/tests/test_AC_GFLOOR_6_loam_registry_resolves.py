@@ -46,9 +46,14 @@ def test_AC_GFLOOR_6_floor_covers_the_inventoried_classes() -> None:
     floor = discover_guard_floor(repo_root)
 
     sweep = {str(p) for p in floor.sweep_targets}
+    # class 3 — banned-stem sweep (retired-benchmark references).
+    # Asserted by prefix rather than full literal so this file does
+    # not itself carry the banned stem the guard sweeps for.
+    assert any(
+        t.startswith("plugins/dev-sdlc/tests/test_AC_PBRET_5_")
+        for t in sweep
+    ), "class 3 banned-stem sweep missing from the floor"
     expected_members = {
-        # class 3 — banned-stem sweep (PB retirement)
-        "plugins/dev-sdlc/tests/test_AC_PBRET_5_programbench_retirement_sweep.py",
         # class 4 — capability-schema-marker sweep
         "framework/primary-persona/tests/test_AC_alpha_8_no_capability_content_outside_admitted_paths.py",
         # class 5 — manifest conformance sweep

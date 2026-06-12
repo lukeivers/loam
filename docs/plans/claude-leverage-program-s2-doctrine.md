@@ -544,16 +544,26 @@ seal-diff review enforces the intent). F4: HIGH.
 
 ## §13 §status (recorded at build)
 
-_Populated by the builder: per-AC verdict table + evidence._
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.CLP-DOC.1 | GREEN | Three graduated skills present + discoverable (LSK suite); `claude-feature-awareness` routes to `docs/capability-corpus/` (no own claims). `test_AC_CLP_DOC_1_*`. |
+| AC.CLP-DOC.2 ★ | GREEN | Bespoke "build a polling loop … every hour" dispatch through the real hook SUBPROCESS (venv interpreter, real dev-mode persona contract, stdin envelope) → deny payload naming `/loop` + NDJSON audit on disk. No pre-arranged state. `test_AC_CLP_DOC_2_production_dispatch_path`. |
+| AC.CLP-DOC.3 | GREEN (in-slice) | Convention names REQUIRED Primitive-check section + allows `bespoke`; template carries `{{PRIMITIVE_CHECK}}` slot (skeleton fixture regenerated); this plan's §2bis is the first instance. Post-seal "next plan conforms" rides the roadmap checkpoint (§3.5). `test_AC_CLP_DOC_3_*`. |
+| AC.CLP-DOC.4 | GREEN | Rationale-line hatch → allow + kind=hatch; emergency-off env + sentinel → allow + kind=off; control (no hatch) → deny. All via production `main()`. `test_AC_CLP_DOC_4_*`. |
+| AC.CLP-DOC.5 | GREEN | §3.2 stale framings absent from canonical awareness copy; no pos3-local paths; no schema-marker strings in any graduated body. `test_AC_CLP_DOC_5_*`. |
+| AC.CLP-DOC.6 | GREEN | README count derives from disk (25 packaged); `meta-decision-haiku` labeled planned-not-yet-packaged (dir kept, no SKILL.md); trio named. `test_AC_CLP_DOC_6_*`. |
+| AC.CLP-DOC.7 | GREEN | Matcher `Task` (registered stanza); fire path imports no socket/http/urllib/subprocess/LLM; socket-tripwire fire raises nothing; p95 = **0.447 ms** over n=30 (median 0.398, max 1.889) ≪ 100 ms bound. `test_AC_CLP_DOC_7_*`. |
+| AC.CLP-DOC.8 | GREEN | Every `claude-code/` corpus entry (hooks/loop/schedule/background-agents) covered by a matcher row; every row pointer resolves; fixture-added entry flagged uncovered; dangling pointer flagged. `test_AC_CLP_DOC_8_*`. |
+| AC.CLP-DOC.S | GREEN at seal | Seal-diff per `test_no_sealed_amendments.py` ×3 + AC.α.8 ride-along (green pre-seal). |
 
 ## §14 Method-decision register (populated at build + seal)
 
 | ID | Decision | Builder narrative (at build) | SHA (at seal) |
 |---|---|---|---|
-| D-DOC.1 | Plan-time leg: convention + template section | _at build_ | _at seal_ |
-| D-DOC.2 | Dispatch-time hook shape + posture | _at build_ | _at seal_ |
-| D-DOC.3 | Escape hatch + emergency-off | _at build_ | _at seal_ |
-| D-DOC.4 | Matcher data + coverage guard | _at build_ | _at seal_ |
-| D-DOC.5 | Three-skill graduation + content re-cut | _at build_ | _at seal_ |
-| D-DOC.6 | §3.2 discharged structurally; §3.3 README fix | _at build_ | _at seal_ |
-| D-DOC.7 | Three-component fence; hands-off-lifecycle minimal admission | _at build_ | _at seal_ |
+| D-DOC.1 | Plan-time leg: convention + template section | Convention (`plan-docs.md` §1 + §2) gains the REQUIRED Primitive-check section naming native-primitive-or-`bespoke`; template gains a `## 6bis. Primitive check` block + `{{PRIMITIVE_CHECK}}` optional slot (with a default so the section always renders; skeleton golden fixture regenerated). No plan-lint hook (ruled (a)). | _at seal_ |
+| D-DOC.2 | Dispatch-time hook shape + posture | `primitive_check_guard.py` — PreToolUse `Task` sibling of the four guards; dev-mode short-circuit; fail-open; two-tier deny/warn via `primitive_check_matchers.ROWS`; deny-tier precedence; NDJSON audit via `_gate_helpers`. | _at seal_ |
+| D-DOC.3 | Escape hatch + emergency-off | `primitive-rationale:` line in prompt = hatch (kind=hatch logged); `LOAM_PRIMITIVE_CHECK=off` env OR `.loam/.primitive-check-off` sentinel = emergency-off (kind=off logged); `bespoke — <reason>` valid. | _at seal_ |
+| D-DOC.4 | Matcher data + coverage guard | `primitive_check_matchers.py`: rows carry regex + corpus-entry pointer + tier, NO capability claims; `COVERAGE_EXCLUSIONS` empty (all 4 entries covered); bidirectional coverage guard at test time; fire path file-reads-free. | _at seal_ |
+| D-DOC.5 | Three-skill graduation + content re-cut | Awareness = thin corpus router (no own claims, no v2.1.141 snapshot, no "going stale fast"); rubric = seven decisions with corpus pointers + a graceful-degradation section + no Slice-3 ruling; rationale-check documents the hook-enforced line. Names kept; no pos3 paths; no schema markers. SKTRI.1 table +3 entries (license-covered). | _at seal_ |
+| D-DOC.6 | §3.2 discharged structurally; §3.3 README fix | §3.2: graduated copy carries no independent claims → cannot go stale (discharged). §3.3: README rewritten from disk (25 packaged re-derived, not copied), `meta-decision-haiku` labeled planned-not-yet-packaged (dir kept). | _at seal_ |
+| D-DOC.7 | Three-component fence; hands-off-lifecycle minimal admission | hands-off-lifecycle touched ONLY for the wiring: marker in `_LOAM_PRE_TOOL_USE_COMMAND_MARKERS` + `_primitive_check_guard_stanza` (Task) registered 6th in `_maybe_merge_pre_tool_use` + `test_first_run.py` count rebaseline 5→6 + a focused wiring test. Primary-persona stays OUT (AC.α.8 ride-along, green). | _at seal_ |

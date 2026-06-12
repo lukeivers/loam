@@ -1,20 +1,29 @@
 # Loam Skills plugin for loam
 
-Twenty-one SKILL.md packages: 12 translation-pattern skills
-capturing loam's load-bearing translation patterns + 9 per-
-primitive auto-loaders for Claude Code's scheduling / background /
-hook surface. Discoverable by Claude Code via the standard
-`<plugin>/skills/<skill-name>/SKILL.md` filesystem walk. Composes
-with raw Claude Code — a stranger can install this plugin and
-benefit from loam's patterns without committing to the full
-harness.
+Twenty-five SKILL.md packages: loam's load-bearing translation
+patterns, a cluster of per-primitive auto-loaders for Claude Code's
+scheduling / background / hook surface, and the three-skill
+dispatch-decision discipline (catalogue → decide → record).
+Discoverable by Claude Code via the standard
+`<plugin>/skills/<skill-name>/SKILL.md` filesystem walk. Composes with
+raw Claude Code — a stranger can install this plugin and benefit from
+loam's patterns without committing to the full harness.
+
+The skill count above is derived from disk: every subdirectory of
+`skills/` that contains a `SKILL.md` file. One further directory,
+`meta-decision-haiku/`, is present but is **planned-not-yet-packaged**
+(it carries no `SKILL.md` yet — see the note at the end of this
+section); it is intentionally retained, not garbage.
 
 ## What this plugin contains
 
-Twenty-one skills in `skills/<skill-name>/SKILL.md` shape, in two
-clusters:
+Twenty-five packaged skills in `skills/<skill-name>/SKILL.md` shape,
+in three clusters.
 
-### Translation-pattern skills (12)
+### Translation-pattern skills
+
+These capture loam's load-bearing translation patterns — the persona
+applies them alongside conversation.
 
 - **`memory-recall`** — when prior-session context is needed,
   retrieve from loam's file-based memory store (or graceful-degrade
@@ -42,19 +51,18 @@ clusters:
   abbreviations.
 - **`owner-decision-summary`** — every plan/research artefact gets
   a summary + named-decisions-with-recommendations.
-- **`meta-decision-haiku`** — when a small decision needs an LLM
-  call and Sonnet is overkill, reach for Haiku via the appropriate
-  wrapper.
 - **`skill-capture-proposal`** — when a pattern recurs and would
   benefit from being externalized, propose a new SKILL.
-- **`handsoff-loop`** — loam's packaged build methodology as one
-  capability the persona invokes for the user.
+- **`cost-optimised-defaults`** — when loam cost is the concern,
+  apply the cost-cutting defaults.
+- **`strategic-compact`** — the `/compact`-vs-`/clear` decision
+  heuristic by context-band and arc state.
 
-### Per-primitive auto-loaders (9 — added v0.12.5)
+### Per-primitive auto-loaders
 
-Each fires on a specific Claude Code primitive's work-shape so
-Claude's auto-loader picks the right one when the matching
-dispatch shape appears.
+Each fires on a specific Claude Code (or loam-CLI) primitive's
+work-shape so Claude's auto-loader picks the right one when the
+matching dispatch shape appears.
 
 - **`monitor-tool`** — watching a long-running local subprocess
   for completion or event streams (event-driven local wait).
@@ -74,6 +82,40 @@ dispatch shape appears.
   background-agent inventory.
 - **`precompact-hook`** — PreCompact hook event (fires before
   auto-compaction; can block via exit-code-2).
+- **`handsoff-loop`** — loam's packaged build methodology as one
+  capability the persona invokes for the user.
+
+### Dispatch-decision discipline (catalogue → decide → record)
+
+The three-skill trio for picking the right primitive at dispatch
+time. Graduated from workspace prototypes into canonical loam by the
+DOCTRINE slice of the claude-leverage program; each carries no
+independently-maintained capability claims — they route to or record
+against the refresh-kept capability corpus (`docs/capability-corpus/`).
+
+- **`claude-feature-awareness`** — the catalogue lookup: maps a
+  work-shape to the corpus entry that describes the matching
+  primitive. Carries no capability claims of its own — pure routing
+  into the maintained corpus.
+- **`tool-selection-rubric`** — the seven-decision framework that
+  picks WHICH primitive. Capability facts stay in the corpus; the
+  rubric decides.
+- **`primitive-rationale-check`** — records WHY a non-default (or
+  bespoke) primitive was chosen, as a `primitive-rationale:` audit
+  line. The dispatch-time primitive-check guard (a dev-sdlc
+  PreToolUse `Task` hook) structurally enforces this line's presence
+  on bespoke-equivalent dispatches.
+
+### Planned-not-yet-packaged
+
+- **`meta-decision-haiku`** — referenced in master plans and the
+  roadmap (when a small decision needs an LLM call and Sonnet is
+  overkill, reach for Haiku via the appropriate wrapper) but **not
+  yet a packaged SKILL** — the `meta-decision-haiku/` directory
+  exists without a `SKILL.md`. Retained intentionally per the sealed
+  loam-skills root-cause ruling ("intentionally referenced in master
+  plans but not yet a SKILL package — no action required"); it is not
+  counted among the packaged skills above.
 
 ## How skills are discovered
 
@@ -106,12 +148,15 @@ Skills plugin" (see top-level `install-from-source.txt`).
   re-derive the patterns (they live in the SKILL.md files).
 - **Raw Claude Code** — strangers running `claude` without loam
   installed can enable this plugin alone and benefit from the
-  patterns. Each skill's "Graceful degradation" section names the
-  raw-Claude-Code path.
+  patterns. Each loam-pattern skill's "Graceful degradation" section
+  names the raw-Claude-Code path.
+- **The capability corpus** (`docs/capability-corpus/`) — the
+  dispatch-decision trio routes to and records against the
+  refresh-kept corpus rather than caching capability claims.
 - **Loam Dev/SDLC plugin** (`plugins/dev-sdlc/`) — the
   `start-project` skill there is task-shaped (kicks off a project);
-  these twenty-one are reference-content shaped (knowledge applied
-  alongside conversation). Different roles, complementary surfaces.
+  these are reference-content shaped (knowledge applied alongside
+  conversation). Different roles, complementary surfaces.
 
 ## v0.2 trajectory
 

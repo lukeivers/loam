@@ -77,6 +77,10 @@ INTENDED_SHAPES: dict[str, list[str]] = {
         "what background agents are running right now",
         "inspect the inventory of running agents",
     ],
+    "claude-feature-awareness": [
+        "is there a primitive for this before i build one",
+        "which hook event fires when i need the catalogue",
+    ],
     "cost-optimised-defaults": [
         "loam is expensive cut my costs",
         "my claude bill is too high save money",
@@ -125,6 +129,10 @@ INTENDED_SHAPES: dict[str, list[str]] = {
         "capture state before compaction discards context",
         "block compaction to protect load-bearing memory",
     ],
+    "primitive-rationale-check": [
+        "record why i picked this non-default primitive",
+        "add a rationale line for the bespoke dispatch choice",
+    ],
     "run-in-background-bash": [
         "launch a long build in the background",
         "run a multi-minute command that outlives the turn",
@@ -152,6 +160,10 @@ INTENDED_SHAPES: dict[str, list[str]] = {
     "time-claims-discipline": [
         "verify the elapsed duration before stating it",
         "translate the expected duration to ai-time",
+    ],
+    "tool-selection-rubric": [
+        "which claude primitive should i dispatch this work to",
+        "pick the right primitive for this dispatch decision",
     ],
     "translation-discipline": [
         "strip commit shas and ac ids before replying to the user",

@@ -251,7 +251,54 @@ limit stall → small commits + cheap resume).
 
 ## §14 Method-decision register (populated at build + seal time)
 
-SHA register: TBD-AT-SEAL.
+SHA register: plan pair `fd48f1a5` (BASELINE); family-1 fixes
+`aec03c7d`; families-2-4 fixes `299b3a42`; apply TBD-AT-APPLY; seal
+TBD-AT-SEAL.
 
-- D-SUITEFIX.4 resolution: TBD from live-run evidence (test identity,
-  failure shape, chosen assertion form).
+Build-time method decisions:
+
+1. **D-SUITEFIX.4 RESOLVED — variance-tolerant via bounded
+   re-attempt; fixture pinning rejected.** Test identity:
+   `test_AC_V025_C3_3_cli_live_outcome_altitude` (Tier-0 anchored:
+   the v0-2-5 C6 report names it the stochastic live-LLM failure —
+   "operator re-runs 3x; ≥2 of 3 must pass"). This cycle's full live
+   suite run (1318s) and a dedicated post-fix live run (314s) both
+   PASSED it — the red did NOT reproduce today; the defect class is
+   single-sample stochasticity. Fix: the end-to-end leg runs ≤2
+   attempts, each a FRESH workspace + fixture clone; any green
+   satisfies; both-red surfaces with the persistent-failure message.
+   Rationale: the AC asks an ARCHITECTURAL question (live pipeline
+   works at all — feedback_n1_architectural_vs_n3_statistical), so a
+   single stochastic red refutes nothing a green proves; fixture
+   pinning would stub the live spawn and demote the test from
+   outcome-altitude. NOT deleted, NOT skipped; every per-attempt
+   assertion unchanged.
+2. **BASELINE re-pinned** `ac61137e` → `fd48f1a5` (the plan-pair
+   commit) so the seal window carries only this cycle's edits
+   (PB-retirement §14-decision-1 pattern).
+3. **Family-1 inventory correction Tier-0-confirmed** (plan §1.1):
+   only loam-spawn-isolation pins the archived manifest path; the
+   other three suites were collection-time import gaps. Fixed per
+   D-SUITEFIX.1 (TPI_6 cure; window `ce9d830..ca7f7157` Tier-0-walked
+   = exactly the 14 telegram-5-fix files) + D-SUITEFIX.2 (conftest).
+4. **Family-3 inventory correction Tier-0-confirmed** (plan §1.3):
+   hardcoded authoring-date premise (rotted since 2026-05-22), not a
+   rollover-window-only defect. Fix derives the second episode's
+   instant from the first episode's live `reference_time:`
+   frontmatter — immune to calendar AND to a UTC-midnight rollover
+   between the two writes.
+5. **AC.SUITEFIX.S execution shape:** per-family suite runs executed
+   at fix time (spawn-isolation 27p/1s; heavy-b-migrate +
+   acceptance-smoke + upgrade-merge-resolver 45p; loam-amend 308p;
+   loam-mode 72p/1s; odd-extractor BANDS_3+OREK_1 17p + C3_3 live
+   green); the combined single-invocation run executes at the sealed
+   tip post-seal and is recorded here.
+
+Verification evidence (Tier-0, this cycle):
+
+- Pre-fix reds reproduced: spawn-isolation 12F/15P/1S; heavy-b-migrate
+  6 collection errors; acceptance-smoke 6 collection errors;
+  upgrade-merge-resolver 1 collection error; odd-extractor 9F/932P/2S
+  (8×BANDS_3 + 1×OREK_1; live legs green); loam-amend FBMT1 smoke
+  ValueError (`relative_to` across dated dirs); loam-mode 1F/71P/1S
+  (four cross-mode refs).

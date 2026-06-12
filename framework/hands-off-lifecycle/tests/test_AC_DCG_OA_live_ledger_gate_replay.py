@@ -18,7 +18,15 @@ entry point against the LIVE ledger with NO pre-arranged state:
   (a) a draft asserting the Tilth raise size "is an open
       contradiction" draws a steer citing the $750k ruling;
   (b) a draft calling a genuinely-open ledger question open draws
-      none.
+      none. The open question is DERIVED from the live ledger at test
+      time (AC.DCGFIX.1 — never hardcoded: the original hardcoded
+      fixture rotted when the live ledger ruled it on 2026-06-10).
+      Leg A (preferred): the question of a live record whose status —
+      read directly from the record file, independent of the module
+      under test — is not "ruled". Leg B (when every live record is
+      ruled): a synthesized question whose subject tokens are nonces
+      + one ordinary word, each nonce verified absent from every live
+      record file, so it structurally cannot resolve to any ruling.
 
 The second half of the $750k failure-surface, replayed and caught: on
 2026-06-09 the persona told the owner the raise number was an open
@@ -85,16 +93,62 @@ def test_AC_DCG_OA_reopened_tilth_ruling_caught_live(monkeypatch) -> None:
     assert not result.blocked(), "steer-not-block: the send is never refused"
 
 
+_STATUS_RE_LINE = "status:"
+_QUESTION_RE_LINE = "question:"
+
+
+def _record_field(text: str, key: str) -> str:
+    """First ``key: value`` line of a ledger record, value stripped."""
+    for line in text.splitlines():
+        if line.lower().startswith(key):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
+def _derive_genuinely_open_question() -> str:
+    """AC.DCGFIX.1 — derive an open-question draft sentence from the
+    LIVE ledger at call time, premise established independently of the
+    module under test, so the premise structurally cannot rot.
+
+    Leg A (preferred): a live record whose ``status:`` line (read
+    directly from the record file) is not ``ruled`` — its question IS
+    genuinely open per ground truth.
+
+    Leg B (every live record is ruled): synthesize a question whose
+    subject tokens are two nonces + one ordinary word ("cadence"),
+    asserting each nonce absent from every live record file — a
+    conservative full-text superset of the guard's declared-vocabulary
+    resolution, so the subject cannot reach the >=2-token overlap any
+    resolution requires.
+    """
+    record_texts = [
+        p.read_text() for p in sorted(LIVE_DECISIONS.glob("*.md"))
+    ]
+    # Leg A — a genuinely-open record on file.
+    for text in record_texts:
+        status = _record_field(text, _STATUS_RE_LINE).lower()
+        question = _record_field(text, _QUESTION_RE_LINE)
+        if status and status != "ruled" and question:
+            return f"{question.rstrip('?.')} remains undecided."
+    # Leg B — synthesize a guaranteed-absent subject.
+    import uuid
+
+    corpus = "\n".join(record_texts).lower()
+    nonces = []
+    while len(nonces) < 2:
+        candidate = f"q{uuid.uuid4().hex[:10]}"
+        if candidate not in corpus:  # Tier-0 premise: absent on file
+            nonces.append(candidate)
+    return f"{nonces[0]} {nonces[1]} cadence remains undecided."
+
+
 @pytest.mark.skipif(
     not _live_records_present(),
     reason="live ledger records absent (CI / fresh machine)",
 )
 def test_AC_DCG_OA_genuinely_open_question_passes_live(monkeypatch) -> None:
     monkeypatch.chdir(LIVE_WORKSPACE)
-    result = gate(
-        "The frame-kernel dispatch-pack activation timing in pos3 "
-        "remains undecided — your call on when."
-    )
+    result = gate(_derive_genuinely_open_question())
     dcg = [
         r
         for r in result.reasons

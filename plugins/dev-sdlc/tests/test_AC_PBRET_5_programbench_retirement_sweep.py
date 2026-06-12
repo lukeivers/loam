@@ -94,6 +94,14 @@ REGISTERED_KEEPS: frozenset[str] = frozenset(
         "docs/plans/research/harness-landscape-and-roadmap-rerank.md",
         "docs/plans/research/harness-landscape-and-roadmap-rerank-plan.md",
         "docs/plans/promote-multi-channel-extractor-and-iteration-loop-family.md",
+        # D-K10 — completed-work plan-doc whose parent-context line +
+        # §14 register cite the (now-sealed) PB-retirement plan path as
+        # provenance; the stem survives only inside that citation.
+        # Register-row note: the plan §10 register sealed with the
+        # PB-retirement plan (docs/plans/sealed/), so per D-K9
+        # precedent this entry lives here and is surfaced in the build
+        # report (guard-breach-inventory 2026-06-12, RED #1).
+        "docs/plans/broken-suite-family-fixes.md",
     }
 )
 

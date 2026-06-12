@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-capability-refresh"
+version = "0.1.0"
+description = "Deterministic Class A capability-corpus refresh — fetch canonical upstreams, project entry bodies, emit a structured delta partitioned into auto-land vs review (claude-leverage-program Slice 1; plan: docs/plans/claude-leverage-program-s1-currency.md)."
+requires-python = ">=3.9"
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+capability-refresh = "capability_refresh.cli:main"
+
+[tool.setuptools]
+package-dir = {"capability_refresh" = "src/capability_refresh"}
+packages = ["capability_refresh"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

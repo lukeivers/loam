@@ -265,14 +265,3 @@ pos3, outside this fence).
 - Out-of-repo follow-up surfaced to dispatcher (D-GFLOOR.4): the
   pos3 memory item `feedback_amendment_dispatch_speedups` needs its
   narrow-test-scope clause annotated with the floor modification.
-
-# seal-guard-sweep-floor — mandatory cross-component GUARD-SWEEP FLOOR at every seal (location-agnostic fence-test discovery + repo-local pattern registry docs/plans/guard-floor.yaml with loud staleness; --scoped-sweep removed; breach blocked at the introducing cycle)
-
-slug: seal-guard-sweep-floor
-components: dev-sdlc+loam
-baseline: 1fe3c31a
-amendment-commit: 41a2362163f5b988685788e28d7269a4f570917e
-plan-doc: docs/plans/sealed/seal-guard-sweep-floor.md
-acs-satisfied: 8
-
-Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

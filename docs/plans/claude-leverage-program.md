@@ -128,7 +128,7 @@ owner-gate latency as separate line items.
 
 | Surface | Placement (recommended) | Rationale |
 |---|---|---|
-| Class A projection-refresh automation (Slice 1) | **NEW small framework surface or `framework/tools/`-adjacent script set**; binding to a scheduler is workspace-authored | Per locked δ design, loam ships the contract (source manifest schema + projection transform + diff flow); the schedule binding is workspace content. No existing component owns "keep reference docs current." Final new-component-vs-tools call is the Slice 1 sub-plan's first decision. |
+| Class A projection-refresh automation (Slice 1) | **NEW small framework surface or `framework/tools/`-adjacent script set**; binding to a scheduler is workspace-authored. **FINALISED at Slice 1 (D-CUR.1, sealed `c41f9473`): tools-adjacent NEW component `framework/tools/capability-refresh/` (first-seal).** | Per locked δ design, loam ships the contract (source manifest schema + projection transform + diff flow); the schedule binding is workspace content. No existing component owns "keep reference docs current." Final new-component-vs-tools call is the Slice 1 sub-plan's first decision. |
 | `CLAUDE_CAPABILITIES.md` (Slice 1) | **DEMOTE in place** to an index/redirect over `docs/capability-corpus/` (D-CLP.5) | Two parallel snapshots is how the 7-week-stale failure happened; one refreshable source of truth. |
 | Doctrine catalogue + selection rubric (Slice 2) | **EXTEND `plugins/loam-skills/`** — graduate pos3's `claude-feature-awareness` / `tool-selection-rubric` / `primitive-rationale-check` into shipped skills (merged/renamed as the builder sees fit) | The prototypes are proven in pos3 daily use; loam users don't have them. Skills are the auto-discoverable primitive (Lens 1). |
 | Doctrine structural check (Slice 2) | **Hook surface** — dev-mode dispatch path first (`plugins/dev-sdlc`), persona/runtime path second | Structural-enforcement-on-recurrence pattern; exact hook event + scope is builder's call. |
@@ -389,6 +389,10 @@ disk and working); its substrate references are stale (graphiti retired per
 the 2026-06-07 FBM rulings; persona paths renamed). Full-β revival (b) adds a
 1–2-week server build the currency outcome doesn't need; redesign (a)
 relitigates a locked decision without a bad-outcome reason. F4: HIGH.
+**DELIVERED by Slice 1** (`docs/plans/claude-leverage-program-s1-currency.md`;
+seal `c41f9473`, 2026-06-11): deterministic-projection core + cadence binding
+shipped at `framework/tools/capability-refresh/`; substrate re-derived (cloud
+routine primary — activation owner-gated pending — with launchd fallback).
 
 **D-CLP.4 ★ — Distribution mechanism (leg 4; owner explicitly open to
 alternatives; every public step ⛔OWNER).**
@@ -426,6 +430,8 @@ mechanism of the live failure (corpus seeded 2026-05; the 1038-line snapshot
 kept being cited as the Lens-1 reference and went 7 weeks stale + wrong).
 Deleting (b) breaks inbound references; refreshing both (a) doubles the
 projection surface for zero reader value. F4: HIGH.
+**DELIVERED by Slice 1** (seal `c41f9473`, 2026-06-11): demoted in place to a
+65-line index/redirect; exactly one canonical reference surface remains.
 
 ### F2 — honest doubts, named
 

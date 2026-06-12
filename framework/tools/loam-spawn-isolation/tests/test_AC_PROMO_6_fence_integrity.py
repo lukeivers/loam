@@ -18,11 +18,18 @@ churn, no scope creep; the promote ADDS a shared surface, it does NOT
 re-wire the proven sites).
 
 Plan: docs/plans/telegram-5-fix.md §1a / §1b / §1c / §3.2 OUT / §3.3
+(plan pair archived under docs/plans/sealed/ by amendment #143).
 Satisfiable trivially by fence discipline; falsifiable by a diff
-touching any §1a/§1b/§1c file.  The diff is taken against the
-manifest BASELINE (the pre-apply tip) so this is correct both during
-the build cycle and after seal — mirrors the sealed
-`test_AC_TPI_6_*` pattern.
+touching any §1a/§1b/§1c file inside THIS amendment's diff window.
+
+The diff window is BASELINE..SEAL_COMMIT — bounded at BOTH ends,
+mirroring the sealed `test_AC_TPI_6_*` cure (broken-suite-family-fixes
+AC.SUITEFIX.1). The original form diffed ``BASELINE..HEAD``; unbounded
+above, every later unrelated amendment fell inside the fence window,
+so the fence falsely tripped once post-seal history touched a fenced
+§1a/§1b file (e.g. the PB-retirement docstring edits to handsoff-loop).
+Bounding at the telegram-5-fix seal (`ca7f7157`) makes the fence
+permanent — only THIS amendment's deltas are ever in scope.
 """
 
 from __future__ import annotations
@@ -35,8 +42,29 @@ import pytest
 # .../loam-spawn-isolation/tests/<this> -> parents[4] == repo root.
 REPO_ROOT = Path(__file__).resolve().parents[4]
 _MANIFEST = (
-    REPO_ROOT / "docs" / "plans" / "telegram-5-fix.manifest.yaml"
+    REPO_ROOT / "docs" / "plans" / "sealed"
+    / "telegram-5-fix.manifest.yaml"
 )
+
+# Upper bound of the fence diff window — the telegram-5-fix seal
+# commit (`chore(seals): telegram-5-fix — workspace-bootstrap at
+# a7ca729`). Mirrors the TPI_6 sidecar pattern: read a local sidecar
+# SHA if one ever exists, else the pinned seal SHA, else HEAD (the
+# pre-seal in-cycle fallback). loam-spawn-isolation sealed against
+# the workspace-bootstrap anchor, so no tests/SEAL_COMMIT sidecar
+# exists here and the pinned SHA governs.
+SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
+_SEAL_COMMIT = "ca7f7157"
+
+
+def _seal_commit() -> str:
+    """Resolve the diff-window upper bound: sidecar SHA, else the
+    pinned seal SHA, else HEAD."""
+    if SEAL_COMMIT_PATH.exists():
+        txt = SEAL_COMMIT_PATH.read_text().strip()
+        if txt and txt != "HEAD":
+            return txt
+    return _SEAL_COMMIT or "HEAD"
 
 # Contract §1a — ALREADY isolated production `claude -p` clients.
 _FENCE_1A = (
@@ -84,8 +112,9 @@ def _baseline() -> str:
 
 def _changed_paths() -> list[str]:
     baseline = _baseline()
+    seal = _seal_commit()
     out = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{baseline}..HEAD"],
+        ["git", "diff", "--name-only", f"{baseline}..{seal}"],
         cwd=REPO_ROOT,
         text=True,
     )

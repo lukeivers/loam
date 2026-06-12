@@ -5,11 +5,11 @@ amendment:
   slug: broken-suite-family-fixes
   title: "broken-suite-family-fixes — four pre-existing broken-test families GREEN via un-rottable premise repair (PROMO_6 seal-bounded fence window + sealed manifest path; nested-tool conftest src-path resolution; odd-extractor BANDS_3 post-KEEL re-point + OREK_1 ACTIVE_MINOR derivation + live-variance robustness; FBMT1 live-date derivation; loam-mode cross-mode reference scrub at source, allowlist stays empty)"
 
-# BASELINE: ac61137e — canonical loam HEAD (main) at plan-authoring
-# time (docs(plans): plan-state seal SHA backfill + DCG fixture-
-# derivation register backfill). Builder re-walks if HEAD moves before
-# apply.
-baseline: "ac61137e"
+# BASELINE: fd48f1a5 — the plan-pair commit (the commit immediately
+# preceding this cycle's source-edit commits), re-pinned from the
+# plan-authoring tip ac61137e per the PB-retirement §14-decision-1
+# pattern so the seal window carries only this cycle's edits.
+baseline: "fd48f1a5"
 
 plan: docs/plans/broken-suite-family-fixes.md
 

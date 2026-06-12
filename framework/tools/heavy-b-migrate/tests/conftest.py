@@ -14,9 +14,20 @@ Each test pre-seeds the tracker with the value-prop root + spec-v1.0
 from __future__ import annotations
 
 import asyncio
+import sys
 from pathlib import Path
 
 import pytest
+
+# Resolve this tool's own src/ onto sys.path so the suite collects
+# from a fresh checkout with no package installation (the
+# handsoff-loop / capability-refresh conftest precedent;
+# broken-suite-family-fixes AC.SUITEFIX.2). `loam` is a PEP 420
+# namespace package, so the insertion composes with any editable
+# installs of sibling `loam.*` packages.
+_SRC = Path(__file__).resolve().parents[1] / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 from loam.objective_tracker import (
     LiftedFrom,

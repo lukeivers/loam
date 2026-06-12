@@ -130,8 +130,8 @@ owner-gate latency as separate line items.
 |---|---|---|
 | Class A projection-refresh automation (Slice 1) | **NEW small framework surface or `framework/tools/`-adjacent script set**; binding to a scheduler is workspace-authored. **FINALISED at Slice 1 (D-CUR.1, sealed `c41f9473`): tools-adjacent NEW component `framework/tools/capability-refresh/` (first-seal).** | Per locked δ design, loam ships the contract (source manifest schema + projection transform + diff flow); the schedule binding is workspace content. No existing component owns "keep reference docs current." Final new-component-vs-tools call is the Slice 1 sub-plan's first decision. |
 | `CLAUDE_CAPABILITIES.md` (Slice 1) | **DEMOTE in place** to an index/redirect over `docs/capability-corpus/` (D-CLP.5) | Two parallel snapshots is how the 7-week-stale failure happened; one refreshable source of truth. |
-| Doctrine catalogue + selection rubric (Slice 2) | **EXTEND `plugins/loam-skills/`** — graduate pos3's `claude-feature-awareness` / `tool-selection-rubric` / `primitive-rationale-check` into shipped skills (merged/renamed as the builder sees fit) | The prototypes are proven in pos3 daily use; loam users don't have them. Skills are the auto-discoverable primitive (Lens 1). |
-| Doctrine structural check (Slice 2) | **Hook surface** — dev-mode dispatch path first (`plugins/dev-sdlc`), persona/runtime path second | Structural-enforcement-on-recurrence pattern; exact hook event + scope is builder's call. |
+| Doctrine catalogue + selection rubric (Slice 2) | **EXTEND `plugins/loam-skills/`** — graduate pos3's `claude-feature-awareness` / `tool-selection-rubric` / `primitive-rationale-check` into shipped skills (merged/renamed as the builder sees fit) **FINALISED at Slice 2 (sealed `f308b398`): names kept; `claude-feature-awareness` re-cut as thin corpus router (no own claims); `tool-selection-rubric` corpus-pointer re-verified; `primitive-rationale-check` documents the hook-enforced audit-trail line; README rewritten from disk (25 packaged).** | The prototypes are proven in pos3 daily use; loam users don't have them. Skills are the auto-discoverable primitive (Lens 1). |
+| Doctrine structural check (Slice 2) | **Hook surface** — dev-mode dispatch path first (`plugins/dev-sdlc`), persona/runtime path second **FINALISED at Slice 2 (sealed `f308b398`): `primitive_check_guard.py` PreToolUse `Task` hook in `plugins/dev-sdlc/hooks/`; persona/runtime path is the named out-of-fence follow-on (runtime check for NORMAL-USE workspaces, master §2 row 4 "second").** | Structural-enforcement-on-recurrence pattern; exact hook event + scope is builder's call. |
 | `/goal`+`/loop` adoption (Slice 3) | **EXTEND existing skills** `goal-command` / `loop-command` / `handsoff-loop` + corpus Class B entries | The skills exist; the gap is consistent *use* + the bespoke-overlap ruling. |
 | Weekly knowledge pack (Slice 4 content) | **`docs/capability-corpus/` stays the canonical store**; a distribution projection is built FROM it | Single source of truth; the pack is a rendering, never a fork. |
 | Distribution channel (Slice 4) | **NEW public marketplace repo (⛔OWNER to create) carrying a knowledge plugin**; `framework/workspace-bootstrap/` extends to wire it for users | Per D-CLP.4. Outside any sealed fence until created; bootstrap extension is inside the existing `workspace-bootstrap` fence. |
@@ -366,6 +366,12 @@ trigger and the gap table still shows unused primitives). Advisory-only
 repeats the failure; structural-only without the plan-time leg catches
 violations too late (after the bespoke thing is designed). F4 confidence:
 HIGH on the layering, MEDIUM on which hook event — builder's call.
+**DELIVERED by Slice 2** (`docs/plans/claude-leverage-program-s2-doctrine.md`;
+seal `f308b398`, 2026-06-12): plan-time leg (convention + template REQUIRED
+Primitive-check section) + dispatch-time structural check
+(`primitive_check_guard.py` PreToolUse `Task` hook, dev-sdlc) + corpus-fed
+catalogue (graduated skill trio, loam-skills). Runtime/persona-path check for
+NORMAL-USE workspaces is the named out-of-fence follow-on.
 
 **D-CLP.2 — Native `/goal` vs bespoke `autonomy_continuation.py` (leg 2).**
 Alternatives: (a) keep bespoke, ignore native; (b) replace outright; (c)

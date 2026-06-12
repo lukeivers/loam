@@ -79,15 +79,10 @@ def attach_subparsers(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
             "commit, or verify"
         ),
     )
-    p_seal.add_argument(
-        "--scoped-sweep",
-        action="store_true",
-        help=(
-            "restrict cross-component sweep to manifest-listed "
-            "components (default: sweep every sealed component in "
-            "the workspace)"
-        ),
-    )
+    # NOTE: `--scoped-sweep` was REMOVED by the seal-guard-sweep-floor
+    # cycle (AC.GFLOOR.4 — the GUARD-SWEEP FLOOR runs at every seal
+    # with no bypass; docs/plans/seal-guard-sweep-floor.md
+    # D-GFLOOR.3). argparse now rejects the flag loudly.
     p_seal.add_argument(
         "--plan-doc",
         type=Path,
@@ -397,7 +392,6 @@ def dispatch(args: argparse.Namespace) -> int:
         return seal_cmd.run(
             args.manifest,
             no_finalize=args.no_finalize,
-            scoped_sweep=args.scoped_sweep,
             plan_doc=plan_doc,
             allow_untracked_globs=tuple(args.allow_untracked_globs),
             skip_fidraft_cleanup=args.skip_fidraft_cleanup,

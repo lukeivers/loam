@@ -4,9 +4,13 @@ Pre-extension behaviour (still available via ``--no-finalize``):
 advance sidecars to HEAD + append narrative.
 
 Post-extension default (per AC.D-sa.1): also stage the changes, run
-the touched component(s)' full pytest suite, run the cross-component
-sweep (every sealed component's seal-diff test by default; per
-AC.D-sa.3), create a deterministic seal commit (per AC.D-sa.2), and
+the touched component(s)' full pytest suite, run the GUARD-SWEEP
+FLOOR (the cross-component protection sweep set — convention-
+discovered fence tests + registry-resolved sweep-class guards, at
+EVERY seal regardless of fence, no bypass; per AC.GFLOOR.{1,2,4},
+superseding AC.D-sa.3's scoped-sweep clause — see
+``docs/plans/seal-guard-sweep-floor.md``), create a deterministic
+seal commit (per AC.D-sa.2), and
 verify ``loam amend apply --dry-run`` exits 0 against the post-seal
 HEAD (the amendment-#22 hard prereq, preserved at the seal step).
 
@@ -43,6 +47,11 @@ from pathlib import Path
 
 from loam_amend.commands import apply as apply_cmd
 from loam_amend.fidraft_cleanup import plan_slug_from_path, scan_fidraft
+from loam_amend.guard_floor import (
+    GuardFloorRegistryError,
+    REGISTRY_RELPATH,
+    discover_guard_floor,
+)
 from loam_amend.manifest import Manifest, ManifestError, load_manifest
 from loam_amend.narrative import append_narrative
 from loam_amend.paths import find_repo_root
@@ -153,42 +162,6 @@ def _working_tree_dirty(
             continue
         dirty.append(line)
     return dirty
-
-
-def _discover_sealed_components(repo_root: Path) -> list[str]:
-    """Return the list of sealed-component names in the workspace.
-
-    Discovery: every directory under ``framework/`` that carries a
-    ``tests/SEAL_COMMIT`` sidecar is a sealed component. This matches
-    the convention every seal-diff test in the workspace already
-    relies on (post-D.1 directory restructure: framework code lives
-    under ``framework/``). Returned sorted for determinism.
-    """
-    components: list[str] = []
-    for sidecar in repo_root.glob("framework/*/tests/SEAL_COMMIT"):
-        comp_dir = sidecar.parent.parent
-        if comp_dir.is_dir():
-            components.append(comp_dir.name)
-    return sorted(components)
-
-
-def _seal_diff_test_path(repo_root: Path, component: str) -> Path | None:
-    """Return the seal-diff test path for *component*, or None.
-
-    Convention (post-D.1): ``framework/<comp>/tests/test_no_sealed_amendments.py``
-    for most sealed components, ``framework/<comp>/tests/test_cross_cutting.py``
-    for hands-off-lifecycle (per amendment #22 ruling on the lifecycle's
-    different seal-diff test name).
-    """
-    comp_dir = repo_root / "framework" / component
-    candidates = (
-        comp_dir / "tests" / "test_no_sealed_amendments.py",
-        comp_dir / "tests" / "test_cross_cutting.py",
-    )
-    for c in candidates:
-        if c.exists():
-            return c
-    return None
 
 
 @dataclass
@@ -631,7 +604,6 @@ def _finalize(
     manifest_path: Path,
     repo_root: Path,
     *,
-    scoped_sweep: bool,
     plan_doc: Path | None,
     allow_untracked_globs: Sequence[str] = (),
     skip_fidraft_cleanup: bool = False,
@@ -820,62 +792,105 @@ def _finalize(
             return 3
 
     # ------------------------------------------------------------------
-    # (e) Cross-component sweep — every sealed component's seal-diff
-    # test by default; manifest-listed only when --scoped-sweep.
+    # (e) GUARD-SWEEP FLOOR — the cross-component protection sweep
+    # set, at EVERY seal regardless of the amendment's fence, with no
+    # bypass (AC.GFLOOR.{1,2,4}; docs/plans/seal-guard-sweep-floor.md).
+    # Convention-discovered fence tests (AC.GFLOOR.1) + sweep-class
+    # guards resolved from the repo-local registry
+    # ``docs/plans/guard-floor.yaml`` (AC.GFLOOR.2). A floor breach
+    # halts BEFORE the seal commit — the breach is blocked at the
+    # introducing cycle, not a later innocent one.
     # ------------------------------------------------------------------
-    if scoped_sweep:
-        sweep_components = [c.name for c in manifest.components]
-    else:
-        sweep_components = _discover_sealed_components(repo_root)
-        if not sweep_components:
-            _emit_diagnostic(
-                _FailureCheckpoint(
-                    code=3,
-                    klass="sweep-discovery-empty",
-                    detail=(
-                        "cross-component sweep discovery found no "
-                        "sealed components (no */tests/SEAL_COMMIT "
-                        "marker files). Verify workspace layout and "
-                        "re-invoke; or use --scoped-sweep to bypass."
-                    ),
-                )
+    try:
+        floor = discover_guard_floor(repo_root)
+    except GuardFloorRegistryError as exc:
+        _emit_diagnostic(
+            _FailureCheckpoint(
+                code=3,
+                klass="guard-floor-registry-invalid",
+                detail=(
+                    f"guard-floor registry is malformed:\n  {exc}\n"
+                    "Fix the registry and re-invoke. Sidecar + "
+                    "narrative changes left uncommitted."
+                ),
             )
-            return 3
-
-    sweep_run: list[str] = []
-    sweep_skipped: list[str] = []
-    for comp_name in sweep_components:
-        seal_diff = _seal_diff_test_path(repo_root, comp_name)
-        if seal_diff is None:
-            # No seal-diff test convention recognised for this
-            # component — skip with a note (defensive).
-            sweep_skipped.append(comp_name)
-            continue
-        rc, output = _run_pytest(repo_root, seal_diff)
-        if rc != 0:
-            _emit_diagnostic(
-                _FailureCheckpoint(
-                    code=3,
-                    klass="cross-component-sweep-failed",
-                    detail=(
-                        f"sweep regression in '{comp_name}'\n"
-                        f"  seal-diff test: {seal_diff.relative_to(repo_root)}\n\n"
-                        + output
-                        + "\nSidecar + narrative changes left "
-                        "uncommitted. Fix the regression and re-invoke."
-                    ),
-                )
-            )
-            return 3
-        sweep_run.append(comp_name)
-    sweep_summary = (
-        f"{len(sweep_run)} components green"
-        + (
-            f" ({len(sweep_skipped)} skipped — no seal-diff test recognised: "
-            f"{', '.join(sweep_skipped)})"
-            if sweep_skipped
-            else ""
         )
+        return 3
+    if floor.registry_present and (
+        floor.stale_patterns or not floor.fence_targets
+    ):
+        # AC.GFLOOR.3 — in a floor-enforcing (registry-carrying)
+        # repo, staleness is loud: a zero-match pattern or an empty
+        # fence discovery halts the seal instead of silently
+        # shrinking the floor.
+        stale_lines = [
+            f"  unresolvable pattern: {p}" for p in floor.stale_patterns
+        ]
+        if not floor.fence_targets:
+            stale_lines.append(
+                "  fence-test discovery returned ZERO tracked "
+                "*/tests/test_no_sealed_amendments.py / "
+                "test_cross_cutting.py files"
+            )
+        _emit_diagnostic(
+            _FailureCheckpoint(
+                code=3,
+                klass="guard-floor-stale",
+                detail=(
+                    f"guard-sweep floor is stale ({REGISTRY_RELPATH} "
+                    "is present, so the floor is enforced loudly):\n"
+                    + "\n".join(stale_lines)
+                    + "\nUpdate the registry pattern(s) to the "
+                    "guard's current location (or verify the tree) "
+                    "and re-invoke. Sidecar + narrative changes left "
+                    "uncommitted."
+                ),
+            )
+        )
+        return 3
+    if floor.empty:
+        # Registry-less repo with no fence tests (young / synthetic
+        # workspace): nothing to sweep is legitimate — proceed with a
+        # printed note, never a false halt (AC.GFLOOR.3).
+        print(
+            "guard floor: no floor members discovered (no "
+            f"{REGISTRY_RELPATH}, no tracked fence tests) — "
+            "nothing to sweep"
+        )
+    floor_targets = floor.targets
+    for target in floor_targets:
+        rc, output = _run_pytest(repo_root, repo_root / target)
+        if rc != 0:
+            # AC.GFLOOR.5 — D-GFLOOR.2 failure UX: name the breached
+            # guard, the introducing window, and an inspection
+            # command. THIS cycle's diff is the introducing diff.
+            _emit_diagnostic(
+                _FailureCheckpoint(
+                    code=3,
+                    klass="guard-floor-breach",
+                    detail=(
+                        f"guard-sweep floor breach\n"
+                        f"  breached floor guard: {target}\n\n"
+                        + output
+                        + "\nThis cycle's diff is the introducing "
+                        "diff — the guard-sweep floor blocks the "
+                        "breach at the introducing cycle "
+                        "(docs/plans/seal-guard-sweep-floor.md).\n"
+                        f"  introducing window: {manifest.baseline}.."
+                        f"{_short_sha(amendment_sha)}\n"
+                        f"  inspect: git diff {manifest.baseline}.."
+                        f"{_short_sha(amendment_sha)} --stat\n"
+                        "Sidecar + narrative changes left "
+                        "uncommitted. Fix the breach and re-invoke."
+                    ),
+                )
+            )
+            return 3
+    n_fence = len(floor.fence_targets)
+    sweep_summary = (
+        f"guard floor {len(floor_targets)} targets green "
+        f"({n_fence} fence + {len(floor_targets) - n_fence} "
+        "sweep-class)"
     )
 
     # ------------------------------------------------------------------
@@ -1138,7 +1153,6 @@ def run(
     manifest_path: Path,
     *,
     no_finalize: bool = False,
-    scoped_sweep: bool = False,
     plan_doc: Path | None = None,
     allow_untracked_globs: Sequence[str] = (),
     skip_fidraft_cleanup: bool = False,
@@ -1164,7 +1178,6 @@ def run(
         manifest,
         manifest_path,
         repo_root,
-        scoped_sweep=scoped_sweep,
         plan_doc=plan_doc,
         allow_untracked_globs=allow_untracked_globs,
         skip_fidraft_cleanup=skip_fidraft_cleanup,

@@ -1,0 +1,97 @@
+schema_version: 1
+amendment:
+  number: 184  # Next sequential amendment. Highest manifest counter on disk
+               # is 183 (conventional-install-pypi-publish). The builder
+               # CONFIRMS the exact number at `loam amend apply` against the
+               # live counter (feedback_version_numbers_at_release_time —
+               # never pre-bake a number that drifts).
+  slug: claude-leverage-program-s1-currency
+  title: "Claude-leverage program Slice 1 — CURRENCY: the capability corpus stays current by loam's own recurring machinery. Corrects the proven-wrong subagent-recursion claim (Claude Code 2.1.172: sub-agents spawn sub-agents to 5 levels — verified live 2026-06-11) in the Class A corpus; demotes the 7-weeks-stale docs/CLAUDE_CAPABILITIES.md snapshot to an index/redirect over docs/capability-corpus/ (D-CLP.5, master-locked) so exactly ONE canonical capability-reference surface exists; lands a NEW tools-adjacent component framework/tools/capability-refresh/ (first-seal) implementing the locked-2026-04-26 δ deterministic-projection core — source manifest as data → fetch canonical upstreams → project Class A bodies (NO LLM authorship) → structured delta partitioned per D-CUR.4 (body re-projections + fetch-ts stamps + stale-markings AUTO-LAND; new claims / removals / [user-intent phrasings] overlay touches / contradictions SURFACE as pending-delta for review) → source_fetch_ts stamped, fetch failure marks stale (never silently current); binds an unattended cadence for the canonical repo (recommended: scheduled cloud routine via /schedule — no machine awake, Lens 1, NO API key; shipped launchd-plist fallback if live verification fails; session-cron ruled out as session-only) on the locked cadence classes (high-velocity daily, long-form weekly; workspace-overridable). NO public-action steps — the corpus is in-repo; distribution is Slice 4 (⛔OWNER gates live there). ★ outcome-altitude AC.CLP-CUR.4: an upstream capability change published AFTER the seal appears in the corpus or a surfaced pending-delta within one cadence cycle with no manual trigger."
+
+# BASELINE: 266aa93cc878f422a20e83376a35bfbd660dad8c — HEAD of main at
+# sub-plan authoring (retirement STATE/roadmap SHA-register backfill).
+# The builder CONFIRMS against the actual predecessor tip at apply time.
+baseline: "266aa93cc878f422a20e83376a35bfbd660dad8c"
+
+plan: docs/plans/claude-leverage-program-s1-currency.md
+
+components:
+  # The refresh tool — NEW tools-adjacent component, first-seal (D-CUR.1;
+  # precedent: usage-window-guard-foundation new_component pattern +
+  # framework/tools/loam-acceptance-smoke shape). Fenced because it WRITES
+  # the corpus: an unfenced corpus-writer is a protection-floor hole.
+  # The canonical-repo cadence-binding artefacts (routine spec / plist +
+  # ops docs) live inside this tree so the fence stays single-component.
+  - name: capability-refresh
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/tools/capability-refresh/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/capability-refresh/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The corpus + the
+# demoted snapshot are repo-level docs, not component source. NO
+# primary-persona admission: the recursion fact-fix extends the EXISTING
+# indexed entry docs/capability-corpus/claude-code/background-agents.md,
+# so no persona-spine index edit is needed (plan §2 row 5 / §3.3); if the
+# builder finds a new entry genuinely required, that is plan halt trigger
+# 5/6 — halt and surface, never widen silently.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/capability-corpus/
+  files:
+    - docs/CLAUDE_CAPABILITIES.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/claude-leverage-program-s1-currency.md
+  body: |
+    # Claude-leverage program Slice 1 — CURRENCY — apply ladder
+
+    First of four slices under the master plan
+    `docs/plans/claude-leverage-program.md` (program ratified 2026-06-11;
+    D-CLP.4 owner-RATIFIED Discord 1514753768175042771; D-CLP.3 + D-CLP.5
+    delivered by this slice). Root cause fixed first: the Lens-1 reference
+    surface went 7 weeks stale and factually wrong on a load-bearing claim
+    (gap analysis 2026-06-11 §3.1 — "subagents cannot spawn other
+    subagents" vs Claude Code 2.1.172's 5-level recursion), because the
+    locked-2026-04-26 δ refresh automation never shipped and two parallel
+    reference surfaces drifted apart.
+
+    This amendment:
+      1. Corrects the recursion claim in the Class A corpus
+         (docs/capability-corpus/claude-code/background-agents.md,
+         re-verified live at build) and sweeps the repo for contradicting
+         reference text (AC.CLP-CUR.1).
+      2. Demotes docs/CLAUDE_CAPABILITIES.md in place to an index/redirect
+         over docs/capability-corpus/ — exactly one canonical
+         capability-reference surface remains (AC.CLP-CUR.2, D-CLP.5).
+      3. Lands framework/tools/capability-refresh/ (NEW component,
+         first-seal): deterministic Class A projection from a data-declared
+         source manifest; structured delta; auto-land vs review-flag
+         partition per D-CUR.4 (new claims / removals / overlay touches /
+         contradictions NEVER auto-land — the protection-floor guard);
+         source_fetch_ts stamping + stale-marking on fetch failure
+         (AC.CLP-CUR.3/5/6); no-cross-class-write — Class B is structurally
+         untouched (AC.CLP-CUR.7, locked §7bis.3 invariant).
+      4. Binds the unattended cadence for the canonical repo: cloud routine
+         primary (live-verified at build; no machine awake; no API key),
+         shipped launchd-plist fallback recorded in plan §14 if the
+         verification says no (D-CUR.2).
+      5. ★ AC.CLP-CUR.4 (outcome-altitude): observed over the first real
+         post-seal cadence cycle — an upstream change lands in the corpus
+         or a surfaced pending-delta with no manual trigger; the roadmap
+         row carries a pending-observation marker until green.
+
+    Deferred with named handoffs (plan §7): gap-analysis §3.2
+    (claude-feature-awareness skill — pos3 surface, fixed by Slice 2
+    graduation) and §3.3 (loam-skills README count — Slice 2 owns that
+    fence and rewrites the README). β MCP knowledge-server and Class B
+    accrual stay out per master §7.
+
+    NO public-action steps; NO Anthropic API key anywhere (any LLM-routed
+    step uses claude -p via the house client with spawn isolation).
+    BASELINE 266aa93c — HEAD at sub-plan authoring; counter 184 next free;
+    builder confirms both at apply time.

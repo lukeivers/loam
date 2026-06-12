@@ -44,9 +44,21 @@ components:
   # fails by construction. Any hands-off-lifecycle edit beyond this
   # intent is out-of-scope drift — seal-diff review enforces.
   - name: hands-off-lifecycle
-    seal_test: framework/hands-off-lifecycle/tests/test_no_sealed_amendments.py
+    # CORRECTED at apply time (builder, against the established
+    # hands-off-lifecycle precedent — every prior sealed manifest that
+    # touches this component, e.g. n4-mvp-user-model-and-config /
+    # memory-decision-ledger-surfacing-dispatch-packs): the component's
+    # seal-test is the cross-cutting H19/H20/H21 suite (NOT a
+    # test_no_sealed_amendments.py, which this component does not have),
+    # and its BASELINE is FROZEN at project-start (H19 frozen-BASELINE
+    # convention per amendment #23 / #61). The original manifest named a
+    # nonexistent seal-test + frozen_baseline:false; both are mechanical
+    # data errors, fixed to match reality. test_cross_cutting.py passes
+    # against this cycle's wiring edits (top-level prefixes framework/
+    # plugins/docs are all in its admitted set).
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
     sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
-    frozen_baseline: false
+    frozen_baseline: true
     extra_allowed_prefixes: []
 
 # Universal admissions — per amendment #22 ruling #3. Plan-doc + status

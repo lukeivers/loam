@@ -27,13 +27,21 @@ status line (the exact drift surface that produced the 2026-06-09
 Build-state classes (AC.PSI.1):
 
   * ``sealed`` — the plan's seal narrative landed in the sealed
-    archive (``docs/plans/sealed/<slug>.md``).
-  * ``partially-sealed`` — no sealed-archive narrative, but the git
-    subject history carries apply/seal evidence naming the plan's slug
-    (``chore(amend): <slug> …`` / ``chore(seals): <slug> …``). Sealing
-    a slice in the real repo flips a plan into (or through) this state
-    on the next derivation with NO doc edit — the derived-not-stored
-    contract.
+    archive (``docs/plans/sealed/<slug>.md``), OR the plan's NEWEST
+    slug-named evidence commit in the HEAD-reachable subject history
+    is a completed seal (``chore(seals): <slug> …``) — the
+    latest-evidence-seal-reachability predicate (AC.PSTATE.1 /
+    D-PSTATE.1, plan-state-false-partial-fix). Archive presence is a
+    doc convention, not the build fact; keying ``sealed`` on archive
+    presence alone reported 18 fully-sealed legacy-narrative plans as
+    "partially built" (the 2026-06-11 false-dispatch-premise defect).
+  * ``partially-sealed`` — build evidence exists but the newest
+    slug-named evidence commit is NOT a completed seal (an apply
+    landed; its seal has not) — a genuinely mid-cycle plan
+    (AC.PSTATE.2). A NEW apply after a prior seal (next cycle
+    mid-flight) re-enters this state. Sealing a slice in the real
+    repo flips a plan through these states on the next derivation
+    with NO doc edit — the derived-not-stored contract.
   * ``no-build-evidence`` — a plan-doc exists but the ref graph
     carries no apply/seal commit naming its slug.
 
@@ -74,6 +82,12 @@ SEALED_SUBDIR = Path("docs/plans/sealed")
 #: the deterministic shapes ``loam amend apply`` / ``loam amend seal``
 #: author.
 _EVIDENCE_SUBJECT_PREFIXES = ("chore(amend): ", "chore(seals): ")
+
+#: A completed-seal subject (the second evidence shape). When the
+#: NEWEST evidence line for a slug carries this prefix, the plan's
+#: latest build cycle completed — the sealed verdict's git-fact arm
+#: (AC.PSTATE.1 / D-PSTATE.1).
+_SEAL_SUBJECT_PREFIX = "chore(seals): "
 
 #: Builder-companion plan docs (``<slug>.builder-plan.md``) are
 #: auxiliary artefacts of the SAME plan identity, not independent
@@ -154,6 +168,17 @@ def _evidence_for_slug(
     return tuple(hits)
 
 
+def _latest_evidence_is_seal(evidence: tuple[str, ...]) -> bool:
+    """True when the NEWEST evidence line is a completed seal commit
+    (AC.PSTATE.1 — evidence lines are ``<short-sha> <subject>``,
+    newest-first by ``git log`` order; HEAD-reachability is by
+    construction of the subject probe)."""
+    if not evidence:
+        return False
+    _sha, _, subject = evidence[0].partition(" ")
+    return subject.startswith(_SEAL_SUBJECT_PREFIX)
+
+
 def _plan_title(doc: Path, slug: str) -> str:
     """The plan's first ``# `` heading (identity), else the prettified
     slug. Bounded read; fail-soft — title is identity, never state."""
@@ -230,9 +255,13 @@ def derive_plan_states(
         in_archive = slug in sealed
         doc = active.get(slug, sealed.get(slug))
         evidence = _evidence_for_slug(slug, subjects)
-        if in_archive:
+        if in_archive or _latest_evidence_is_seal(evidence):
+            # Sealed: archive narrative present (doc convention) OR the
+            # newest HEAD-reachable evidence is a completed seal commit
+            # (the git build-fact — AC.PSTATE.1 / D-PSTATE.1).
             build_state = BUILD_STATE_SEALED
         elif evidence:
+            # Mid-cycle: an apply landed; its seal has not (AC.PSTATE.2).
             build_state = BUILD_STATE_PARTIAL
         else:
             build_state = BUILD_STATE_PENDING

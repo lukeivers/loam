@@ -302,3 +302,52 @@ Verification evidence (Tier-0, this cycle):
   (8×BANDS_3 + 1×OREK_1; live legs green); loam-amend FBMT1 smoke
   ValueError (`relative_to` across dated dirs); loam-mode 1F/71P/1S
   (four cross-mode refs).
+
+# broken-suite-family-fixes — four pre-existing broken-test families GREEN
+
+Per docs/plans/broken-suite-family-fixes.md. Four broken-test
+families — inventoried by the 2026-06-11 PB-retirement cycle +
+plan-state §16b finding 4 (pos3 task #11), all Tier-0 re-reproduced
+pre-baseline this cycle — repaired by making each rotted premise
+un-rottable, never by loosening an assertion:
+
+1a. loam-spawn-isolation PROMO_6: the fence test pinned the
+archived manifest path (moved to docs/plans/sealed/ by amendment
+#143) AND diffed BASELINE..HEAD — unbounded above, so post-seal
+history falsely tripped the fence. Cure = the sibling TPI_6 house
+pattern: sealed manifest path + seal-commit upper bound
+(sidecar → pinned ca7f7157 → HEAD fallback). The §1a/§1b/§1c
+byte-unchanged protective assertions unchanged in substance.
+
+1b. heavy-b-migrate / loam-acceptance-smoke /
+upgrade-merge-resolver: collection-time ModuleNotFoundError (tool
+packages not installed; no in-suite src-path resolution). Cure =
+conftest sys.path insertion (handsoff-loop / capability-refresh
+precedent) — fresh-checkout-proof, no interpreter mutation.
+
+2. odd-extractor: BANDS_3 re-pointed to the post-KEEL-P1
+documentation contract (methodology §6 band restatement + the
+relocation pointer + relocated mechanics markers in
+adapter-conventions.md — every pre-rewrite marker still asserted
+at its current canonical home); OREK_1 version premise derived
+from docs/ACTIVE_MINOR (PCVR-anchored); the live-LLM variance
+test made variance-robust per D-SUITEFIX.4 (NOT deleted, NOT
+blanket-skipped).
+
+3. loam-amend FBMT1 smoke: hardcoded authoring-date ref_time
+(2026-05-21) put the two episodes in different UTC date dirs →
+relative_to ValueError every day since. Cure = derive the second
+episode's reference time from the FIRST episode's live on-disk
+dated location at test time (DCG_OA cure shape).
+
+4. loam-mode AC.F3: four path-shaped provenance citations in
+always-loaded artefacts (two primary-persona skills, README.md,
+docs/CLAUDE_CAPABILITIES.md) referenced dev-only paths. Scrubbed
+at source by de-pathing the citations (provenance prose kept);
+KNOWN_CROSS_MODE_DEBT stays EMPTY; no loam-mode test edited.
+
+ACs: AC.SUITEFIX.1 (spawn-isolation), .2 (three nested suites
+fresh-checkout-proof), .3 (odd-extractor), .4 (loam-amend), .5
+(loam-mode, allowlist empty), .S ★ outcome-altitude (all suites
+green in one combined production-entry-point run at the sealed
+tip). ZERO production-source changes.

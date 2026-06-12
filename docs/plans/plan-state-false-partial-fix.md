@@ -128,14 +128,21 @@ LOCAL only — never pushed.
 
 ## §14 Method-decision register
 
-Populated at build/seal time:
-
-- Plan+manifest commit: 4e2447ab
-- Source/test commits: 0bb0791e (fix + AC tests), 5151ed5a (OA re-grounding)
-- Apply commit: ee46a5d6
-- Seal commit: 718337ff
-- D-PSTATE.1: implemented as `_EVIDENCE_SEAL_PREFIX` check on
-  `seal_evidence[0]` (evidence is newest-first by git-log order).
+- Plan+manifest commit: d17da709
+- Source/test commits: 7a76fb4e (fix + AC.PSTATE.1-3 tests), 51114e69
+  (AC.PSTATE.4-5 OA re-grounding)
+- Apply commit: b7fc83d3
+- Seal commit: PENDING — seal HALTED on a pre-existing sweep failure
+  (§16 finding 3); re-invoke `loam amend seal` after the dispatcher
+  rules on the AC.α.8 breach.
+- D-PSTATE.1: implemented as `_latest_evidence_is_seal()` checking
+  `seal_evidence[0]`'s subject for the `chore(seals): ` prefix
+  (evidence is newest-first by git-log order; HEAD-reachability by
+  construction of the `git log` probe).
+- All 5 ACs verified green at build time: 11 passed (loam-cli
+  PSTATE+PSI suites), 2 passed (AC.PSI.OA re-grounded), 2 passed
+  (AC.CLG.OA re-grounded), 34 passed (fixture-consumer sweep:
+  PSI_2/3, WVS_MR_1, CLG_1-4).
 
 ## §15 Backwards-compat verification
 
@@ -155,3 +162,29 @@ Populated at build/seal time:
 - The FIDRAFT cause-guess ("commit-count heuristic + stale `<backfill>`
   placeholders") was wrong in mechanism; corrected in §2. No scope
   change.
+
+## §16b Halt-and-surface findings (build/seal time)
+
+3. **Seal HALTED (2026-06-12) — pre-existing AC.α.8 sweep breach,
+   NOT caused by this cycle.** `loam amend seal` ran primary-persona's
+   full suite;
+   `test_AC_alpha_8_no_capability_content_outside_admitted_paths.py::test_AC_alpha_8_user_intent_phrasings_marker_only_in_admitted_paths`
+   fails: the `[user-intent phrasings]` schema marker exists in 8
+   non-admitted paths (docs/CLAUDE_CAPABILITIES.md, docs/STATE.md,
+   framework/tools/capability-refresh/* — README, src x3, tests x2).
+   Tier-0: all 8 carry the marker at this cycle's baseline 12cd606b;
+   this cycle's diff (12cd606b..51114e69) is fully disjoint from them.
+   Introduced by claude-leverage-program-s1-currency (apply 6c5dc5a2,
+   seal c41f9473), whose fence did not run primary-persona's sweep, so
+   the breach landed silently and surfaces here. NOT fixed in this
+   cycle: extending the test's ADMITTED_PREFIXES maps to no AC.PSTATE.*
+   (ODD §2.5) and the admitted-set judgment belongs to the CURRENCY
+   plan's scope. Cycle state at halt: apply b7fc83d3 committed; seal
+   WIP (3 SEAL_COMMIT sidecars modified + untracked
+   docs/plans/sealed/plan-state-false-partial-fix.md) left uncommitted
+   in-tree exactly as `loam amend seal` left it for re-invoke.
+   Proposed resolutions for dispatcher ruling: (a) one-line
+   ADMITTED_PREFIXES extension (capability-refresh tree +
+   docs/CLAUDE_CAPABILITIES.md + docs/STATE.md) ratified as a CURRENCY
+   follow-up, then re-invoke this seal; or (b) a separate corrective
+   cycle on the CURRENCY plan first.

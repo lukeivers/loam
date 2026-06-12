@@ -2,7 +2,8 @@
 
 > **This file is an index/redirect, not a reference.** It was demoted in
 > place on 2026-06-11 (claude-leverage-program Slice 1, D-CLP.5 —
-> master-locked; plan: `docs/plans/claude-leverage-program-s1-currency.md`).
+> master-locked; plan: claude-leverage-program-s1-currency, dev-mode
+> plan corpus).
 > **The canonical capability-reference surface is
 > [`docs/capability-corpus/`](capability-corpus/AUTHORING.md)** — exactly
 > one canonical surface exists; this file carries no independently

@@ -114,7 +114,8 @@ The full architecture map lives at
 references live under [`docs/components/`](docs/components/) (the two
 most recent components — `state-migration-engine` and
 `protection-matrix` — ship as runtime verbs and are documented in
-`docs/STATE.md` and the roadmap pending a dedicated component page).
+the development state log and the roadmap pending a dedicated
+component page).
 
 ## Design lenses
 
@@ -163,8 +164,8 @@ loam shipped v0.1.0 as the first public release on 2026-04-29; the
 current public release is v1.2.0. The project remains intentionally
 narrow: infrastructure components, one demonstration plugin (Dev/SDLC),
 and enough scaffolding for a stranger to clone, run, and reach a useful
-session without reading source. See `docs/STATE.md` and
-`docs/release-roadmap.md` for the per-version detail.
+session without reading source. See `docs/release-roadmap.md` (and the
+development state log alongside it) for the per-version detail.
 
 The maintainer is one person on a personal GitHub account
 (`lukeivers/loam`). Bus factor is honestly one. If loam helps you,

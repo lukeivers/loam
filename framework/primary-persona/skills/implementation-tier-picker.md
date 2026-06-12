@@ -93,6 +93,6 @@ User onboards a household-finance workspace. Onboarding survey ends; the persona
 ## Authority
 
 - Plan-doc: `docs/plans/v0-7-0-non-tech-user-surface.md` AC.NTU.7.
-- Source idea: `docs/FUTURE_IDEAS_DRAFT.md` Telegram 10575 capture (2026-05-09).
+- Source idea: FUTURE-IDEAS draft capture, Telegram 10575 (2026-05-09; dev-mode idea ledger).
 - Tier-ladder doc: `docs/implementation-tiers.md`.
 - Method decision: D-NTU.7 (SKILL fence = `framework/primary-persona/skills/`; non-tech users are the primary audience for the tier conversation).

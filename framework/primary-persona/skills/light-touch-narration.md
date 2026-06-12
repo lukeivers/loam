@@ -84,5 +84,5 @@ The default is `default`.
 ## Authority
 
 - Plan-doc: `docs/plans/v0-7-0-non-tech-user-surface.md` AC.NTU.1.
-- Source idea: `docs/FUTURE_IDEAS.md` Idea 2 (light-touch education).
+- Source idea: FUTURE-IDEAS Idea 2 (light-touch education; dev-mode idea ledger).
 - Method decision: D-NTU.1 (ship with named lead-phrases for first ship; loosen to format-only constraint if first reader finds the lead-phrase set stilted).

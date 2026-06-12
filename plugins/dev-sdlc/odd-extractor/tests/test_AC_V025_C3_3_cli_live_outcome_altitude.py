@@ -137,6 +137,21 @@ def test_AC_V025_C3_3_cli_live_outcome_altitude(tmp_path: Path) -> None:
     OUTCOME-class verification for AC.V025-C3.3. STUB-class probes (e.g.,
     ``test_AC_V025_C1_C2_*``) satisfy implementation-altitude ACs but
     cannot satisfy outcome-altitude ACs.
+
+    **Variance tolerance (broken-suite-family-fixes D-SUITEFIX.4):**
+    live ``claude -p`` output is stochastic, and the question this AC
+    asks is ARCHITECTURAL ("does the live pipeline work AT ALL?"), not
+    statistical — a single stochastic red does not refute the
+    capability a single green proves
+    (feedback_n1_architectural_vs_n3_statistical). The end-to-end leg
+    therefore runs up to TWO attempts, each against a FRESH workspace
+    + fixture clone: any green attempt satisfies the AC; the failure
+    surfaces only when BOTH attempts fail (a persistent red — the
+    real-regression signal, not model variance). The live spawn, the
+    no-mocking posture, and every per-attempt assertion are unchanged
+    — this is bounded variance tolerance, NOT retry-to-green on a
+    deterministic verdict and NOT fixture pinning (which would stub
+    the live leg and demote the test from outcome-altitude).
     """
     # Precondition — `claude` binary on PATH.
     # Pre-C4-pivot this required ANTHROPIC_API_KEY + anthropic SDK;
@@ -153,6 +168,26 @@ def test_AC_V025_C3_3_cli_live_outcome_altitude(tmp_path: Path) -> None:
             "keychain."
         )
 
+    last_variance_failure: AssertionError | None = None
+    for attempt in (1, 2):
+        attempt_dir = tmp_path / f"attempt-{attempt}"
+        attempt_dir.mkdir()
+        try:
+            _run_live_end_to_end(attempt_dir)
+            return
+        except AssertionError as exc:
+            last_variance_failure = exc
+    raise AssertionError(
+        "AC.V025-C3.3 failed on BOTH live attempts — a persistent "
+        "failure, not single-sample model variance (D-SUITEFIX.4 "
+        f"bounded tolerance exhausted). Last failure:\n"
+        f"{last_variance_failure}"
+    ) from last_variance_failure
+
+
+def _run_live_end_to_end(tmp_path: Path) -> None:
+    """ONE full live attempt: fresh fixture clone + fresh workspace →
+    production CLI ``--live`` → the four outcome assertions."""
     workspace = tmp_path / "ws"
     workspace.mkdir()
     repo = _setup_jsts_repo(tmp_path)

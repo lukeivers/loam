@@ -24,7 +24,7 @@ Per plan-doc ``amendment-134-fbm-tier1-foundations.md`` §4 AC.FBMT1.S.
 from __future__ import annotations
 
 import textwrap
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -117,8 +117,24 @@ def test_AC_FBMT1_S_end_to_end_smoke(sealed_repo, capsys, tmp_path: Path):
     # Write a second memory file using the FileMemoryStore directly
     # (the worker uses turn-id as filename; this exposes the path
     # we need for the supersession marker).
+    #
+    # The reference time is DERIVED from the FIRST episode's live
+    # frontmatter at test time (broken-suite-family-fixes
+    # AC.SUITEFIX.4): write_episode files episodes under the
+    # reference-time UTC date dir, and the supersession marker below
+    # is a same-directory relative path — so the two episodes MUST
+    # share a dated dir. The original hardcoded authoring-date
+    # ``datetime(2026, 5, 21, …)`` matched the worker-written first
+    # episode's dir only on 2026-05-21 (UTC) and rotted the next day.
+    # Deriving the instant from the first episode's own
+    # ``reference_time:`` makes co-location structural — immune to
+    # the calendar AND to a UTC-midnight rollover between the two
+    # writes.
     store = FileMemoryStore(memory_dir=memory_dir)
-    ref_time = datetime(2026, 5, 21, 10, 0, 0, tzinfo=timezone.utc)
+    first_ref_raw = _split_frontmatter(
+        first_memory_path.read_text(encoding="utf-8")
+    )[0]["reference_time"]
+    ref_time = datetime.fromisoformat(str(first_ref_raw))
     store.write_episode(
         name="turn/second-rule",
         body="quokka platypus rare lexical match shared with first",

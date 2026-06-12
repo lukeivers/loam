@@ -34,11 +34,27 @@ def test_directory_layout() -> None:
 
 
 def test_pyproject_parses_and_declares_required_metadata() -> None:
-    """pyproject.toml parses; declares name, version, requires-python."""
+    """pyproject.toml parses; declares name, version, requires-python.
+
+    The version premise is DERIVED from ``docs/ACTIVE_MINOR`` at test
+    time (broken-suite-family-fixes D-SUITEFIX.6): this pyproject is
+    in the PCVR lockstep's IN_SCOPE_PYPROJECTS set, so its version
+    equals the current shipped MINOR by structural enforcement
+    (test_AC_PCVR_pyproject_version_lockstep.py). Pinning a literal
+    here rots at every minor bump — the original "0.1.0" pin broke
+    when the lockstep landed.
+    """
     pp_path = _ROOT / "pyproject.toml"
     data = tomllib.loads(pp_path.read_text(encoding="utf-8"))
     assert data["project"]["name"] == "loam-odd-extractor"
-    assert data["project"]["version"] == "0.1.0"
+    # _ROOT = plugins/dev-sdlc/odd-extractor → parents[2] = repo root.
+    active_minor_path = _ROOT.parents[2] / "docs" / "ACTIVE_MINOR"
+    active_minor = active_minor_path.read_text(encoding="utf-8").strip()
+    assert data["project"]["version"] == active_minor, (
+        f"odd-extractor pyproject version must track docs/ACTIVE_MINOR "
+        f"({active_minor!r}) per the PCVR lockstep; got "
+        f"{data['project']['version']!r}"
+    )
     assert data["project"]["requires-python"].startswith(">=3.")
     deps = data["project"]["dependencies"]
     assert "loam-cost-governance" in deps

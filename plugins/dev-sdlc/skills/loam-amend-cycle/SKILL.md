@@ -71,8 +71,10 @@ The amendment-cycle ladder in canonical order:
 6. **`loam amend seal --plan-doc <abs-path-to-plan-doc>
    <abs-path-to-manifest>`.** Deterministic short-form seal commit
    per AC.DPS2.{1,4,6}: stages the seal narrative, runs the
-   sealed-component sweep tests (or `--scoped-sweep` to limit to
-   manifest-listed components), creates the
+   touched components' suites + the GUARD-SWEEP FLOOR (every
+   tracked fence test + the sweep-class guards registered in
+   `docs/plans/guard-floor.yaml`, at every seal, no bypass — per
+   AC.GFLOOR.*, `docs/plans/seal-guard-sweep-floor.md`), creates the
    `chore(seals): <slug> — <component> at <SHA>` commit, verifies
    `loam amend apply --dry-run` is clean post-seal.
 7. **§14 method-decision-register backfill.** A separate
@@ -193,11 +195,10 @@ When raw Claude Code without loam dev-sdlc plugin:
 - Multi-component fence semantics (this skill walks single-
   component cycles; cross-component admissions ride on the
   manifest's `universal_paths` block).
-- The `--scoped-sweep` vs full-sweep tradeoff for `loam amend
-  seal` (default is full sweep across every sealed component;
-  `--scoped-sweep` limits to manifest-listed components — use
-  when the cycle's blast radius is provably bounded; see
-  `loam amend seal --help`).
+- The GUARD-SWEEP FLOOR's registry mechanics (pattern shapes,
+  staleness halts, registry-less semantics — see
+  `docs/plans/seal-guard-sweep-floor.md`; the floor always runs,
+  there is no scoping flag).
 - The recovery walk when `loam amend apply` fails halfway (a
   future v0.1.9 SKILL `hook-violation-recovery` will codify
   the partial-failure recovery pattern).

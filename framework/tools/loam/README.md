@@ -94,7 +94,6 @@ loam amend apply --dry-run <manifest.yaml>     # simulate; exit 1 on missing adm
 loam amend apply <manifest.yaml>               # perform file edits (no commit)
 loam amend seal <manifest.yaml>                # finalise the amendment cycle in one shot
 loam amend seal --no-finalize <manifest.yaml>  # legacy: advance sidecars + append narrative only
-loam amend seal --scoped-sweep <manifest.yaml> # restrict sweep to manifest-listed components
 loam amend seal --plan-doc <plan.md> <manifest.yaml>
                                               # also append §14 SHA backfill + follow-up commit
 loam amend template list                       # enumerate registered markdown templates
@@ -252,7 +251,7 @@ v1 manifest parses and applies unchanged.
 7. `loam amend seal --plan-doc <plan> <manifest>` — finalises the cycle:
    advances every listed sidecar to the amendment SHA, appends the
    narrative, runs the touched components' pytest suite, runs the
-   cross-component seal-diff sweep, creates the seal commit with the
+   cross-component GUARD-SWEEP FLOOR, creates the seal commit with the
    deterministic message, verifies post-seal `apply --dry-run` is green,
    and (with `--plan-doc`) backfills the plan-doc §14 SHA subsection +
    `docs(plans):` follow-up commit.
@@ -273,11 +272,16 @@ invocation:
    sidecar to the current HEAD SHA.
 3. Appends the `narrative.body` to `narrative.target`.
 4. Runs `pytest <comp>/tests/` for every manifest-listed component.
-5. Runs `pytest <comp>/tests/test_no_sealed_amendments.py` (or
-   `test_cross_cutting.py` for hands-off-lifecycle) for every sealed
-   component in the workspace (the cross-component sweep). Use
-   `--scoped-sweep` to restrict this to the manifest-listed components
-   only.
+5. Runs the GUARD-SWEEP FLOOR — the cross-component protection
+   sweep set — at every seal regardless of the amendment's fence:
+   every tracked fence test (`*/tests/test_no_sealed_amendments.py`
+   or `test_cross_cutting.py`, any tree location, `docs/archive/`
+   excluded) plus every sweep-class guard resolved from the
+   repo-local registry `docs/plans/guard-floor.yaml` (when present).
+   A breach of any floor guard blocks the seal at the introducing
+   cycle. There is no bypass flag; a registry pattern that resolves
+   to zero tracked files halts the seal (staleness is loud). See
+   `docs/plans/seal-guard-sweep-floor.md`.
 6. Stages the sidecar(s) + narrative file(s).
 7. Creates a deterministic seal commit with subject
    `chore(seals): <description> — <comp1>[+<comp2>...] at <amendment-sha-short>`.

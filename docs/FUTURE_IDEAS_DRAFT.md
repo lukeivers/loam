@@ -412,6 +412,8 @@ lives).
 
 ## F-SEAL-GUARD-SWEEP-FLOOR — cross-component guard sweeps must run at EVERY seal (2026-06-12)
 
+**ACTIONED/BUILT 2026-06-12** — sealed as the `seal-guard-sweep-floor` amendment (plan `docs/plans/sealed/seal-guard-sweep-floor.md`; seal `f7c1cc29`). `loam amend seal` now runs the GUARD-SWEEP FLOOR (every tracked fence test + the sweep-class registry `docs/plans/guard-floor.yaml`) at every seal, no bypass; `--scoped-sweep` removed.
+
 Pattern proven FIVE times in one night (2026-06-11/12): a cycle lands content
 that breaches a SIBLING component's guard test, but its narrow fence (the
 approved narrow-test-scope speedup) never runs that sweep — the breach

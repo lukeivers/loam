@@ -276,3 +276,10 @@ plan-doc: docs/plans/sealed/seal-guard-sweep-floor.md
 acs-satisfied: 8
 
 Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.
+
+### Commit SHAs
+
+- Amendment commit: `3469d956313d9ae34cfef44bb456b50105dd0dce` —
+  `docs(plans): strip the halted first seal attempt's stale narrative block (cited pre-corrective amendment SHA); re-seal will append the current one`
+- Seal commit: `f7c1cc292ad78969363f697fae0ed13e806779a0` —
+  `chore(seals): seal-guard-sweep-floor — dev-sdlc+loam at 3469d95`

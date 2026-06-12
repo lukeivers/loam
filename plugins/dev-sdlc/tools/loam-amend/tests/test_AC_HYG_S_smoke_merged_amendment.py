@@ -154,7 +154,7 @@ def test_AC_HYG_S_merged_amendment_end_to_end_seal_cycle(tmp_path, monkeypatch):
     monkeypatch.chdir(repo)
 
     rc = cli_main(
-        ["seal", "--scoped-sweep", "--plan-doc", str(plan_path),
+        ["seal", "--plan-doc", str(plan_path),
          str(manifest_path)]
     )
 

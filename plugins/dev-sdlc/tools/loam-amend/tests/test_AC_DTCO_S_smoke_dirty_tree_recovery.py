@@ -77,7 +77,7 @@ def test_AC_DTCO_S_dirty_tree_halt_leaves_working_tree_pristine(
     dirty_file.write_text("intentionally untracked\n", encoding="utf-8")
 
     rc = cli_main(
-        ["seal", "--scoped-sweep", "--plan-doc", str(plan_path),
+        ["seal", "--plan-doc", str(plan_path),
          str(manifest_path)]
     )
 

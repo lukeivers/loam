@@ -5,7 +5,7 @@ Each AC has at least one test function. See
 
 Fixture shape: a tmpfs git repo with one or more fake "sealed
 components" — each is a top-level dir carrying ``tests/SEAL_COMMIT``
-(the convention `_discover_sealed_components` uses) plus a stub
+(the sealed-component convention) plus a tracked stub
 ``tests/test_no_sealed_amendments.py`` (the seal-diff test). The
 amendment commit lands a no-op file under the component to model
 the post-amendment-commit state. ``loam amend seal`` is then
@@ -22,7 +22,6 @@ from pathlib import Path
 import pytest
 
 from loam_amend.cli import main as cli_main
-from loam_amend.commands.seal import _discover_sealed_components
 from loam_amend.manifest import load_manifest
 
 
@@ -47,15 +46,16 @@ def _make_fake_component(
     """Create a fake sealed-component directory layout under *repo*.
 
     Post-D.1: components live at ``<repo>/framework/<name>/``. The
-    fixture mirrors the production layout so ``_discover_sealed_components``
-    finds them at ``framework/*/tests/SEAL_COMMIT``.
+    fixture mirrors the production layout; the GUARD-SWEEP FLOOR's
+    fence-class discovery (AC.GFLOOR.1) finds the tracked fence tests
+    wherever they live.
     """
     comp_dir = repo / "framework" / name
     (comp_dir / "tests").mkdir(parents=True, exist_ok=True)
     (comp_dir / "src").mkdir(exist_ok=True)
     (comp_dir / "src" / "__init__.py").write_text("\n", encoding="utf-8")
     (comp_dir / "tests" / "__init__.py").write_text("\n", encoding="utf-8")
-    # Sidecar — the marker `_discover_sealed_components` looks for.
+    # Sidecar — the sealed-component marker.
     (comp_dir / "tests" / "SEAL_COMMIT").write_text(
         "0000000000000000000000000000000000000000\n", encoding="utf-8"
     )
@@ -371,70 +371,20 @@ def test_AC_D_sa_2_co_authored_trailer_env_gated(
 
 
 # ----------------------------------------------------------------------
-# AC.D-sa.3 — cross-component sweep (default full; --scoped-sweep opt-in)
+# AC.D-sa.3 — cross-component sweep. SUPERSEDED by the GUARD-SWEEP
+# FLOOR (AC.GFLOOR.* family, docs/plans/seal-guard-sweep-floor.md):
+# the floor sweeps every tracked fence test + registry-resolved
+# sweep-class guards at every seal, with no bypass (`--scoped-sweep`
+# removed per D-GFLOOR.3). Floor-specific coverage lives in the
+# test_AC_GFLOOR_*.py files; the halt-before-commit property is
+# re-asserted here at its original home.
 # ----------------------------------------------------------------------
 
 
-def test_AC_D_sa_3_full_sweep_default_runs_every_sealed_component(
-    sealed_repo, capsys
-) -> None:
-    """Default behaviour invokes every sealed component's seal-diff
-    test; the sweep summary names the count."""
-    repo = sealed_repo
-    # Add a third component so we have 3 in workspace.
-    _make_fake_component(repo, "gamma")
-    _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", "add gamma")
-
-    manifest_path = _write_manifest(
-        repo,
-        components=["alpha"],  # only alpha listed
-        number=910,
-        slug="full-sweep-default",
-        seal_description="full sweep",
-    )
-    _make_amendment_commit(repo, "alpha", payload="ac3a")
-
-    # Direct discovery confirms 3 sealed components.
-    discovered = _discover_sealed_components(repo)
-    assert set(discovered) == {"alpha", "beta", "gamma"}
-
-    rc = cli_main(["seal", str(manifest_path)])
-    assert rc == 0
-    body = _git(repo, "log", "-1", "--format=%B").stdout
-    # 3 components green in sweep summary
-    assert "3 components green" in body
-
-
-def test_AC_D_sa_3_scoped_sweep_runs_manifest_listed_only(
-    sealed_repo,
-) -> None:
-    """`--scoped-sweep` restricts the sweep to manifest-listed
-    components; sweep summary names only that count."""
-    repo = sealed_repo
-    _make_fake_component(repo, "gamma")
-    _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", "add gamma")
-
-    manifest_path = _write_manifest(
-        repo,
-        components=["alpha"],
-        number=911,
-        slug="scoped-sweep",
-        seal_description="scoped",
-    )
-    _make_amendment_commit(repo, "alpha", payload="ac3b")
-
-    rc = cli_main(["seal", "--scoped-sweep", str(manifest_path)])
-    assert rc == 0
-    body = _git(repo, "log", "-1", "--format=%B").stdout
-    # Scoped sweep: only the manifest-listed component is run.
-    assert "1 components green" in body
-
-
-def test_AC_D_sa_3_sweep_failure_halts_before_commit(sealed_repo) -> None:
-    """A failing seal-diff test in any swept component prevents the
-    seal commit from being created (case (b) of AC.D-sa.5)."""
+def test_AC_GFLOOR_2_floor_red_halts_before_commit(sealed_repo) -> None:
+    """A red floor target (here: a sibling component's fence test)
+    prevents the seal commit from being created (AC.GFLOOR.2; the
+    halt-before-commit property formerly under AC.D-sa.5 case (b))."""
     repo = sealed_repo
     # Inject a failing seal-diff test in beta.
     _make_fake_component(repo, "beta", with_passing_seal_diff=False)

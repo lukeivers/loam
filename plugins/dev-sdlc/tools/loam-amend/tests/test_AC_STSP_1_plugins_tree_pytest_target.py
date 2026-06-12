@@ -156,7 +156,7 @@ def test_AC_STSP_1_plugins_tree_seal_test_invokes_plugins_tests_dir(
         return real_run_pytest(repo_root, target, env=env)
 
     with patch.object(seal_mod, "_run_pytest", side_effect=_capture):
-        rc = cli_main(["seal", "--scoped-sweep", str(manifest_path)])
+        rc = cli_main(["seal", str(manifest_path)])
 
     assert rc == 0, "seal must succeed on the plugins-tree fixture"
     # Step (d) target — first invocation per the loop in _finalize step (d).

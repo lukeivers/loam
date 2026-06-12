@@ -203,7 +203,7 @@ def test_AC_STSP_S_failing_plugins_test_halts_the_seal(
     _land_amendment_edit(repo, "demo", "comp-failing")
     monkeypatch.chdir(repo)
 
-    rc = cli_main(["seal", "--scoped-sweep", str(manifest_path)])
+    rc = cli_main(["seal", str(manifest_path)])
 
     assert rc == 3, (
         "seal must halt with exit 3 when plugins-tree component test "
@@ -231,7 +231,7 @@ def test_AC_STSP_S_passing_plugins_test_completes_the_seal(
 
     pre_seal_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
 
-    rc = cli_main(["seal", "--scoped-sweep", str(manifest_path)])
+    rc = cli_main(["seal", str(manifest_path)])
     assert rc == 0, "seal must succeed on the passing-plugins fixture"
 
     # Seal commit lands.

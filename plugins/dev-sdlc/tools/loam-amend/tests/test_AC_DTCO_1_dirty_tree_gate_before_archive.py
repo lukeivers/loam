@@ -66,7 +66,7 @@ def test_AC_DTCO_1_halt_leaves_plan_doc_at_original_location(
     dirty_file.write_text("intentionally untracked\n", encoding="utf-8")
 
     rc = cli_main(
-        ["seal", "--scoped-sweep", "--plan-doc", str(plan_path),
+        ["seal", "--plan-doc", str(plan_path),
          str(manifest_path)]
     )
     assert rc == 3, "seal must halt with exit 3 on dirty working tree"

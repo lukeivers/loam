@@ -70,6 +70,13 @@ allowed_files = {
     "docs/odd-methodology.md",
     "README.md",
     "docs/CLAUDE_CAPABILITIES.md",
+    # broken-suite-family-fixes batch — file-precise admissions of the
+    # four cross-component test/conftest edits that cycle sanctioned
+    # (plan §2 scope; finding-6 corrective). NOT prefix-broad.
+    "framework/tools/capability-refresh/tests/test_no_sealed_amendments.py",
+    "framework/tools/heavy-b-migrate/tests/conftest.py",
+    "framework/tools/loam-spawn-isolation/tests/test_AC_PROMO_6_fence_integrity.py",
+    "framework/tools/upgrade-merge-resolver/tests/conftest.py",
 }
 
 
@@ -100,6 +107,7 @@ def test_AC_SMOKE_S_only_acceptance_smoke_changed() -> None:
         ln
         for ln in changed
         if not any(ln.startswith(p) for p in allowed_prefixes)
+        and ln not in allowed_files
     ]
     assert not offenders, (
         "sealed-component fence breach: the introduction diff touched paths "

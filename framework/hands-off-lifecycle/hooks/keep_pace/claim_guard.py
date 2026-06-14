@@ -423,6 +423,127 @@ def _default_ledger_query(subject: str) -> list[Any]:
     )
 
 
+# --------------------------------------------------------------------
+# Question-identity filter (AC.DCGID.1–4, dcg-question-identity-match;
+# owner ruling D-DCGID.1) — contradiction-detection must match QUESTION
+# IDENTITY, not shared claim-language.
+# --------------------------------------------------------------------
+#
+# The pre-fix overlap counted EVERY shared declared-vocabulary token,
+# so a genuinely-OPEN question false-positived against an UNRELATED
+# ruled record on generic claim-language + a ubiquitous domain token
+# (live-ledger Tier-0: the open "Which model runs substantive loam
+# build work…" question resolved the unrelated FBM co-citation ruled
+# record on {and, happens, loam, what}). The fix counts a shared token
+# toward identity only when it is DISTINCTIVE: neither a generic
+# stopword (AC.DCGID.1a) NOR corpus-ubiquitous (AC.DCGID.1b — its
+# full-ledger declared-vocab document-frequency exceeds the ubiquity
+# cutoff; this is what drops "loam" without hardcoding domain
+# knowledge). Threshold stays >= 2 (AC.DCGID.2/.3); recall on real
+# same-question reopens is preserved (their distinctive identity tokens
+# survive both filters). Stopword set is domain-agnostic English
+# function words + decision-state claim-language.
+
+# AC.DCGID.1a — generic stopwords + decision-state claim-language that
+# carry no question-identity signal. Domain-agnostic (no workspace
+# nouns here — corpus-ubiquity, AC.DCGID.1b, handles domain tokens).
+_IDENTITY_STOPWORDS: frozenset[str] = frozenset(
+    {
+        # English function words
+        "the", "and", "what", "which", "on", "of", "to", "in", "an",
+        "for", "is", "are", "was", "were", "be", "been", "it", "its",
+        "that", "this", "our", "their", "his", "her", "both", "up",
+        "see", "we", "you", "they", "do", "does", "did", "about",
+        "how", "why", "when", "where", "who", "whom", "than", "with",
+        "from", "as", "at", "or", "not", "no", "so", "but", "if", "by",
+        "will", "would", "can", "could", "should", "has", "have", "had",
+        "whether", "there", "here", "any", "all", "some", "more", "most",
+        "into", "out", "over", "after", "before", "during", "then",
+        "now", "also", "just", "only", "very", "really",
+        # decision-state claim-language (the words the detector keys on —
+        # never identity-bearing)
+        "question", "questions", "undecided", "unresolved", "unsettled",
+        "open", "still", "remains", "remain", "decided", "decision",
+        "ruling", "happens", "happen", "happened",
+    }
+)
+
+# AC.DCGID.1b — a token whose declared-vocab document-frequency across
+# the full ledger is at or below this fraction of records is
+# distinctive; above it the token is corpus-ubiquitous (e.g. "loam")
+# and carries no question-identity signal.
+_UBIQUITY_FRACTION = 0.4
+
+
+def _ledger_corpus_frequency() -> dict[str, int]:
+    """AC.DCGID.1b — declared-vocabulary document frequency over the
+    FULL live ledger (entities + aliases + question + workstream of
+    every non-superseded record). LAZY cross-component read per the
+    D-KP9.1 hook discipline; any failure propagates to the fail-open
+    wrapper (AC.DCGID.4 — a frequency-read error never blocks a send).
+    Returns ``{token: record_count}`` plus a ``"__nrec__"`` total."""
+    from pathlib import Path as _Path
+
+    from loam.primary_persona.decision_ledger import (  # type: ignore[import-not-found]  # noqa: WPS433
+        iter_decisions,
+    )
+    from loam.primary_persona.file_memory import (  # type: ignore[import-not-found]  # noqa: WPS433
+        memory_dir_for_workspace,
+    )
+
+    freq: dict[str, int] = {}
+    nrec = 0
+    for rec in iter_decisions(memory_dir_for_workspace(_Path.cwd())):
+        if getattr(rec, "status", "") == "superseded":
+            continue
+        nrec += 1
+        for tok in _record_declared_tokens(rec):
+            freq[tok] = freq.get(tok, 0) + 1
+    freq["__nrec__"] = nrec
+    return freq
+
+
+def _record_declared_tokens(record: Any) -> set:
+    """The record's DECLARED vocabulary (entities + aliases + question +
+    workstream) as a lowercased >=2-char token set — the encode-time
+    index the ledger's design makes load-bearing."""
+    declared: set = set()
+    for field in ("entities", "aliases"):
+        for value in getattr(record, field, ()) or ():
+            declared |= {
+                t.lower()
+                for t in _SUBJECT_TOKEN_RE.findall(str(value))
+                if len(t) > 1
+            }
+    for field in ("question", "workstream"):
+        declared |= {
+            t.lower()
+            for t in _SUBJECT_TOKEN_RE.findall(
+                str(getattr(record, field, "") or "")
+            )
+            if len(t) > 1
+        }
+    return declared
+
+
+def _distinctive_tokens(
+    tokens: set, corpus_frequency: Optional[dict[str, int]]
+) -> set:
+    """AC.DCGID.1 — keep only identity-bearing tokens: drop generic
+    stopwords (1a) and corpus-ubiquitous tokens (1b). When
+    ``corpus_frequency`` is ``None`` (no ledger reachable) only the
+    stopword filter applies — fail-soft toward the prior behaviour for
+    the ubiquity leg, never raising."""
+    out = {t for t in tokens if t not in _IDENTITY_STOPWORDS}
+    if not corpus_frequency:
+        return out
+    nrec = corpus_frequency.get("__nrec__", 0)
+    if nrec <= 0:
+        return out
+    cutoff = _UBIQUITY_FRACTION * nrec
+    return {t for t in out if corpus_frequency.get(t, 0) <= cutoff}
+
+
 def _reopened_ruling_steer(
     claim: DecisionStateClaim, record: Any
 ) -> ClaimSteer:
@@ -456,6 +577,18 @@ def check_decision_claims(
     if not claims:
         return []
     query_fn = ledger_query if ledger_query is not None else _default_ledger_query
+    # AC.DCGID.1b — full-ledger declared-vocab document frequency for
+    # the ubiquity filter. Fail-soft (AC.DCGID.4): an unreachable ledger
+    # yields None so the identity filter degrades to the stopword leg
+    # rather than raising into the send path. The production read is
+    # used unless a test seam overrode the query (synthetic ledger ⇒ no
+    # live corpus available, stopword leg suffices for the seam tests).
+    corpus_frequency: Optional[dict[str, int]] = None
+    if ledger_query is None:
+        try:
+            corpus_frequency = _ledger_corpus_frequency()
+        except BaseException:  # noqa: BLE001 — AC.DCGID.4 fail-soft
+            corpus_frequency = None
     steers: list[ClaimSteer] = []
     for claim in claims:
         if not claim.subject.strip():
@@ -473,9 +606,14 @@ def check_decision_claims(
         # time: "activation timing" resolving a different ruled
         # record on the single common token "activation").
         for record in records:
-            overlap = _declared_vocab_overlap(record, subject_tokens)
-            # "Resolvable to" requires >= 2 declared-vocabulary token
-            # matches — a one-common-word brush is not resolution.
+            overlap = _declared_vocab_overlap(
+                record, subject_tokens, corpus_frequency=corpus_frequency
+            )
+            # AC.DCGID.1–3 — "resolvable to" requires >= 2 QUESTION-
+            # IDENTITY (distinctive) token matches: a generic-claim-
+            # language or ubiquitous-token brush is not resolution; a
+            # shared DISTINCTIVE-token cluster (a real same-question
+            # reopen) still clears the bar.
             if overlap < 2:
                 continue
             if getattr(record, "status", "") == "ruled":
@@ -484,27 +622,22 @@ def check_decision_claims(
     return steers
 
 
-def _declared_vocab_overlap(record: Any, subject_tokens: set) -> int:
-    """Distinct subject-token matches against the record's DECLARED
-    vocabulary (entities + aliases + question + workstream — the
-    encode-time index, per the ledger's design)."""
-    declared: set = set()
-    for field in ("entities", "aliases"):
-        for value in getattr(record, field, ()) or ():
-            declared |= {
-                t.lower()
-                for t in _SUBJECT_TOKEN_RE.findall(str(value))
-                if len(t) > 1
-            }
-    for field in ("question", "workstream"):
-        declared |= {
-            t.lower()
-            for t in _SUBJECT_TOKEN_RE.findall(
-                str(getattr(record, field, "") or "")
-            )
-            if len(t) > 1
-        }
-    return len(declared & subject_tokens)
+def _declared_vocab_overlap(
+    record: Any,
+    subject_tokens: set,
+    *,
+    corpus_frequency: Optional[dict[str, int]] = None,
+) -> int:
+    """AC.DCGID.1 — QUESTION-IDENTITY overlap: distinct DISTINCTIVE-token
+    matches between the subject and the record's DECLARED vocabulary
+    (entities + aliases + question + workstream — the encode-time index,
+    per the ledger's design). A token counts only when it survives the
+    identity filter (:func:`_distinctive_tokens`): not a generic
+    stopword (1a) and not corpus-ubiquitous (1b). ``corpus_frequency``
+    ``None`` degrades to the stopword leg only (fail-soft, AC.DCGID.4)."""
+    declared = _record_declared_tokens(record)
+    shared = declared & subject_tokens
+    return len(_distinctive_tokens(shared, corpus_frequency))
 
 
 def check_claims(

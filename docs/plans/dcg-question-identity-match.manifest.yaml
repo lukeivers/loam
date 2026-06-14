@@ -10,7 +10,7 @@ amendment:
 # BASELINE: the plan-doc commit (the commit immediately preceding this
 # cycle's source-edit commits), per the house pattern. The builder
 # CONFIRMS against the actual predecessor tip at apply time.
-baseline: "PLAN_DOC_COMMIT"  # confirmed to the plan-doc commit at apply (house pattern)
+baseline: "f93d07d9"  # the plan-doc commit (confirmed at apply, house pattern)
 
 plan: docs/plans/dcg-question-identity-match.md
 plan_doc_ref: docs/plans/sealed/dcg-question-identity-match.md

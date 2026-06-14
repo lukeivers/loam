@@ -467,7 +467,7 @@ Recurred twice (broken-suite batch + DCG-gate fix): a bare `python -m
 pytest` invocation FAILS-OPEN the assembled `loam` namespace / ledger
 import (Python resolves a different/empty module set), so it (a) mis-reports
 WHICH test fails and (b) can pass tests that the real seal environment
-fails. The seal ritual runs under the project `.venv` (Python 3.9 with the
+fails. The seal ritual runs under the project `.venv` (`/Users/lukeivers/loam/.venv`, Python 3.13, with the
 assembled loam namespace) — that is the ground-truth environment. Builder/
 diagnostic discipline: reproduce + verify seal-floor behavior via the SAME
 `.venv` the `loam` binary uses (the `loam` binary resolves seal.py + the

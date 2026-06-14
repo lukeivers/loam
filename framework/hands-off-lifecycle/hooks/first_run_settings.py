@@ -200,6 +200,12 @@ _LOAM_PRE_TOOL_USE_COMMAND_MARKERS: tuple[str, ...] = (
     "secret_pattern_guard.py",
     "dangerous_flag_guard.py",
     "config_write_guard.py",
+    # principle-foundation-structural-enforcement (AC.PFSE.5): the
+    # context-load gate registers TWO matcher entries (Task +
+    # Edit|Write|MultiEdit). Marker MUST appear here so a re-merge over
+    # a stanza pos-v2 already wrote does NOT treat the context-load
+    # inner hooks as user-authored.
+    "context_load_gate.py",
 )
 
 

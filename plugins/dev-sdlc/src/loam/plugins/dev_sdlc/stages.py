@@ -258,6 +258,123 @@ def _check_minimal_artefact(
     return GateOutcome(passed=True)
 
 
+# ---------------------------------------------------------------------
+# Four-research-question gate (AC.PFSE.3 — principle-foundation-
+# structural-enforcement). A research-plan that omits any of the four
+# required research questions cannot advance; the gate refuses on any
+# empty question. The four questions are the lens research questions
+# canonicalised in docs/FUTURE_IDEAS.md §"Step 3":
+#   1. Claude-leverage — what Claude capabilities does this lean on /
+#      extend / replace?
+#   2. Primary-persona — does this reduce the user's translation burden?
+#   3. Harness — does this add to the primary persona's toolkit?
+#   4. ODD — objectives + constraints + acceptance without prescribing
+#      method?
+# Detection is deterministic (section-heading keyword + non-empty body);
+# NO LLM (the section-presence check is a parse, plan §6 / Primitive-
+# check).
+#
+# SCOPE (feedback_odd_cdc_scope): the four lens questions are a
+# loam-FEATURE-research artefact — they reference VALUE_PROPOSITION, the
+# primary persona, and the harness, which are loam-internal. They are
+# NOT universal to every ODD project (a NORMAL-USE user's ODD research
+# has nothing to do with loam's lenses). The gate is therefore OPT-IN: a
+# research artefact gated by the four questions declares itself a
+# lens-research plan via a `lens_research: true` frontmatter flag. A
+# research artefact without that flag is a generic ODD research stage
+# and is NOT subject to the four-question gate (it still passes the
+# objective + AC gate). This keeps AC.OSS-M6.4's generic-ODD contract
+# intact while giving AC.PFSE.3 teeth on the plans the questions govern.
+# ---------------------------------------------------------------------
+
+# Each tuple: (stable id, the alternation of keyword phrases that mark
+# the question's section heading). A heading line matching any phrase
+# (case-insensitive) opens the section; the section is satisfied iff a
+# non-blank, non-heading prose/bullet line follows before the next
+# heading.
+_RESEARCH_QUESTION_MARKERS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("claude_leverage", ("claude-leverage", "claude leverage")),
+    ("primary_persona", ("primary-persona", "primary persona")),
+    ("harness", ("harness",)),
+    ("odd", ("odd",)),
+)
+
+_HEADING_LINE_RE = re.compile(r"^(#{2,6})\s+(.*\S)\s*$", re.MULTILINE)
+
+
+def _is_lens_research_plan(text: str) -> bool:
+    """True iff the artefact opts into the four-lens-research gate via a
+    `lens_research: true` frontmatter flag. Generic ODD research plans
+    omit the flag and are NOT subject to the four-question gate."""
+    fm_match = _FRONTMATTER_RE.match(text)
+    if not fm_match:
+        return False
+    try:
+        fm = yaml.safe_load(fm_match.group(1)) or {}
+    except yaml.YAMLError:
+        return False
+    if not isinstance(fm, dict):
+        return False
+    val = fm.get("lens_research")
+    return val is True or (
+        isinstance(val, str) and val.strip().lower() in ("true", "yes")
+    )
+
+
+def _heading_has_nonempty_body(text: str, start: int) -> bool:
+    """True iff a non-blank, non-heading line follows ``start`` before
+    the next heading."""
+    after = text[start:]
+    for line in after.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            return False
+        return True
+    return False
+
+
+def _check_research_questions(text: str) -> GateOutcome:
+    """Return GateOutcome for the four-research-question gate.
+
+    Walks the artefact's `##`..`######` headings; for each required
+    question, the FIRST heading whose text contains one of the question's
+    keyword phrases must carry a non-empty body. Any required question
+    with no matching heading, or a matching heading with an empty body,
+    fails the gate (reason ``missing_research_question``).
+    """
+    headings = [
+        (m.start(), m.end(), m.group(2).lower())
+        for m in _HEADING_LINE_RE.finditer(text)
+    ]
+    missing: list[str] = []
+    for qid, phrases in _RESEARCH_QUESTION_MARKERS:
+        satisfied = False
+        for _start, end, heading_text in headings:
+            if any(p in heading_text for p in phrases):
+                if _heading_has_nonempty_body(text, end):
+                    satisfied = True
+                break
+        if not satisfied:
+            missing.append(qid)
+    if missing:
+        return GateOutcome(
+            passed=False,
+            reason="missing_research_question",
+            detail=(
+                "Research plan is missing or has an empty section for "
+                "the required research question(s): "
+                + ", ".join(missing)
+                + ". Every research plan must answer all four lens "
+                "questions (Claude-leverage / Primary-persona / Harness "
+                "/ ODD) with a non-empty section before it can advance "
+                "(AC.PFSE.3; docs/FUTURE_IDEAS.md Step 3)."
+            ),
+        )
+    return GateOutcome(passed=True)
+
+
 def check_gate(
     *,
     project_root: Path,
@@ -269,7 +386,8 @@ def check_gate(
     artefact (per plan §4 AC.OSS-M6.4).
 
     Detection routes:
-      - methodology == "odd" → `_check_odd_artefact`.
+      - methodology == "odd" → `_check_odd_artefact`, AND for the
+        `research` stage, the four-research-question gate (AC.PFSE.3).
       - methodology in {"tdd","bdd","adhoc"} → `_check_minimal_artefact`.
     """
     path = artefact_path(project_root, stage, slug)
@@ -285,7 +403,17 @@ def check_gate(
         )
     text = path.read_text(encoding="utf-8")
     if methodology == "odd":
-        return _check_odd_artefact(text)
+        outcome = _check_odd_artefact(text)
+        if not outcome.passed:
+            return outcome
+        # The research stage additionally requires the four lens
+        # research questions (AC.PFSE.3) WHEN the artefact opts into the
+        # lens-research convention (`lens_research: true`). Generic ODD
+        # research is not gated by the four questions
+        # (feedback_odd_cdc_scope). Other ODD stages are never gated.
+        if stage == "research" and _is_lens_research_plan(text):
+            return _check_research_questions(text)
+        return outcome
     return _check_minimal_artefact(text, methodology=methodology)
 
 

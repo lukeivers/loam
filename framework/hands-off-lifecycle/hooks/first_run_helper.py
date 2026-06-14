@@ -682,6 +682,50 @@ def _primitive_check_guard_stanza(loam_root: Path) -> dict[str, Any]:
     }
 
 
+def _context_load_gate_stanzas(loam_root: Path) -> list[dict[str, Any]]:
+    """Return the PreToolUse envelopes for the context-load gate
+    (principle-foundation-structural-enforcement, AC.PFSE.5).
+
+    The gate governs two work-shapes — dispatching a sub-agent (Task)
+    and authoring a source edit (Edit|Write|MultiEdit) — so it
+    registers as TWO matcher entries (matcher independence: Claude Code
+    fires only the inner hook whose matcher matches the active tool).
+    The Task entry shares the Task matcher with the agent/dispatch/
+    primitive-check guards (sequential per Claude Code's deterministic
+    order); the Edit|Write|MultiEdit entry shares that matcher with the
+    objective-binding + TDD guards. The gate is a deterministic loaded-
+    set predicate over the corpus-load sentinel — NO LLM, file-read of
+    one sentinel JSON only — so cold-start cost is the Python-startup
+    envelope. Fail-open on every internal error.
+    """
+    script = _resolve_gate_script(loam_root, "context_load_gate.py")
+    command = f"{sys.executable} {script}"
+    return [
+        {
+            "matcher": "Task",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": command,
+                    "async": False,
+                    "timeout": 5,
+                }
+            ],
+        },
+        {
+            "matcher": "Edit|Write|MultiEdit",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": command,
+                    "async": False,
+                    "timeout": 5,
+                }
+            ],
+        },
+    ]
+
+
 def _maybe_merge_pre_tool_use(
     *, loam_root: Path, settings_path: Path
 ) -> None:
@@ -719,6 +763,7 @@ def _maybe_merge_pre_tool_use(
                 _agent_guard_stanza(loam_root),
                 _dispatch_setup_hook_stanza(loam_root),
                 _primitive_check_guard_stanza(loam_root),
+                *_context_load_gate_stanzas(loam_root),
             ],
         )
     except Exception:  # noqa: BLE001 — fail-soft per locked plan §5

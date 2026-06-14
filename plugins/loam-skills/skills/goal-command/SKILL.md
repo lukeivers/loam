@@ -59,6 +59,20 @@ the frozen acceptance check as the independent verifier.
   cycle. The `EVAL_DIMENSIONS` named-axis judging pattern composes
   with `/goal`'s halt evaluator.
 
+## Adoption disposition (D-ADOPT.1, RULED keep-both-scoped)
+
+`/goal` is loam's **default keep-going leg for single-task
+drive-to-checkable-outcome** — that is its adopted role. The ruling
+that fixed this (`docs/plans/claude-leverage-program-s3-adoptions.md`
+§14, D-ADOPT.1) drew the boundary against the one bespoke overlap: a
+durable cross-turn workstream-queue dispatcher (pos3's
+`autonomy_continuation.py`) covers a *different* shape — "pick the
+next queued workstream when idle" — that `/goal` does not express.
+`/goal` drives THIS task to THIS predicate; it is not a queue
+dispatcher. Reach for `/goal` for the single-task keep-going leg; a
+cross-turn queue-dispatch shape is a distinct mechanism, not a
+`/goal` substitute.
+
 ## Anti-patterns
 
 - Using `/goal` without a checkable success predicate — the halt

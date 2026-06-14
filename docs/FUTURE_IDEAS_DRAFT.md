@@ -460,3 +460,18 @@ not-yet-built" (same shape as the plan-state false-partial fix). The floor
 itself was the three-strikes prevention from 2026-06-11/12 — this is its
 first false-positive, caught cleanly by a builder halting per three-strikes
 rather than fix-looping.
+
+## F-SEAL-ENV-IS-DOT-VENV — seal/test invocations must use the project .venv, not bare python (2026-06-14)
+
+Recurred twice (broken-suite batch + DCG-gate fix): a bare `python -m
+pytest` invocation FAILS-OPEN the assembled `loam` namespace / ledger
+import (Python resolves a different/empty module set), so it (a) mis-reports
+WHICH test fails and (b) can pass tests that the real seal environment
+fails. The seal ritual runs under the project `.venv` (Python 3.9 with the
+assembled loam namespace) — that is the ground-truth environment. Builder/
+diagnostic discipline: reproduce + verify seal-floor behavior via the SAME
+`.venv` the `loam` binary uses (the `loam` binary resolves seal.py + the
+floor from the working tree under that venv), never a naive `python`. Add to
+loam-builder dispatch briefs + the seal runbook. INSTANCE of
+information-trust-ordering (the bare-python result is a low-trust signal that
+disagrees with the Tier-0 seal environment).

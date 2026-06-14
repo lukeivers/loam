@@ -136,6 +136,51 @@ ROWS: tuple[MatcherRow, ...] = (
         primitive="/loop (in-session recurring execution)",
         tier="warn",
     ),
+    # --- goal.md : bespoke keep-going / drive-to-goal loop ---
+    # The keep-going work-shape /goal covers: drive a single task to a
+    # checkable success predicate and halt when met. The deny row is
+    # build-verb + a keep-going-shape phrase in proximity; the warn row
+    # is the keep-going shape alone (D-ADOPT.2 two-tier posture). The
+    # keep-going lexicon is deliberately NARROW — it requires an
+    # explicit drive-to-done / keep-going-until / re-run-until /
+    # continuation-loop / Stop-hook-re-fire phrase, NOT a bare "loop"
+    # (which would over-match the /loop and orchestrator shapes the
+    # sibling rows already cover, and flag every loop in prose). The
+    # cadence "loop" shape stays the loop.md rows' jurisdiction; this
+    # row keys on the halt-on-checkable-outcome shape /goal uniquely
+    # expresses.
+    MatcherRow(
+        name="bespoke-keep-going-loop",
+        pattern=_c(
+            _BUILD_VERB
+            + r"\b[^.\n]{0,40}\b(?:"
+            + r"keep[\s-]+going[^.\n]{0,20}until|"
+            + r"drives?[^.\n]{0,20}\bto[\s-]+(?:done|goal|completion|"
+            + r"a[\s-]+(?:passing|checkable|success))|"
+            + r"re-?run[^.\n]{0,20}until[^.\n]{0,20}(?:done|pass|green)|"
+            + r"(?:iterate|loop)[^.\n]{0,20}until[^.\n]{0,20}"
+            + r"(?:the[\s-]+)?(?:test|check|build|goal|predicate)|"
+            + r"continuation[\s-]+(?:loop|driver)|"
+            + r"stop[\s-]+hook[^.\n]{0,20}re-?fires?|"
+            + r"drive-?to-?(?:goal|done|outcome)[\s-]+(?:loop|driver))"
+        ),
+        corpus_entry=f"{CORPUS_CLAUDE_CODE_DIR}/goal.md",
+        primitive="/goal (drive-to-checkable-outcome with autonomous halt)",
+        tier="deny",
+    ),
+    MatcherRow(
+        name="keep-going-shape",
+        pattern=_c(
+            r"\b(?:keep[\s-]+going[^.\n]{0,20}until|"
+            r"drive[\s-]+(?:it[\s-]+)?to[\s-]+(?:done|goal|completion)|"
+            r"re-?run[^.\n]{0,20}until[^.\n]{0,20}(?:done|pass|green)|"
+            r"iterate[^.\n]{0,20}until[^.\n]{0,20}"
+            r"(?:the[\s-]+)?(?:test|check|build|goal|passes?))"
+        ),
+        corpus_entry=f"{CORPUS_CLAUDE_CODE_DIR}/goal.md",
+        primitive="/goal (drive-to-checkable-outcome with autonomous halt)",
+        tier="warn",
+    ),
     # --- background-agents.md : bespoke orchestrator / dispatch loop ---
     MatcherRow(
         name="bespoke-orchestrator",

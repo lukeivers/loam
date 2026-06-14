@@ -144,4 +144,10 @@ repo). Manifests with REAL resolvable baselines stay FULLY validated.
 
 ## §14 — Method-decision register
 
-(SHAs backfilled by `loam amend seal --plan-doc` at seal time.)
+- plan-doc commit: `b14e279d`
+- source commit (AC.GFLOOR2.*): `716b7b97`
+- apply commit: `5ded29a0`
+- seal commit: `82c93c5b`
+- AC.GFLOOR2.1–3 (incl. ★ outcome-altitude AC.GFLOOR2.3): GREEN at seal
+  (the GUARD-SWEEP FLOOR's manifest-conformance sweep skips draft
+  placeholder baselines; real-baseline manifests still fully validated).

@@ -193,10 +193,11 @@ as a consequence — it is the live-derived instance of AC.DCGID.OA(a).
 
 ## §14 — Seal register
 
-(backfilled at seal)
-
-- plan-doc commit: TBD
-- source/test commit: TBD
-- apply commit: TBD
-- seal commit: TBD
-- AC.DCGID.1–4 + AC.DCGID.OA: verdicts at seal
+- plan-doc commit: `f93d07d9`
+- source/test commit: `10f1519f`
+- apply commit: `4a3bcdc8`
+- seal commit: `cb3fd8d4`
+- AC.DCGID.1–4 + ★ AC.DCGID.OA: GREEN at seal (10 new tests; the
+  previously-failing GUARD-SWEEP FLOOR class-6 live test
+  `test_AC_DCG_OA_genuinely_open_question_passes_live` returned to
+  GREEN as the live-derived instance of AC.DCGID.OA(a)).

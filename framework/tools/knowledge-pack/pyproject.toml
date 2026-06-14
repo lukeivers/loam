@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-knowledge-pack"
+version = "0.1.0"
+description = "Deterministic corpus -> skills-pack marketplace render — projects docs/capability-corpus/ into a marketplace-shaped skills-pack tree IN-REPO behind a curation gate, no LLM authorship in the pack body (claude-leverage-program Slice 4a; plan: docs/plans/claude-leverage-program-s4-push.md). LOCAL — no public action."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+knowledge-pack = "knowledge_pack.cli:main"
+
+[tool.setuptools]
+package-dir = {"knowledge_pack" = "src/knowledge_pack"}
+packages = ["knowledge_pack"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

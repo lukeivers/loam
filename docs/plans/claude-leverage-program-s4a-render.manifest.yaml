@@ -8,10 +8,14 @@ amendment:
   slug: claude-leverage-program-s4a-render
   title: "Claude-leverage program Slice 4a — RENDER (LOCAL, no public surface): the weekly knowledge pack is a DETERMINISTIC rendering FROM docs/capability-corpus/ (Class A claude-code/ + harness/ currency + Class B best-practice/ synthesis) into a marketplace-shaped skills-pack tree IN-REPO — never a fork (master §2), no LLM authorship in the pack body (protection-floor: a hallucinated leverage claim cannot enter by construction, same shape as Slice-1's refresh D-CUR.4). Lands a NEW tools-adjacent component framework/tools/knowledge-pack/ (first-seal; peer shape to the sealed framework/tools/capability-refresh/) that: reads the corpus + Slice-1's .refresh/last-run.json freshness signal → projects each entry into SKILL.md form under a .claude-plugin/marketplace.json + plugins/<name>/ tree (the §3.1.5 live-verified marketplace shape) → carries every pack claim's corpus citation ([primitive:<class>:<name>] / source_url passthrough) → emits a curation-gate record (pass/fail + ts) and marks the pack publish-eligible ONLY on gate pass → stamps a pack generated-ts + content-hash + per-entry source_fetch_ts/source_status passthrough so a stale corpus entry never renders as silently-current (D-PUSH.5) → reuses Slice-1's sealed cadence binding as the trigger (the pack-render is an added step in the same routine, NO second scheduler — D-PUSH.4). Builds + tests the ungated-publish-REFUSAL rig LOCALLY (AC.CLP-PUSH.5 adversarial leg: a publish attempt with no gate-pass record is refused). NO public-action steps — the pack stages in-repo; the public marketplace repo + first publish are S4c ⛔OWNER. ★ outcome-altitude AC.CLP-PUSH-RENDER.4: a production-CLI render against the live corpus with no pre-arranged state produces a well-formed marketplace tree (marketplace.json + plugins/<name>/ skills validate)."
 
-# BASELINE: c77a2447b7d34835fee23b9066159bf14baede7f — HEAD of main at
-# parent-authoring (Candidate 6 roadmap mark). The builder CONFIRMS against
-# the actual predecessor tip at apply time.
-baseline: "c77a2447b7d34835fee23b9066159bf14baede7f"
+# BASELINE: a3a02775c7d274880c25e89539c7d33263e5159b — predecessor tip at
+# S4a build (HEAD of main at apply). The parent-authoring candidate was
+# c77a2447, but the S3-adoptions cycle (foreign components) sealed into main
+# between c77a2447 and this build, so c77a2447 is no longer the predecessor
+# tip — confirmed against the live tip at apply time per the rule below, the
+# baseline advances to a3a02775 so the seal-diff window contains ONLY the
+# knowledge-pack component + universal-path admissions (no foreign S3 paths).
+baseline: "a3a02775c7d274880c25e89539c7d33263e5159b"
 
 plan: docs/plans/claude-leverage-program-s4-push.md
 

@@ -1,0 +1,96 @@
+# Copyright 2026 Luke Ivers and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""AC.CLP-PUSH-RENDER.S — sealed-component fence invariant for knowledge-pack.
+
+FIRST seal of a brand-new component (amendment
+claude-leverage-program-s4a-render). The diff window between the
+introduction BASELINE and SEAL_COMMIT must contain ONLY paths under
+framework/tools/knowledge-pack/ (the new component) + the manifest's
+universal-paths admissions (docs/plans/ for the plan-doc + manifest,
+docs/capability-corpus/.pack/ for the generated pack staging,
+docs/STATE.md + docs/release-roadmap.md for bookkeeping) + any
+cross-component partner prefixes admitted by ``loam amend apply``.
+
+Mirror of the capability-refresh first-seal fence test. The
+``allowed_prefixes`` / ``allowed_files`` names are LOAD-BEARING: the
+loam-amend seal-diff binding reader parses these identifiers.
+
+SEAL_COMMIT_PATH reads from tests/SEAL_COMMIT; falls back to HEAD when
+absent/placeholder so a build on an unfinished seal still exercises the
+test. Post-seal, tests/SEAL_COMMIT carries the exact SHA.
+
+BASELINE history:
+  - c77a2447 — candidate at parent-authoring (HEAD of main when the
+    Slice-4 PUSH sub-plan was authored). SUPERSEDED at build time: the
+    S3-adoptions cycle (foreign components) sealed into main between
+    c77a2447 and this cycle's predecessor tip, so c77a2447 is no longer
+    the predecessor tip and would pull foreign S3 paths into the fence
+    window. Per the manifest's "builder CONFIRMS against the actual
+    predecessor tip at apply time," the baseline advances to a3a02775.
+  - a3a02775 — predecessor tip at S4a build (HEAD of main at apply;
+    the F-SEAL-ENV FIDRAFT commit). The Slice-4 plan + S4a manifest are
+    already in main at this tip, so the build window from here contains
+    ONLY the knowledge-pack component + universal-path admissions.
+"""
+
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+BASELINE = "a3a02775c7d274880c25e89539c7d33263e5159b"
+
+SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
+
+allowed_prefixes = (
+    "framework/tools/knowledge-pack/",
+    "docs/plans/",
+    "docs/capability-corpus/.pack/",
+)
+allowed_files = {
+    "docs/STATE.md",
+    "docs/release-roadmap.md",
+}
+
+
+def _seal_commit() -> str:
+    """Resolve SEAL_COMMIT from sidecar file, else HEAD."""
+    if SEAL_COMMIT_PATH.exists():
+        txt = SEAL_COMMIT_PATH.read_text().strip()
+        if txt and txt != "HEAD":
+            return txt
+    return "HEAD"
+
+
+def test_AC_CLP_PUSH_RENDER_S_only_knowledge_pack_changed() -> None:
+    """AC.CLP-PUSH-RENDER.S — sealed-component fence invariant (first seal)."""
+    seal = _seal_commit()
+    out = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{BASELINE}..{seal}"],
+        cwd=REPO_ROOT,
+        text=True,
+    )
+    changed = [ln for ln in out.splitlines() if ln.strip()]
+    offenders = [
+        ln
+        for ln in changed
+        if not any(ln.startswith(p) for p in allowed_prefixes)
+        and ln not in allowed_files
+    ]
+    assert not offenders, (
+        "sealed-component fence breach: the introduction diff touched paths "
+        f"outside the knowledge-pack component fence: {offenders}"
+    )

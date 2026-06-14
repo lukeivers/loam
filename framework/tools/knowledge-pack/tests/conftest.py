@@ -48,7 +48,7 @@ Takes a goal condition; iterates until it passes, then halts.
 
 Sibling of `/loop`.
 
-## [user-intent phrasings]
+## Invocation phrasings
 
 - "keep working until the build is green"
 - "drive this to a passing acceptance"
@@ -79,7 +79,7 @@ Takes an interval + a prompt.
 
 Sibling of `/goal`.
 
-## [user-intent phrasings]
+## Invocation phrasings
 
 - "check the deploy every 5 minutes"
 - "keep running this on a loop"
@@ -109,7 +109,7 @@ Objective + constraints + acceptance.
 
 Projected by the scope-of-work component.
 
-## [user-intent phrasings]
+## Invocation phrasings
 
 - "define the work"
 - "what is the acceptance"

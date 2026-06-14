@@ -44,6 +44,18 @@ schedule.md sibling note. The persona picks one based on
 whether session lifetime is the right granularity (`/loop`)
 or cron-shape across sessions is needed (`/schedule`).
 
+`/loop` is the cadence sibling of `/goal` (see goal.md):
+both keep Claude working across turns, but they halt on
+different criteria. `/loop` keeps running until the model
+(or the session) stops — the *iteration itself* is the work,
+with no single success state to halt on. `/goal` halts the
+instant a checkable goal predicate passes — the work is to
+*reach a state*. The persona reaches for `/loop` when the
+recurring check IS the task ("keep polling the deploy every
+5 minutes") and for `/goal` when there is a definite success
+predicate to drive toward and halt on ("keep working until
+the build is green"). Siblings, not nestable.
+
 `/loop` plus `Monitor` (the event-stream primitive) lets
 the persona poll a background process's output stream until
 a condition is met, rather than chaining shorter sleeps.

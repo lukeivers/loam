@@ -513,7 +513,47 @@ def cli_stop(workspace_root: Path | None = None) -> int:
             )
         except Exception:  # noqa: BLE001
             pass
+    # principle-foundation-structural-enforcement (Slice C, AC.PFSE.4 +
+    # AC.PFSE.7): run the Stop-hook contributor framework over the turn's
+    # OUTBOUND reply and emit any composed advisory as a non-blocking
+    # ``systemMessage``. FAIL-SOFT end-to-end: any error returns None /
+    # is swallowed, so the exit-0-always + fast-return contract (AC.M.4)
+    # is never at risk. NEVER emits ``decision: block`` (advisory only).
+    try:
+        _emit_stop_contributor_advisories(envelope, Path(root))
+    except Exception:  # noqa: BLE001 — AC.M.4 fail-soft; advisory best-effort
+        pass
     return 0
+
+
+def _emit_stop_contributor_advisories(
+    envelope: StopEnvelope, workspace_root: Path
+) -> None:
+    """Run the Stop contributors over the turn's outbound reply and write
+    the composed advisory ``systemMessage`` to stdout (or nothing).
+
+    Recovers the assistant reply from the same transcript the
+    memory-write pipeline reads. Emits a JSON ``{"systemMessage": ...}``
+    on a non-empty compose; emits NOTHING on a clean turn (empty stdout
+    -> the turn closes normally). The contributors run deterministically
+    (regex + bounded git-read); NO LLM / network. Fail-soft: a recovery
+    or compose error writes nothing.
+    """
+    from .stop_contributor import run_stop_contributors
+
+    _user, assistant_reply = _walk_transcript_for_turn(
+        Path(envelope.transcript_path)
+    )
+    if not assistant_reply:
+        return
+    payload = run_stop_contributors(
+        outbound_reply=assistant_reply,
+        workspace_root=workspace_root,
+        session_id=envelope.session_id,
+    )
+    if payload is None:
+        return
+    sys.stdout.write(json.dumps(payload, ensure_ascii=False))
 
 
 # ---- detached-child entry point (D3 / AC.M.6 / AC.M.10) -------------

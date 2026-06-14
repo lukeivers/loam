@@ -441,3 +441,22 @@ a silent-no-op trap for any agent or user who reaches for the idiom. Fix:
 add `__main__.py` (or main-guard) + a test that `-m` performs real work or
 errors loudly. Tiny PATCH-class ergonomics; INSTANCE of the protection
 floor (silent no-op = lying success).
+
+## F-GUARD-FLOOR-OVERVALIDATES-DRAFT-MANIFESTS — seal floor blocks unrelated seals on draft placeholder baselines (2026-06-14)
+
+The seal guard-sweep floor (seal.py, sealed f7c1cc29) validates ALL
+docs/plans/*.manifest.yaml via load_manifest at EVERY seal — so a not-yet-
+applied DRAFT plan's legitimate placeholder baseline (PENDING-*,
+PLAN_DOC_COMMIT, <backfill>) fails the schema hex-SHA check and blocks
+UNRELATED cycles' seals. Surfaced when Slice-3 (apply-complete, all ACs
+green) could not seal because sibling drafts s4b-wire + principle-foundation
+sat in docs/plans/ with placeholder baselines. The floor wrongly couples
+every seal to every in-flight draft. Fix (in flight, task #20): the
+manifest sweep skips manifests whose baseline is not a real commit-ish
+(draft markers); real-baseline manifests stay fully validated. Derivation:
+locked-design-not-license on the guard floor (a 2-day-old mechanism with a
+false-positive is revisitable); INSTANCE of "enforce-what's-real, skip the
+not-yet-built" (same shape as the plan-state false-partial fix). The floor
+itself was the three-strikes prevention from 2026-06-11/12 — this is its
+first false-positive, caught cleanly by a builder halting per three-strikes
+rather than fix-looping.

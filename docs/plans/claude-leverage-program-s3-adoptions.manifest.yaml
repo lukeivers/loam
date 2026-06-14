@@ -14,7 +14,7 @@ amendment:
 # 8e91b4299713187f69a8c14305dd9d8edd87b27c. The builder CONFIRMS against the
 # actual predecessor tip at apply time (concurrent sibling plan-authors may
 # advance main between authoring and apply — feedback_sync_check_before_build_on_checkout).
-baseline: "8e91b4299713187f69a8c14305dd9d8edd87b27c"
+baseline: "f908c72aeab9e422df97290e704c5c9ef8df3723"
 
 plan: docs/plans/claude-leverage-program-s3-adoptions.md
 

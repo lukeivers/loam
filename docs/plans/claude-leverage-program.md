@@ -132,7 +132,7 @@ owner-gate latency as separate line items.
 | `CLAUDE_CAPABILITIES.md` (Slice 1) | **DEMOTE in place** to an index/redirect over `docs/capability-corpus/` (D-CLP.5) | Two parallel snapshots is how the 7-week-stale failure happened; one refreshable source of truth. |
 | Doctrine catalogue + selection rubric (Slice 2) | **EXTEND `plugins/loam-skills/`** — graduate pos3's `claude-feature-awareness` / `tool-selection-rubric` / `primitive-rationale-check` into shipped skills (merged/renamed as the builder sees fit) **FINALISED at Slice 2 (sealed `f308b398`): names kept; `claude-feature-awareness` re-cut as thin corpus router (no own claims); `tool-selection-rubric` corpus-pointer re-verified; `primitive-rationale-check` documents the hook-enforced audit-trail line; README rewritten from disk (25 packaged).** | The prototypes are proven in pos3 daily use; loam users don't have them. Skills are the auto-discoverable primitive (Lens 1). |
 | Doctrine structural check (Slice 2) | **Hook surface** — dev-mode dispatch path first (`plugins/dev-sdlc`), persona/runtime path second **FINALISED at Slice 2 (sealed `f308b398`): `primitive_check_guard.py` PreToolUse `Task` hook in `plugins/dev-sdlc/hooks/`; persona/runtime path is the named out-of-fence follow-on (runtime check for NORMAL-USE workspaces, master §2 row 4 "second").** | Structural-enforcement-on-recurrence pattern; exact hook event + scope is builder's call. |
-| `/goal`+`/loop` adoption (Slice 3) | **EXTEND existing skills** `goal-command` / `loop-command` / `handsoff-loop` + corpus Class B entries | The skills exist; the gap is consistent *use* + the bespoke-overlap ruling. |
+| `/goal`+`/loop` adoption (Slice 3) | **EXTEND existing skills** `goal-command` / `loop-command` / `handsoff-loop` + corpus Class B entries **FINALISED at Slice 3 (sealed `59c85aa8`, 2026-06-13): D-ADOPT.1 ruled native `/goal` the default keep-going leg for single-task drive-to-checkable-outcome; the bespoke queue-dispatcher retained only for its distinct cross-turn-queue shape; Class B corpus entries + `/loop` routing landed (dev-sdlc + loam-skills components).** | The skills exist; the gap is consistent *use* + the bespoke-overlap ruling. |
 | Weekly knowledge pack (Slice 4 content) | **`docs/capability-corpus/` stays the canonical store**; a distribution projection is built FROM it | Single source of truth; the pack is a rendering, never a fork. |
 | Distribution channel (Slice 4) | **NEW public marketplace repo (⛔OWNER to create) carrying a knowledge plugin**; `framework/workspace-bootstrap/` extends to wire it for users | Per D-CLP.4. Outside any sealed fence until created; bootstrap extension is inside the existing `workspace-bootstrap` fence. |
 
@@ -243,6 +243,14 @@ recommended one can satisfy it.
 | AC.CLP-DOC.4 | The check has an explicit escape hatch for the cases where bespoke IS correct, and using it leaves an audit-visible record. | Exercise the hatch; find the record. |
 
 ### Slice 3 — NAMED ADOPTIONS (`AC.CLP-ADOPT.*`)
+
+> **SEALED `59c85aa8` (2026-06-13) — AC family GREEN.** Sub-plan
+> `docs/plans/claude-leverage-program-s3-adoptions.md` (dev-sdlc + loam-skills
+> components at `82c93c5`). D-ADOPT.1 recorded: native `/goal` is the default
+> keep-going leg for single-task drive-to-checkable-outcome; the bespoke
+> queue-dispatcher is retained only for its distinct cross-turn-queue shape.
+> The ★ AC.CLP-ADOPT.2 production-`/goal` run + AC.CLP-ADOPT.3 `/loop` routing
+> + AC.CLP-ADOPT.4 Class B corpus entries all landed. LOCAL — never pushed.
 
 | AC | Outcome | Verification |
 |---|---|---|

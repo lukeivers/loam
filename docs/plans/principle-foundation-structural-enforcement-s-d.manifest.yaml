@@ -1,0 +1,87 @@
+schema_version: 1
+amendment:
+  number: 191  # Next sequential after Slice C (190, sealed fafd2898). The
+               # builder CONFIRMS the exact number at `loam amend apply`
+               # against the live counter (feedback_version_numbers_at_release_time).
+               # Baselines on Slice C's seal (serial in one tree, D-PFSE.5).
+               # FINAL slice — closes the candidate.
+  slug: principle-foundation-structural-enforcement-s-d
+  title: "principle-foundation-structural-enforcement Slice D — SLUG-COLLISION + ARBITER SKILL (AC.PFSE.6, AC.PFSE.8). The final slice; closes the candidate. AC.PFSE.6: a new workspace-bootstrap adapter (slug_collision.py) detects two workspaces colliding on the same derived slug at install+bootstrap time — detect_slug_collision derives the slug and scans the LaunchAgents dir for com.loam.<slug>.*.plist whose embedded WorkingDirectory points at a DIFFERENT workspace (a re-bootstrap of the same workspace is NOT a collision); disambiguate_slug is the knob (appends <slug>-N until free); taken_slugs_in reads the live host state. Deterministic; fail-soft (unreadable plist / missing dir = no collision); catches the silent launchd-label clobber two same-slug workspaces cause. AC.PFSE.8: packages the meta-decision-haiku SKILL.md the sealed lsk1 ruling held open as planned-not-yet-packaged (PFSE plan §2 — this AC is the authority filling the slot). The impartial borderline-rule arbiter invokes Haiku via the subscription print-client path (NO API key) on a BOUNDED trigger list (plan-doc needed? real principle-conflict? scope-only or method-smuggling? verified or guess? in-scope-authorized or owner-gated?) — a tiebreaker OFF the per-action hot path, the operational arbiter for M5; carries the model-rationale line for the Haiku selection. The lsk1 planned-not-yet-packaged state is SUPERSEDED: README count 25->26, the planned note removed, the CLP-DOC.6 test flipped to assert packaged, the SKTRI trigger table gains the entry."
+
+# BASELINE: confirmed at apply time against the Slice C SEAL commit
+# (serial dependency — Slice C's Stop framework sealed before Slice D
+# builds). Slice C sealed at fafd2898 (Amendment #190, primary-persona at
+# 1723c20). The baseline is the commit Slice D's source sits on top of:
+# HEAD at Slice D build-start = fafd2898 (the Slice C seal). Builder
+# CONFIRMS the actual Slice C seal SHA at apply from the git ref graph
+# (feedback_published_state_only_from_git_refs).
+baseline: "fafd2898"
+
+plan: docs/plans/principle-foundation-structural-enforcement.md
+
+components:
+  # The slug-collision adapter + its tests.
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # The meta-decision-haiku SKILL.md + the README/CLP-DOC.6/SKTRI updates
+  # that supersede the lsk1 planned-not-yet-packaged state.
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + status surfaces only.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/principle-foundation-structural-enforcement-s-d.md
+  body: |
+    # principle-foundation-structural-enforcement — Slice D — SLUG-COLLISION + ARBITER SKILL — apply ladder
+
+    Fourth and FINAL slice under the candidate plan
+    `docs/plans/principle-foundation-structural-enforcement.md`. Baselines on
+    Slice C's seal (fafd2898). Closes the candidate (roadmap §4 Candidate 1).
+
+    This amendment:
+      1. AC.PFSE.6 — workspace-slug collision detection. A new
+         workspace-bootstrap adapter (slug_collision.py): detect_slug_collision
+         derives the slug + scans ~/Library/LaunchAgents/com.loam.<slug>.*.plist
+         for a plist whose embedded WorkingDirectory points at a DIFFERENT
+         workspace (a same-workspace re-bootstrap is NOT a collision);
+         disambiguate_slug appends <slug>-N until free; taken_slugs_in reads
+         the live host state. Deterministic; fail-soft. Catches the silent
+         launchd-label clobber two same-slug workspaces cause.
+      2. AC.PFSE.8 — the meta-decision-haiku arbiter SKILL. Packages the
+         SKILL.md the sealed lsk1 ruling held open as planned-not-yet-packaged
+         (PFSE plan §2 — this AC is the authority that fills the slot). The
+         impartial borderline-rule arbiter invokes Haiku via the subscription
+         print-client path (NO API key) on a BOUNDED trigger list — a
+         tiebreaker OFF the per-action hot path, the operational arbiter for
+         M5. Carries the model-rationale line for the Haiku selection.
+      3. The lsk1 planned-not-yet-packaged state is SUPERSEDED: README count
+         25->26, the planned note removed, the CLP-DOC.6 test flipped to
+         assert packaged, the SKTRI trigger table gains the entry.
+
+    With Slice D sealed, the candidate is complete: the three Lenses +
+    derivation-map are NAMED PRIMITIVES (the principle-manifest, Slice A),
+    structurally enforced for the machine-checkable subset (the four-question
+    gate + context-load gate, Slice B; the permission-ask + terminology-drift
+    Stop contributors, Slice C; slug-collision + the arbiter SKILL, Slice D).
+    M5 ships ADVISORY per the D-PFSE.1 partition (named primitive + arbiter
+    SKILL + recorded-conflict template; behavioural enforcement explicitly
+    out — interior cognition, no observable artefact).
+
+    NO public-action steps; NO Anthropic API key anywhere (the arbiter routes
+    through the subscription print-client path). BASELINE = Slice C seal
+    (confirmed at apply); counter 191 next free; builder confirms both at
+    apply time. LOCAL only.

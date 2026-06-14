@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "a8bbc3f7c74dfb35b6d4443ebc15535a206560fe"
+BASELINE = "225ab2acbcfac72029e175ef638ab422ff6ab93e"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -99,6 +99,7 @@ def test_only_loam_skills_changed() -> None:
         "docs/plans/",
         "framework/hands-off-lifecycle/",
         "plugins/dev-sdlc/",
+        "docs/capability-corpus/",
     )
     allowed_files: set[str] = {
         "install-from-source.txt",

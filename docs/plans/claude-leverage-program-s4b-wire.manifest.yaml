@@ -1,0 +1,102 @@
+schema_version: 1
+amendment:
+  number: 187  # Next sequential after S4a-render (186). The builder CONFIRMS
+               # the exact number at `loam amend apply` against the live
+               # counter (feedback_version_numbers_at_release_time). Baselines
+               # on S4a's seal — S4a must seal before S4b applies (dependency
+               # order: the pack must exist before the wiring points at it).
+  slug: claude-leverage-program-s4b-wire
+  title: "Claude-leverage program Slice 4b — WIRE (LOCAL, no public surface): the bootstrap-wiring contract — the in-fence buildable half of distribution (D-PUSH.2). EXTENDS framework/workspace-bootstrap/ so a bootstrapped workspace's .claude/settings.json gains an extraKnownMarketplaces stanza carrying autoUpdate:true (the §3.1.2 live-verified zero-user-action mechanism — third-party marketplaces default auto-update OFF, so the stanza is what delivers TRUE zero-action-after-the-bootstrap; the bootstrap IS the one-time setup) — idempotent on re-run. Adds the persona knowledge-surfacing rule: newly-arrived leverage knowledge is surfaced per the Lens 0 substance/vocabulary rule (substance exposed, wording tuned to the user), NOT a raw changelog dump (AC.CLP-PUSH.4) — builder's call whether this is a primary-persona spine edit (fence carries primary-persona, named below) or routes through the existing corpus-lean hook (no spine edit); a sealed-component edit not in this manifest is plan halt-trigger 4 — halt with the proposed widening, never silent. ★ outcome-altitude AC.CLP-PUSH-WIRE.2 (= the AC.CLP-PUSH.3 LOCAL leg): a second fixture workspace, after one-time setup ONLY, receives a re-rendered pack via a LOCAL-path marketplace (/plugin marketplace add ./<path> — §3.1.3 verified) with zero further user action; the real-publish leg is S4c ⛔OWNER. NO public-action steps."
+
+# BASELINE: confirmed at apply time against the S4a-render SEAL commit
+# (dependency order — the pack-render component must be sealed before the
+# wiring is built against it). Placeholder is S4a's expected seal tip; the
+# builder CONFIRMS the actual S4a seal SHA at `loam amend apply` and replaces
+# this line (feedback_published_state_only_from_git_refs — baseline verified
+# from the git ref graph, never from S4a's plan prose).
+baseline: "PENDING-S4A-SEAL"   # builder sets to the confirmed S4a seal SHA at apply
+
+plan: docs/plans/claude-leverage-program-s4-push.md
+
+components:
+  # The bootstrap-wiring contract — EXTEND the existing sealed
+  # workspace-bootstrap component (D-PUSH.2). The stanza-writer that adds
+  # extraKnownMarketplaces + autoUpdate:true to the workspace's
+  # .claude/settings.json + its tests live here. Precedent for a
+  # settings-wiring extension to this fence: amendment-39 tracker-seed +
+  # the Slice-2 first_run_settings.py stanza-wiring pattern.
+  - name: workspace-bootstrap
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # CONDITIONAL — admitted ONLY IF the persona knowledge-surfacing rule
+  # (AC.CLP-PUSH.4) genuinely requires a primary-persona spine/prompt edit
+  # (plan §2 "Persona knowledge-surfacing" row — builder's call). If the
+  # surfacing routes through the existing corpus-lean hook with NO spine
+  # edit, this component is NOT touched and the builder REMOVES this entry
+  # at apply (a fence wider than the work is its own ODD violation). If a
+  # spine edit IS needed, this is its fence; the builder confirms the
+  # seal-test path against the live primary-persona component at apply
+  # (primary-persona uses a cross-cutting AC.alpha suite, not necessarily a
+  # test_no_sealed_amendments.py — CORRECT at apply against the established
+  # precedent, mirroring the S2-doctrine hands-off-lifecycle correction).
+  # Verified at plan time as the named-conditional surface, not pre-committed.
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py  # CONFIRM/CORRECT at apply
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc + status
+# surfaces only. NO docs/capability-corpus/ admission (corpus is read-only
+# input; a discrepancy surfaces as a Slice-1 pending-delta, plan §8.3). The
+# rendered pack from S4a is consumed as a fixture input for the ★ WIRE.2
+# local-arrival test, NOT edited here.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/claude-leverage-program-s4b-wire.md
+  body: |
+    # Claude-leverage program Slice 4b — WIRE — apply ladder
+
+    Second buildable sub-cycle of Slice 4 under the thin-parent
+    `docs/plans/claude-leverage-program-s4-push.md`. Baselines on S4a's seal
+    (the pack must exist before the wiring points at it). Delivers the
+    bootstrap-wiring contract (D-PUSH.2) — the IN-FENCE buildable half of
+    distribution — and the persona surfacing (AC.CLP-PUSH.4).
+
+    This amendment (LOCAL — NO public surface):
+      1. EXTENDS framework/workspace-bootstrap/: a bootstrapped workspace's
+         .claude/settings.json gains an extraKnownMarketplaces stanza carrying
+         autoUpdate:true (the §3.1.2 live-verified mechanism — third-party
+         marketplaces default auto-update OFF, so the stanza is what delivers
+         TRUE zero-user-action-after-the-bootstrap). Idempotent on re-run.
+         (AC.CLP-PUSH-WIRE.1/.4)
+      2. Adds the persona knowledge-surfacing rule: arrived leverage knowledge
+         surfaced per the Lens 0 substance/vocabulary rule, not a raw changelog
+         dump. Builder's call whether this is a primary-persona spine edit
+         (the conditional component above) or a corpus-lean-hook route (no
+         spine edit — remove that component at apply). (AC.CLP-PUSH.4,
+         AC.CLP-PUSH-WIRE.3)
+      3. ★ AC.CLP-PUSH-WIRE.2 (outcome-altitude = the AC.CLP-PUSH.3 LOCAL
+         leg): a second fixture workspace, after one-time setup ONLY, receives
+         a re-rendered S4a pack via a LOCAL-path marketplace with zero further
+         user action. The real-publish leg is S4c ⛔OWNER.
+
+    The ★ AC is satisfied LOCALLY against a file://-path / local-clone
+    marketplace (plan §3.1.3 — local-path marketplaces are first-class add
+    targets); NO public surface is created or required by this cycle. The
+    `/reload-plugins` post-auto-update prompt is the platform's behavior, NOT
+    a loam step — named as the §10 F2.2 caveat, not owned.
+
+    NO Anthropic API key anywhere. BASELINE = S4a seal (confirmed at apply);
+    counter 187 next free; builder confirms both at apply time. If the
+    primary-persona conditional component is not needed, the builder removes
+    it at apply (no fence wider than the work).

@@ -1,0 +1,96 @@
+schema_version: 1
+amendment:
+  number: 186  # Next sequential after S2-doctrine (185 highest on disk).
+               # The builder CONFIRMS the exact number at `loam amend apply`
+               # against the live counter (feedback_version_numbers_at_release_time
+               # — never pre-bake a number that drifts; S4b is the next after
+               # this one).
+  slug: claude-leverage-program-s4a-render
+  title: "Claude-leverage program Slice 4a — RENDER (LOCAL, no public surface): the weekly knowledge pack is a DETERMINISTIC rendering FROM docs/capability-corpus/ (Class A claude-code/ + harness/ currency + Class B best-practice/ synthesis) into a marketplace-shaped skills-pack tree IN-REPO — never a fork (master §2), no LLM authorship in the pack body (protection-floor: a hallucinated leverage claim cannot enter by construction, same shape as Slice-1's refresh D-CUR.4). Lands a NEW tools-adjacent component framework/tools/knowledge-pack/ (first-seal; peer shape to the sealed framework/tools/capability-refresh/) that: reads the corpus + Slice-1's .refresh/last-run.json freshness signal → projects each entry into SKILL.md form under a .claude-plugin/marketplace.json + plugins/<name>/ tree (the §3.1.5 live-verified marketplace shape) → carries every pack claim's corpus citation ([primitive:<class>:<name>] / source_url passthrough) → emits a curation-gate record (pass/fail + ts) and marks the pack publish-eligible ONLY on gate pass → stamps a pack generated-ts + content-hash + per-entry source_fetch_ts/source_status passthrough so a stale corpus entry never renders as silently-current (D-PUSH.5) → reuses Slice-1's sealed cadence binding as the trigger (the pack-render is an added step in the same routine, NO second scheduler — D-PUSH.4). Builds + tests the ungated-publish-REFUSAL rig LOCALLY (AC.CLP-PUSH.5 adversarial leg: a publish attempt with no gate-pass record is refused). NO public-action steps — the pack stages in-repo; the public marketplace repo + first publish are S4c ⛔OWNER. ★ outcome-altitude AC.CLP-PUSH-RENDER.4: a production-CLI render against the live corpus with no pre-arranged state produces a well-formed marketplace tree (marketplace.json + plugins/<name>/ skills validate)."
+
+# BASELINE: c77a2447b7d34835fee23b9066159bf14baede7f — HEAD of main at
+# parent-authoring (Candidate 6 roadmap mark). The builder CONFIRMS against
+# the actual predecessor tip at apply time.
+baseline: "c77a2447b7d34835fee23b9066159bf14baede7f"
+
+plan: docs/plans/claude-leverage-program-s4-push.md
+
+components:
+  # The pack-render tool — NEW tools-adjacent component, first-seal
+  # (D-PUSH.1; precedent: the sealed framework/tools/capability-refresh/
+  # new_component shape + framework/tools/loam-acceptance-smoke). Fenced
+  # because it WRITES a distributable artefact: an unfenced pack-writer is
+  # a protection-floor hole (the same reasoning as capability-refresh's
+  # D-CUR.1). The curation-gate record + the ungated-publish-refusal rig
+  # live inside this tree so the fence stays single-component.
+  - name: knowledge-pack
+    new_component: true            # first-seal; no pre-existing sidecar
+    seal_test: framework/tools/knowledge-pack/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/knowledge-pack/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The rendered pack
+# STAGES inside the corpus root or a dist/ path (machine-generated, builder's
+# call per plan §2) — repo-level generated artefact, not component source.
+# The corpus itself is READ-ONLY input here: NO docs/capability-corpus/ source
+# edits (a corpus discrepancy found at render surfaces as a Slice-1
+# pending-delta per plan §8.3, NEVER a silent edit). If the render genuinely
+# needs to write under docs/capability-corpus/.pack/ that staging prefix is
+# admitted below; any corpus-CONTENT edit is plan halt-trigger 3 — halt and
+# surface, never widen silently.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/capability-corpus/.pack/   # generated pack staging (if builder
+                                       # stages under the corpus root; a
+                                       # dedicated dist/ path is the alt — §2)
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/claude-leverage-program-s4a-render.md
+  body: |
+    # Claude-leverage program Slice 4a — RENDER — apply ladder
+
+    First buildable sub-cycle of Slice 4 (KNOWLEDGE CORPUS, PUSHED) under the
+    thin-parent `docs/plans/claude-leverage-program-s4-push.md` and the master
+    `docs/plans/claude-leverage-program.md` (D-CLP.4 owner-RATIFIED Discord
+    1514753768175042771, 2026-06-11: distribution = plugin-marketplace
+    auto-update). The payoff leg — closest to loam's prime objective (master
+    §4): loam learns the *how* (best-current leverage knowledge) and renders it
+    for distribution so no user has to learn how to leverage AI themselves
+    (AC.PO.1).
+
+    This amendment (LOCAL — NO public surface):
+      1. Lands framework/tools/knowledge-pack/ (NEW component, first-seal):
+         deterministic projection FROM docs/capability-corpus/ into a
+         marketplace-shaped skills-pack tree (.claude-plugin/marketplace.json
+         + plugins/<name>/ with SKILL.md entries — the live-verified shape,
+         plan §3.1.5). NO LLM authorship in the pack body — a hallucinated
+         leverage claim cannot enter by construction (D-PUSH.1 protection
+         floor). (AC.CLP-PUSH.1, AC.CLP-PUSH-RENDER.1/.2)
+      2. Emits a curation-gate record; the pack is publish-eligible ONLY on a
+         recorded gate pass. Builds + tests the ungated-publish-REFUSAL rig
+         LOCALLY (AC.CLP-PUSH.5 adversarial leg). (AC.CLP-PUSH-RENDER.3)
+      3. Stamps pack generated-ts + content-hash + per-entry source_fetch_ts /
+         source_status passthrough — a stale corpus entry never renders as
+         silently-current (D-PUSH.5; the AUTHORING stale rule propagated).
+         (AC.CLP-PUSH-RENDER.5)
+      4. Reuses Slice-1's sealed cadence binding as the render trigger — the
+         pack-render is an added step in the same routine, NO second scheduler
+         (D-PUSH.4, Lens 1). (AC.CLP-PUSH-RENDER.6)
+      5. ★ AC.CLP-PUSH-RENDER.4 (outcome-altitude): a production-CLI render
+         against the live corpus with no pre-arranged state produces a
+         well-formed, validating marketplace tree.
+
+    The corpus is READ-ONLY input: NO docs/capability-corpus/ source edits; a
+    discrepancy found at render surfaces as a Slice-1 pending-delta (plan
+    §8.3), never a silent corpus edit. The public marketplace repo + first
+    publish are S4c ⛔OWNER (NOT this cycle). NO Anthropic API key anywhere
+    (any LLM-routed step — none needed for the deterministic render — would use
+    claude -p via the house client with spawn isolation).
+
+    BASELINE c77a2447 — HEAD at parent-authoring; counter 186 next free;
+    builder confirms both at apply time.

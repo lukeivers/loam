@@ -25,8 +25,9 @@ capability claims: the gap-analysis §3.2 stale items do not appear in
 the canonical copies, and capability facts are corpus pointers.
 
 AC.CLP-DOC.6 — the README matches disk: skill count derives from what
-exists; meta-decision-haiku is labeled planned-not-yet-packaged;
-gap-analysis §3.3's mismatch is gone.
+exists; meta-decision-haiku is PACKAGED (AC.PFSE.8 — supersedes the
+prior planned-not-yet-packaged state); gap-analysis §3.3's mismatch is
+gone.
 """
 
 from __future__ import annotations
@@ -166,28 +167,30 @@ def test_AC_CLP_DOC_6_readme_count_derives_from_disk() -> None:
     )
 
 
-def test_AC_CLP_DOC_6_meta_decision_haiku_labeled_planned() -> None:
-    """meta-decision-haiku is labeled planned-not-yet-packaged, not
-    deleted (the sealed lsk1 F3 ruling)."""
-    # The directory still exists (not deleted).
-    assert (SKILLS_DIR / "meta-decision-haiku").exists(), (
-        "meta-decision-haiku directory must NOT be deleted (lsk1 F3 "
-        "ruling: intentional, no action required)"
-    )
-    # It carries no SKILL.md (it is planned-not-yet-packaged).
-    assert not (
+def test_AC_CLP_DOC_6_meta_decision_haiku_now_packaged() -> None:
+    """meta-decision-haiku is PACKAGED by AC.PFSE.8 (principle-
+    foundation-structural-enforcement Slice D), filling the slot the
+    sealed lsk1 F3 ruling held open as planned-not-yet-packaged.
+
+    Supersedes the prior planned-not-yet-packaged assertion: the
+    candidate's AC.PFSE.8 is the authority that packages the SKILL (PFSE
+    plan §2 placement — 'fills the planned-not-yet-packaged slot per the
+    lsk1 ruling')."""
+    # The directory exists and now carries a SKILL.md.
+    assert (
         SKILLS_DIR / "meta-decision-haiku" / "SKILL.md"
-    ).exists(), (
-        "meta-decision-haiku is planned-not-yet-packaged; it carries no "
-        "SKILL.md yet"
+    ).is_file(), (
+        "meta-decision-haiku is now packaged (AC.PFSE.8) — it carries a "
+        "SKILL.md"
     )
     body = README.read_text(encoding="utf-8")
     assert "meta-decision-haiku" in body, (
-        "README must still name meta-decision-haiku"
+        "README must name meta-decision-haiku"
     )
-    assert "planned-not-yet-packaged" in body, (
-        "README must label meta-decision-haiku planned-not-yet-packaged "
-        "(gap-analysis §3.3 fix — truthful labeling, not deletion)"
+    # The README no longer labels it planned-not-yet-packaged.
+    assert "planned-not-yet-packaged" not in body, (
+        "README must NOT label meta-decision-haiku "
+        "planned-not-yet-packaged any more — it is packaged (AC.PFSE.8)"
     )
 
 

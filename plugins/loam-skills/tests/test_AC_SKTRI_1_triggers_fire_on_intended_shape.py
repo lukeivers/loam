@@ -113,6 +113,10 @@ INTENDED_SHAPES: dict[str, list[str]] = {
         "recall what we discussed in a prior session",
         "ground this in earlier decisions from memory",
     ],
+    "meta-decision-haiku": [
+        "this borderline call needs an impartial arbiter",
+        "does this principle-conflict need a neutral tiebreaker",
+    ],
     "monitor-tool": [
         "wait until the background build finishes",
         "watch a log file for an error pattern",

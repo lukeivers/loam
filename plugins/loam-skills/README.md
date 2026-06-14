@@ -1,23 +1,21 @@
 # Loam Skills plugin for loam
 
-Twenty-five SKILL.md packages: loam's load-bearing translation
+Twenty-six SKILL.md packages: loam's load-bearing translation
 patterns, a cluster of per-primitive auto-loaders for Claude Code's
-scheduling / background / hook surface, and the three-skill
-dispatch-decision discipline (catalogue → decide → record).
-Discoverable by Claude Code via the standard
-`<plugin>/skills/<skill-name>/SKILL.md` filesystem walk. Composes with
-raw Claude Code — a stranger can install this plugin and benefit from
-loam's patterns without committing to the full harness.
+scheduling / background / hook surface, the three-skill
+dispatch-decision discipline (catalogue → decide → record), and the
+meta-decision-haiku borderline-rule arbiter. Discoverable by Claude
+Code via the standard `<plugin>/skills/<skill-name>/SKILL.md`
+filesystem walk. Composes with raw Claude Code — a stranger can
+install this plugin and benefit from loam's patterns without
+committing to the full harness.
 
 The skill count above is derived from disk: every subdirectory of
-`skills/` that contains a `SKILL.md` file. One further directory,
-`meta-decision-haiku/`, is present but is **planned-not-yet-packaged**
-(it carries no `SKILL.md` yet — see the note at the end of this
-section); it is intentionally retained, not garbage.
+`skills/` that contains a `SKILL.md` file.
 
 ## What this plugin contains
 
-Twenty-five packaged skills in `skills/<skill-name>/SKILL.md` shape,
+Twenty-six packaged skills in `skills/<skill-name>/SKILL.md` shape,
 in three clusters.
 
 ### Translation-pattern skills
@@ -106,16 +104,18 @@ against the refresh-kept capability corpus (`docs/capability-corpus/`).
   PreToolUse `Task` hook) structurally enforces this line's presence
   on bespoke-equivalent dispatches.
 
-### Planned-not-yet-packaged
-
-- **`meta-decision-haiku`** — referenced in master plans and the
-  roadmap (when a small decision needs an LLM call and Sonnet is
-  overkill, reach for Haiku via the appropriate wrapper) but **not
-  yet a packaged SKILL** — the `meta-decision-haiku/` directory
-  exists without a `SKILL.md`. Retained intentionally per the sealed
-  loam-skills root-cause ruling ("intentionally referenced in master
-  plans but not yet a SKILL package — no action required"); it is not
-  counted among the packaged skills above.
+- **`meta-decision-haiku`** — the impartial borderline-rule arbiter
+  (the operational arbiter for loam's M5 principle-conflict
+  resolution). When the persona hits a genuinely borderline
+  meta-decision on a BOUNDED trigger list (plan-doc needed? real
+  principle-conflict? scope-only or method-smuggling? verified or
+  guess? in-scope-authorized or owner-gated?), it calls a neutral
+  Haiku model via `claude -p` (the subscription path, NO API key) to
+  rule from a standpoint with no stake in the next action. Bounded +
+  off the per-action hot path by design — a tiebreaker, not a gate.
+  Packaged by the principle-foundation-structural-enforcement
+  candidate (AC.PFSE.8), filling the slot the sealed loam-skills
+  root-cause ruling held open.
 
 ## How skills are discovered
 

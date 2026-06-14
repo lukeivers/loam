@@ -1,0 +1,105 @@
+schema_version: 1
+amendment:
+  number: 188  # Next sequential after claude-leverage-program-s4b-wire (187,
+               # sealed eb2f1efc). The builder CONFIRMS the exact number at
+               # `loam amend apply` against the live counter
+               # (feedback_version_numbers_at_release_time). First of four
+               # ordered slices (D-PFSE.5).
+  slug: principle-foundation-structural-enforcement-s-a
+  title: "principle-foundation-structural-enforcement Slice A — DECLARATION SUBSTRATE (AC.PFSE.1, AC.PFSE.2-manifest-leg). loam's design principles become a machine-read named-primitive registry + a mechanical integrity check, not advisory prose alone (roadmap §4 Candidate 1, MINOR/META). Ships docs/design/principle-manifest.yaml (NEW, universal-paths) — the code-side declaration surface carrying the frame-rules FR.1/FR.2/FR.3 + the cross-cutting principles (F2/F3/F4/M5) + the enforced operating primitives, each with an `enforcement` field (enforced|advisory|partial); M5 declared `advisory` per the D-PFSE.1 partition (interior cognition, no observable artefact — the load-bearing call, HALT-SURFACED at plan §3.1/§10 RF-1). Ships plugins/dev-sdlc/hooks/principle_manifest_reader.py (typed reader; enumerate FR.1/FR.2/FR.3 + M5 from code) + plugins/dev-sdlc/hooks/principle_manifest_guard.py (PreToolUse sibling of primitive_check_guard — WARN-tier on structural/coverage drift when an edit targets the manifest or map; _gate_helpers NDJSON audit + dev-mode short-circuit + fail-open envelope, D-PFSE.4) + a bidirectional manifest<->derivation-map coverage guard scoped to the declared-principle surface (frame_rules + principles). Ships framework/docs/principles/odd-principles.md (NEW — FR.1 REAL authoring; framework/docs/principles/ did not exist on disk, the verified correction; Anthropic-publish-grade principles tier cross-referencing the manifest). FR.2/FR.3 docs (plugins/dev-sdlc/docs/odd-{methodology,in-loam}.md, the one sealed fence) gain a one-line manifest cross-reference; the derivation-map gains a one-line pointer to the manifest. FR.2/FR.3 full publish-grade re-author is tracked separately under foundation-revision-rebuild — AC.PFSE.1 requires the prose docs EXIST + cross-reference the manifest, NOT a re-author (operational-objective ruling, surfaced)."
+
+# BASELINE: e4c4734f — HEAD of main at Slice A source-edit start (the
+# commit immediately preceding the Slice A feat commit, per the house
+# pattern). The plan/manifest pair committed at f908c72a is an ancestor;
+# e4c4734f is one commit ahead (prior cycle's roadmap-mark). The builder
+# CONFIRMED this against the predecessor tip at apply time
+# (feedback_published_state_only_from_git_refs — baseline from the git
+# ref graph, not plan prose).
+baseline: "e4c4734f"
+
+plan: docs/plans/principle-foundation-structural-enforcement.md
+
+components:
+  # The principle-manifest reader + checker hook + matcher/coverage
+  # tests, AND the FR.2/FR.3 doc cross-reference edits (the one sealed
+  # fence FR.1-3 touch). The full methodology/project-bridge re-author is
+  # OUT of this slice (foundation-revision-rebuild owns it); this slice
+  # adds the named-primitive cross-reference only.
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (amendment #22 ruling #3). The machine-read
+# principle-manifest + FR.1's NEW principles dir + the derivation-map
+# pointer + the plan pair live in universally-admitted space so future
+# principle-row edits never breach a fence (guard-floor-registry
+# precedent, seal f7c1cc29).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/design/
+    - framework/docs/principles/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/design/principle-manifest.yaml
+    - docs/design/principle-derivation-map.md
+
+narrative:
+  target: docs/plans/sealed/principle-foundation-structural-enforcement-s-a.md
+  body: |
+    # principle-foundation-structural-enforcement — Slice A — DECLARATION SUBSTRATE — apply ladder
+
+    First of four ordered slices under the candidate plan
+    `docs/plans/principle-foundation-structural-enforcement.md` (roadmap §4
+    Candidate 1, MINOR/META). Delivers the declaration substrate: loam's
+    design principles stop being advisory prose and become a machine-read
+    named-primitive registry plus a mechanical integrity check.
+
+    This amendment:
+      1. Ships docs/design/principle-manifest.yaml (NEW, universal-paths) —
+         the code-side declaration surface a checker enumerates the
+         frame-rules (FR.1/FR.2/FR.3) + M5 from. Each row carries an
+         `enforcement` field (enforced|advisory|partial). M5 is declared
+         `advisory` per the load-bearing D-PFSE.1 partition: the four-step
+         conflict process is interior cognition with no observable artefact,
+         and an LLM-per-action judge collides with the hook-latency budget —
+         behavioural enforcement is explicitly OUT (HALT-SURFACED, plan
+         §3.1/§10 RF-1). (AC.PFSE.1, AC.PFSE.2-manifest-leg)
+      2. Ships the typed reader (principle_manifest_reader.py) + the
+         PreToolUse manifest-checker (principle_manifest_guard.py, a
+         WARN-tier sibling of primitive_check_guard reusing the
+         _gate_helpers NDJSON-audit + dev-mode short-circuit + fail-open
+         envelope, D-PFSE.4) + a bidirectional manifest<->derivation-map
+         coverage guard scoped to the declared-principle surface
+         (frame_rules + principles; enforced-primitives provenance is
+         excluded — it may name a newer feedback memory not yet in the map's
+         table). A manifest row naming a corpus file the map omits, OR a
+         structurally invalid manifest, turns the dev-sdlc suite red — the
+         observable-drift contract (D-PFSE.2 / RF-4). (AC.PFSE.1)
+      3. Ships framework/docs/principles/odd-principles.md (NEW) — FR.1 REAL
+         authoring (framework/docs/principles/ did not exist on disk, the
+         verified plan correction). Anthropic-publish-grade principles tier;
+         cross-references the manifest. (AC.PFSE.1)
+      4. FR.2/FR.3 docs (the one sealed fence, plugins/dev-sdlc/docs/) gain a
+         one-line manifest cross-reference; the derivation-map gains a
+         one-line pointer to the manifest. The full publish-grade re-author
+         of FR.2/FR.3 is tracked separately under foundation-revision-rebuild
+         — AC.PFSE.1 requires the prose docs EXIST + cross-reference the
+         manifest, NOT a re-author. The CLAUDE.md Lens consolidation
+         (foundation-revision-rebuild §3.5) is already present in this tree
+         (Lens 0-7), so that sub-deliverable is a no-op here (surfaced).
+
+    Out with named handoffs: the FR.2/FR.3 publish-grade re-author
+    (foundation-revision-rebuild owns it); the research-question gate +
+    context-load gate (Slice B); the Stop-hook contributor framework + the
+    permission-ask/terminology-drift contributors + the AC.PFSE.2★
+    outcome-altitude fire (Slice C); slug-collision + the meta-decision-haiku
+    arbiter SKILL (Slice D).
+
+    NO public-action steps; NO Anthropic API key anywhere (every check is
+    deterministic YAML/regex/git-read). BASELINE e4c4734f — HEAD at Slice A
+    source-edit start; counter 188 next free; builder confirms both at apply
+    time. LOCAL only.

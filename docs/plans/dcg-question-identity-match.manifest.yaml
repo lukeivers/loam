@@ -1,0 +1,40 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time). PATCH — a correctness
+  # fix to the decision-claim contradiction gate; version derives at
+  # release time.
+  slug: dcg-question-identity-match
+  title: "dcg-question-identity-match (PATCH) — the decision-claim gate (claim_guard.check_decision_claims / _declared_vocab_overlap) false-positives a genuinely-OPEN ledger question as contradicting an UNRELATED ruled record that merely shares claim-language + a ubiquitous domain token (live-ledger Tier-0: the open 'Which model runs substantive loam build work…' question resolved the unrelated FBM co-citation ruled record on {and, happens, loam, what}). FIX (D-DCGID.1, owner ruling D): contradiction-detection requires QUESTION-IDENTITY match — overlap is counted only over DISTINCTIVE tokens (not generic stopwords, not corpus-ubiquitous tokens whose full-ledger declared-vocab document-frequency exceeds a ubiquity cutoff), threshold stays >=2; real same-question contradictions STILL flag (recall preserved). This is the ONLY blocker for three pending seals (GUARD-SWEEP FLOOR class-6). ★ outcome-altitude AC.DCGID.OA: through the production gate against the live ledger, the exact false-positive pair does NOT flag AND a genuine same-question reopen DOES flag."
+
+# BASELINE: the plan-doc commit (the commit immediately preceding this
+# cycle's source-edit commits), per the house pattern. The builder
+# CONFIRMS against the actual predecessor tip at apply time.
+baseline: "PLAN_DOC_COMMIT"  # confirmed to the plan-doc commit at apply (house pattern)
+
+plan: docs/plans/dcg-question-identity-match.md
+plan_doc_ref: docs/plans/sealed/dcg-question-identity-match.md
+
+components:
+  # ONE sealed fence: hands-off-lifecycle. The gate
+  # (hooks/keep_pace/claim_guard.py) + the AC.DCGID.* tests seal via
+  # this fence. Precedent: the DCG cycle (aecb8e47) that authored
+  # claim_guard's decision-claim guard sealed through this same fence.
+  - name: hands-off-lifecycle
+    new_component: false
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true   # H19 pinned at project-start per amendment #23
+    extra_allowed_prefixes: []
+
+# Universal admissions (amendment #22 ruling #3): the plan pair only.
+# The live ledger + decision_ledger module are READ-ONLY inputs.
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: docs/plans/sealed/dcg-question-identity-match.md
+
+# Five ACs (AC.DCGID.1..4 + AC.DCGID.OA); AC.DCGID.OA is outcome-altitude.
+ac_count: 5

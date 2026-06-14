@@ -41,7 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 # #139 diff window when BASELINE points at #138's seal. Bumping
 # BASELINE to the corrective fixup commit takes the orphan-cleanup
 # out of #139's diff window per amendment #139 §16 finding.
-BASELINE = "225ab2acbcfac72029e175ef638ab422ff6ab93e"
+BASELINE = "b14e279d"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

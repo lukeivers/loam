@@ -1,0 +1,114 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time). MINOR / META-FRAMEWORK
+  # per roadmap §4 Candidate 1 — version derives at release time.
+  #
+  # SLICED CYCLE: this candidate ships as FOUR ordered seals (plan §6,
+  # ruling D-PFSE.5), serial in one tree (feedback_serialize_amendment_builds).
+  # The builder authors a per-slice manifest at each apply (slug suffix
+  # -s-a / -s-b / -s-c / -s-d) and confirms the live global counter at
+  # `loam amend apply` for each. This candidate-level manifest names the
+  # FULL fence + the slice→component map so the per-slice manifests are a
+  # mechanical projection of it, not a re-derivation.
+  slug: principle-foundation-structural-enforcement
+  title: "principle-foundation-structural-enforcement (MINOR / META-FRAMEWORK) — loam's design principles become NAMED PRIMITIVES + mechanical enforcement, not advisory prose. Ships a machine-read principle-manifest (docs/design/principle-manifest.yaml) + a dev-sdlc manifest-checker (sibling of primitive_check_guard.py) with a bidirectional manifest↔derivation-map coverage guard; FR.1 odd-principles.md (NEW) + FR.2/FR.3 dev-sdlc methodology/project-bridge re-author + CLAUDE.md Lens consolidation (the one sealed fence: plugins/dev-sdlc/); a four-research-question plan gate that refuses to advance on any empty question; a Stop-hook contributor FRAMEWORK in framework/primary-persona/ (built fresh — no contributor registry exists today; the current cli stop is single-purpose memory-write) carrying the permission-asking-pattern contributor (AC.PFSE.4) + the terminology-drift contributor (AC.PFSE.7); a PreToolUse context-load gate (AC.PFSE.5, sibling guard, first_run_settings wired); workspace-slug collision detection at install+bootstrap with a disambiguation knob (AC.PFSE.6); and the meta-decision-haiku SKILL (AC.PFSE.8) invoking Haiku via claude -p (NO API key) as an impartial arbiter for a BOUNDED borderline-rule trigger list. RULED PARTITION (D-PFSE.1, the load-bearing call): AC.PFSE.2's F6/M5 four-step conflict process is NOT behaviourally enforced — interior cognition with no observable artefact + an LLM-per-action judge collides with the hook-latency budget — it ships as a named manifest primitive + the arbiter SKILL + a recorded-conflict template (HALT-SURFACED, plan §10 RF-1). Every new hook reuses the proven two-tier deny/warn + _gate_helpers NDJSON-audit + dev-mode short-circuit + fail-open envelope. ★ outcome-altitude AC.PFSE.2★: a dispatch/edit violating an ENFORCED declared principle fires the mechanical check through the production hook subprocess with no pre-arranged state."
+
+# BASELINE: the plan-doc commit (the commit immediately preceding the
+# first slice's source-edit commits), per the house pattern
+# (seal-guard-sweep-floor manifest comment). The builder CONFIRMS
+# against the actual predecessor tip at apply time for EACH slice
+# (each slice baselines on the prior slice's seal).
+baseline: "PLAN_DOC_COMMIT"  # builder resolves to the actual SHA at first apply
+
+plan: docs/plans/principle-foundation-structural-enforcement.md
+plan_doc_ref: docs/plans/sealed/principle-foundation-structural-enforcement.md
+
+# FULL candidate fence. Per-slice manifests admit the SUBSET each slice
+# touches (plan §6 slice→component map):
+#   Slice A (AC.PFSE.1, .2-manifest-leg): dev-sdlc (checker + FR.2/FR.3
+#            re-author, the one sealed fence) + universal (principle-manifest.yaml,
+#            FR.1 framework/docs/principles/, CLAUDE.md, derivation-map pointer).
+#   Slice B (AC.PFSE.3, .5): dev-sdlc (template + gates) + hands-off-lifecycle
+#            (first_run_settings wiring, A4 precedent — admitted for wiring ONLY).
+#   Slice C (AC.PFSE.4, .7, .2★): primary-persona (Stop-hook contributor framework
+#            + two contributors).
+#   Slice D (AC.PFSE.6, .8): workspace-bootstrap (slug-collision) + loam-skills
+#            (meta-decision-haiku SKILL.md).
+components:
+  - name: dev-sdlc
+    new_component: false           # manifest-checker hook + matcher data + tests;
+                                   # FR.2/FR.3 methodology/project-bridge re-author
+                                   # (THE one sealed fence FR.1-3 touch); research-
+                                   # question gate + context-load gate + template.
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: primary-persona
+    new_component: false           # Stop-hook contributor FRAMEWORK (built fresh)
+                                   # + permission-ask contributor (AC.PFSE.4)
+                                   # + terminology-drift contributor (AC.PFSE.7)
+                                   # + AC.PFSE.2★ outcome-altitude fire. Preserves
+                                   # the rc=0-always / fail-soft Stop contract
+                                   # (stop_emitter.py:478) — plan halt trigger 1.
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: hands-off-lifecycle
+    new_component: false           # ADMITTED FOR WIRING ONLY (A4 precedent):
+                                   # first_run_settings.py marker + PreToolUse
+                                   # stanza for the context-load gate so it reaches
+                                   # bootstrapped workspaces. Builder CORRECTS the
+                                   # seal_test/frozen_baseline at apply against the
+                                   # established HOL precedent (cross-cutting suite +
+                                   # frozen BASELINE — same correction as the Slice-2
+                                   # manifest). Any HOL edit beyond this wiring is
+                                   # out-of-scope drift; seal-diff review enforces.
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+  - name: workspace-bootstrap
+    new_component: false           # workspace-slug collision detection at install +
+                                   # bootstrap time + disambiguation knob (AC.PFSE.6).
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  - name: loam-skills
+    new_component: false           # meta-decision-haiku SKILL.md (AC.PFSE.8) — fills
+                                   # the planned-not-yet-packaged dir per the lsk1
+                                   # ruling; invokes Haiku via claude -p (NO API key).
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (amendment #22 ruling #3). The machine-read
+# principle-manifest + FR.1's NEW principles dir + the derivation-map
+# pointer + the plan pair live in universally-admitted space so future
+# principle-row edits never breach a fence (the guard-floor-registry
+# precedent, seal f7c1cc29).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/design/
+    - framework/docs/principles/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/design/principle-manifest.yaml
+    - docs/design/principle-derivation-map.md
+
+narrative:
+  target: docs/plans/sealed/principle-foundation-structural-enforcement.md
+
+# Eight roadmap ACs (AC.PFSE.1..8) + one outcome-altitude (AC.PFSE.2★).
+ac_count: 9

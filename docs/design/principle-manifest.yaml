@@ -1,0 +1,268 @@
+# Copyright 2026 Luke Ivers and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
+
+# =====================================================================
+# principle-manifest.yaml — the machine-read declaration surface for
+# loam's principle foundation (principle-foundation-structural-
+# enforcement, roadmap §4 Candidate 1, D-PFSE.2).
+# =====================================================================
+#
+# WHAT THIS FILE IS
+#
+# loam's design principles stop being advisory prose and become NAMED
+# DECLARATIONS A CHECKER READS. Each row below is a principle the
+# candidate makes into a named primitive; the `enforcement` field
+# states whether the principle ships with a MECHANICAL check on the
+# production path (`enforced`), a structural surface but no behavioural
+# check (`advisory`), or a partial check (`partial`).
+#
+# This is the code-side artefact AC.PFSE.1 names: a checker enumerates
+# FR.1 / FR.2 / FR.3 (the three frame-rule / Lens-tier deliverables of
+# the foundation revision) and M5 from THIS file, not from prose. The
+# human-readable companion is `docs/design/principle-derivation-map.md`
+# (the F4 compose-with / independent / partial table + M5 lookup),
+# which carries a one-line pointer back here.
+#
+# WHY A NEW YAML, NOT THE PROSE MAP MADE EXECUTABLE (D-PFSE.2 ruling)
+#
+# The derivation-map is a Markdown table tuned for human reading + M5
+# lookup; parsing Markdown tables for enforcement is brittle, and the
+# map explicitly disclaims being an "override list." A purpose-built
+# YAML is the durable machine surface; a checker reads YAML, never the
+# prose. A bidirectional coverage guard (the primitive_check_matchers
+# precedent, seal f308b398) keeps manifest <-> map drift observable: a
+# manifest row whose `memory_basename` does not resolve to a real
+# corpus entry, OR a map row for a principle this manifest claims to
+# declare that is absent here, turns the dev-sdlc suite red.
+#
+# WHY universal-paths placement
+#
+# This file lives at `docs/design/` (universally-admitted space, the
+# guard-floor-registry precedent at seal f7c1cc29) so future
+# principle-row edits never breach a sealed fence.
+#
+# SCHEMA (per-row)
+#
+#   id              : stable short id. Frame-rules use FR.1/FR.2/FR.3;
+#                     cross-cutting principles use their corpus short-
+#                     name (F2 / F3 / F4 / M5); operating principles use
+#                     a scope-descriptive slug.
+#   name            : human-readable principle name.
+#   memory_basename : the `feedback_*.md` corpus file that carries the
+#                     full text, OR null for frame-rule tiers whose
+#                     home is a framework doc (named in `doc`).
+#   doc             : the prose home (framework doc / plugin doc / this
+#                     repo's CLAUDE.md) — the FR.1/FR.2/FR.3 prose side.
+#   enforcement     : enforced | advisory | partial.
+#   mechanism       : one line naming HOW the principle is checked (or
+#                     why it is advisory).
+#   f4_relationship : IS-F4 | IS-M5 | compose-with | independent |
+#                     partial — mirrors the derivation-map column so the
+#                     coverage guard can cross-check.
+#   ac              : the AC.PFSE.* this row satisfies (null for rows
+#                     that are declared-but-not-this-candidate's-AC).
+#
+# =====================================================================
+
+schema_version: 1
+
+# ---------------------------------------------------------------------
+# FRAME-RULE TIERS (FR.1 / FR.2 / FR.3) — the foundation-revision split.
+# These are the three ODD-documentation tiers the candidate makes into
+# named primitives. AC.PFSE.1: a checker enumerates these from this
+# file; the prose docs exist and cross-reference this manifest.
+# ---------------------------------------------------------------------
+frame_rules:
+  - id: FR.1
+    name: "Principles tier (universal, exportable) — odd-principles spec"
+    memory_basename: null
+    doc: framework/docs/principles/odd-principles.md
+    enforcement: enforced
+    mechanism: >-
+      Presence + manifest: the principles-tier spec exists at the named
+      doc path and cross-references this manifest; the dev-sdlc
+      manifest-checker enumerates this row. Drift (doc absent, or the
+      cross-reference missing) is observable via the coverage guard.
+    f4_relationship: compose-with
+    ac: AC.PFSE.1
+
+  - id: FR.2
+    name: "Methodology tier (loam-specific, proscriptive) — odd-methodology"
+    memory_basename: null
+    doc: plugins/dev-sdlc/docs/odd-methodology.md
+    enforcement: enforced
+    mechanism: >-
+      Presence + manifest: the methodology-tier doc exists and carries a
+      manifest cross-reference; enumerated by the checker. The doc's full
+      re-author is tracked separately (foundation-revision-rebuild FR.2);
+      this candidate enforces the named-primitive declaration + the
+      cross-reference, not the prose re-author.
+    f4_relationship: compose-with
+    ac: AC.PFSE.1
+
+  - id: FR.3
+    name: "Project-bridge tier (mapping layer) — odd-in-loam + Lens corpus"
+    memory_basename: null
+    doc: plugins/dev-sdlc/docs/odd-in-loam.md
+    enforcement: enforced
+    mechanism: >-
+      Presence + manifest: the project-bridge doc exists and carries a
+      manifest cross-reference; the CLAUDE.md Lens corpus (Lens 0-7) is
+      present. Enumerated by the checker. Full re-author tracked under
+      foundation-revision-rebuild FR.3.
+    f4_relationship: compose-with
+    ac: AC.PFSE.1
+
+# ---------------------------------------------------------------------
+# CROSS-CUTTING PRINCIPLES (F2 / F3 / F4 / M5). M5 is the load-bearing
+# advisory row (D-PFSE.1): the four-step conflict process is interior
+# cognition with no observable artefact unless the agent writes one, so
+# it ships as a NAMED PRIMITIVE + arbiter SKILL + recorded-conflict
+# template, NOT a behavioural check (HALT-SURFACED, plan §3.1 / §10).
+# ---------------------------------------------------------------------
+principles:
+  - id: F4
+    name: "Prompt scope <-> confidence"
+    memory_basename: feedback_prompt_scope_confidence.md
+    doc: CLAUDE.md
+    enforcement: advisory
+    mechanism: >-
+      Most-broadly-applicable shaping principle; informs scope-tightness
+      of every dispatch. No per-action mechanical check (the right scope
+      for an outcome is a judgment call); declared as a named primitive
+      + keyed by the derivation-map.
+    f4_relationship: IS-F4
+    ac: null
+
+  - id: M5
+    name: "Principle conflict resolution — multi-signal four-step process"
+    memory_basename: feedback_principle_conflict_resolution_multi_signal.md
+    doc: CLAUDE.md
+    enforcement: advisory
+    mechanism: >-
+      Behavioural enforcement explicitly OUT (D-PFSE.1, plan §3.1):
+      steps 1-3 (name conflict / name signals / make call) are interior
+      cognition with no observable artefact; only step 4 (surface) has
+      one, and that is already covered by F2 surfacing. Ships as: this
+      named-primitive row; the meta-decision-haiku SKILL (AC.PFSE.8) as
+      the borderline arbiter; a recorded-conflict template carrying the
+      four named steps. NOT a regex-on-every-action check (an LLM-per-
+      action judge collides with the hook-latency budget).
+    f4_relationship: IS-M5
+    ac: AC.PFSE.2
+
+  - id: F3
+    name: "Swarming — recursive task decomposition with judge-driven cycles"
+    memory_basename: feedback_swarming_recursive_decomposition.md
+    doc: CLAUDE.md
+    enforcement: advisory
+    mechanism: >-
+      Decomposition + model-rationale discipline; the model-rationale
+      line is audit-checkable but the decomposition decision is a
+      judgment call. Declared as a named primitive.
+    f4_relationship: compose-with
+    ac: null
+
+  - id: F2
+    name: "Ruthless Feedback — name the disagreement / evidence / alternative"
+    memory_basename: feedback_ruthless_feedback.md
+    doc: CLAUDE.md
+    enforcement: advisory
+    mechanism: >-
+      Communication-honesty principle; the obligation to surface is a
+      behavioural commitment, not a regex target. Declared as a named
+      primitive; the permission-ask Stop contributor (AC.PFSE.4) is the
+      nearest mechanical check on one own-behaviour facet.
+    f4_relationship: independent
+    ac: null
+
+# ---------------------------------------------------------------------
+# ENFORCED OPERATING PRIMITIVES — the principles this candidate ships a
+# MECHANICAL check for. Each row names the AC.PFSE.* its check
+# satisfies and the hook / gate / SKILL that is the check.
+# ---------------------------------------------------------------------
+enforced_primitives:
+  - id: research-four-question-gate
+    name: "Four research-question gate (Lens 0-7 research questions)"
+    memory_basename: null
+    doc: plugins/dev-sdlc/docs/odd-methodology.md
+    enforcement: enforced
+    mechanism: >-
+      A research-plan that omits any required research question cannot
+      advance: a deterministic section-presence gate refuses on any
+      empty question (AC.PFSE.3). No LLM — section-presence is parse.
+    f4_relationship: compose-with
+    ac: AC.PFSE.3
+
+  - id: permission-ask-stop-contributor
+    name: "Persona own-behaviour — permission-ask on authorized work"
+    memory_basename: feedback_no_closing_line_permission_asks.md
+    doc: CLAUDE.md
+    enforcement: enforced
+    mechanism: >-
+      A Stop-hook contributor scans the turn's outbound reply for
+      permission-asking patterns on authorized work and WARNs / flags
+      for rewrite (AC.PFSE.4). Deterministic regex over outbound text.
+    f4_relationship: independent
+    ac: AC.PFSE.4
+
+  - id: context-load-gate
+    name: "Structural context-load gate (follow-the-defined-workflow)"
+    memory_basename: feedback_session_start_discipline.md
+    doc: CLAUDE.md
+    enforcement: enforced
+    mechanism: >-
+      A PreToolUse gate blocks dispatch/author work until the relevant
+      design docs are loaded — a deterministic loaded-set predicate, NOT
+      an LLM relevance judgment (AC.PFSE.5, plan halt-trigger 2).
+    f4_relationship: independent
+    ac: AC.PFSE.5
+
+  - id: slug-collision-detection
+    name: "Workspace-slug collision detection + disambiguation knob"
+    memory_basename: null
+    doc: framework/workspace-bootstrap/
+    enforcement: enforced
+    mechanism: >-
+      Install-time + bootstrap-time deterministic slug-collision check
+      with a disambiguation knob (AC.PFSE.6). No primitive beyond the
+      existing bootstrap path.
+    f4_relationship: independent
+    ac: AC.PFSE.6
+
+  - id: terminology-drift-stop-contributor
+    name: "Terminology / dossier-vs-git drift detection"
+    memory_basename: feedback_published_state_only_from_git_refs.md
+    doc: CLAUDE.md
+    enforcement: partial
+    mechanism: >-
+      A Stop-hook contributor WARNs on dossier/narrative claims that
+      disagree with git log / plan-doc / manifest (AC.PFSE.7). PARTIAL:
+      catches claim-vs-git-fact contradictions on a bounded claim shape,
+      not arbitrary semantic drift.
+    f4_relationship: compose-with
+    ac: AC.PFSE.7
+
+  - id: meta-decision-haiku-arbiter
+    name: "Meta-decision-haiku SKILL — impartial borderline-rule arbiter"
+    memory_basename: feedback_principle_conflict_resolution_multi_signal.md
+    doc: plugins/loam-skills/skills/meta-decision-haiku/SKILL.md
+    enforcement: enforced
+    mechanism: >-
+      A SKILL invoking Haiku via `claude -p` (subscription path, NO API
+      key) as an impartial third-party for a BOUNDED borderline-rule
+      trigger list (AC.PFSE.8). The one place an LLM is in the loop —
+      deliberately, off the per-action hot path.
+    f4_relationship: IS-M5
+    ac: AC.PFSE.8

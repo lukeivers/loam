@@ -4,6 +4,8 @@
 
 **Doubles as:** primary M5 artefact — the compose-with/independent/partial table M5 references for routine principle-compatibility lookups.
 
+**Machine-read companion:** [`docs/design/principle-manifest.yaml`](./principle-manifest.yaml) — the code-side declaration surface a checker enumerates the frame-rules (FR.1/FR.2/FR.3) + M5 from. This map is the human-readable F4/M5 table; the manifest is the side a hook reads. A bidirectional coverage guard keeps the two from drifting (a manifest row naming a corpus file this map does not reference turns the dev-sdlc suite red).
+
 ## Purpose
 
 Two purposes, in priority order:

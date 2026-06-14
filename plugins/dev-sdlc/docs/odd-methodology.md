@@ -2,7 +2,7 @@
 
 **Audience:** AI assistants authoring, reviewing, or executing work inside a
 loam workspace — the canonical reference for what "doing ODD properly"
-requires at the mechanical level. **Status:** normative — when this document
+requires at the mechanical level. This is the **methodology tier (FR.2)** of the foundation-revision split, declared as a named primitive (id `FR.2`) in the machine-read [`docs/design/principle-manifest.yaml`](../../../docs/design/principle-manifest.yaml); its principles tier is [`framework/docs/principles/odd-principles.md`](../../../framework/docs/principles/odd-principles.md). **Status:** normative — when this document
 and a persona's instincts disagree, this document wins. Rewritten 2026-06-10
 per the ratified methodology-synthesis verdict (KEEL adoption program,
 Phase 1); full pre-rewrite text (1,264 lines) at

@@ -1,5 +1,7 @@
 # Objective-Driven Design in loam — Implementation Companion
 
+**Tier:** Project-bridge (FR.3) in the foundation-revision split. **Companion declaration:** this project-bridge tier is declared as a named primitive (id `FR.3`) in the machine-read [`docs/design/principle-manifest.yaml`](../../../docs/design/principle-manifest.yaml), alongside the principles tier [`framework/docs/principles/odd-principles.md`](../../../framework/docs/principles/odd-principles.md) and the methodology tier `odd-methodology.md`.
+
 **Audience:** human developers using loam or contributing components to it
 who have read (or are about to read) `odd-methodology.md` and want to see
 how the framework actually practices what that document specifies.

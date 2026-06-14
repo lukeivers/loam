@@ -1,0 +1,133 @@
+schema_version: 1
+amendment:
+  number: 186  # Next sequential amendment. Highest manifest counter on disk
+               # is 185 (claude-leverage-program-s2-doctrine). The builder
+               # CONFIRMS the exact number at `loam amend apply` against the
+               # live counter (feedback_version_numbers_at_release_time —
+               # never pre-bake a number that drifts).
+  slug: claude-leverage-program-s3-adoptions
+  title: "Claude-leverage program Slice 3 — NAMED ADOPTIONS: /goal + /loop in consistent, observable use (the owner-named worked example of the Slice-2 prefer-the-primitive doctrine). Carries the native-/goal-vs-bespoke-autonomy_continuation.py evaluation (D-CLP.2 made precise as D-ADOPT.1, RULED keep-both-scoped: /goal is the default keep-going leg for single-task drive-to-checkable-outcome — it already is, inside handsoff-loop — and pos3's autonomy_continuation.py is RETAINED for its distinct shape, durable cross-turn workstream-queue dispatch on idle, which /goal does not express; the retention reason is recorded and NO pos3 edit is triggered — read off the actual hook 2026-06-14, it is a Stop-event queue dispatcher, not a /goal analog). Closes the Slice-2 doctrine-check coverage gap: adds ONE goal.md-keyed matcher row to plugins/dev-sdlc/hooks/primitive_check_matchers.py (the ROWS table currently covers schedule/loop/background-agents only — verified — so a bespoke keep-going dispatch is NOT caught; the new row makes the slice the doctrine eating its own cooking), two-tier deny/warn posture per the Slice-2 sibling rows, kept honest by the existing corpus↔matcher bidirectional coverage guard. Authors the Class B corpus entry the corpus lacks: docs/capability-corpus/claude-code/goal.md (sibling-disambiguation /goal vs /loop vs /schedule vs background-agents), and adds the reciprocal /goal disambiguation to the existing loop.md (currently absent). ★ outcome-altitude AC.CLP-ADOPT.2: a keep-going work item through the production handsoff-loop flow drives via /goal on a real task with NO pre-arranged state, halting at goal-met — real claude -p leg, default Sonnet, NO Anthropic API key. ★ AC.CLP-ADOPT.5: a deliberately-bespoke keep-going dispatch through the production PreToolUse path produces the guard's observable check event naming /goal. LOCAL only; no public-action steps; /goal+/loop adopted as native primitives, never forked."
+
+# BASELINE: HEAD of main at sub-plan authoring. The load-bearing predecessor
+# is the Slice-2 seal f308b398 (the primitive_check_guard + matcher ROWS this
+# slice extends; verified present in history 2026-06-14). HEAD at authoring is
+# 8e91b4299713187f69a8c14305dd9d8edd87b27c. The builder CONFIRMS against the
+# actual predecessor tip at apply time (concurrent sibling plan-authors may
+# advance main between authoring and apply — feedback_sync_check_before_build_on_checkout).
+baseline: "8e91b4299713187f69a8c14305dd9d8edd87b27c"
+
+plan: docs/plans/claude-leverage-program-s3-adoptions.md
+
+components:
+  # The doctrine-check coverage extension: ONE goal.md-keyed matcher row in
+  # primitive_check_matchers.py + its coverage in the Slice-2 guard's test
+  # suite (the corpus↔matcher bidirectional coverage guard + the
+  # AC.CLP-ADOPT.5 deliberately-bespoke dispatch test). NO new hook — the
+  # Slice-2 guard primitive already exists and is the correct surface
+  # (§2bis Primitive check: EXTEND, do not re-implement).
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # Back-reference edits only (if any): handsoff-loop / goal-command /
+  # loop-command SKILLs gain a pointer to the D-ADOPT.1 record. The SKILLs
+  # already name /goal as the keep-going leg (verified) — the likely edit is
+  # a reference, not a behavior change. Admitted because any skill-text edit
+  # + the loam-skills derived-from-disk suite (LSK/SKTRI) regression lives
+  # here. If the build finds NO skill edit is needed, this component carries
+  # only the green-suite ride-along.
+  - name: loam-skills
+    seal_test: plugins/loam-skills/tests/test_no_sealed_amendments.py
+    sidecar: plugins/loam-skills/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. Plan-doc + status
+# surfaces PLUS docs/capability-corpus/ (the fence decision that DIFFERS from
+# Slice 2 — recorded in plan §5 + §16 finding 3): Slice 2 held the corpus OUT
+# because it CONSUMED it; Slice 3 AUTHORS Class B corpus entries as its
+# explicit AC.CLP-ADOPT.4 deliverable (goal.md creation + loop.md /goal
+# disambiguation), so the corpus prefix is admitted here. The builder CONFIRMS
+# this at apply time (plan §5 names it as the one fence call differing from
+# the sibling slice; halt trigger 3 still guards: a wrong corpus CLAIM outside
+# the new entries surfaces as a Slice-1 pending-delta, never a silent edit).
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/capability-corpus/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/claude-leverage-program-s3-adoptions.md
+  body: |
+    # Claude-leverage program Slice 3 — NAMED ADOPTIONS — apply ladder
+
+    Third of four slices under the master plan
+    `docs/plans/claude-leverage-program.md`. Delivers the owner-named
+    instance of the Slice-2 prefer-the-primitive doctrine (sealed
+    f308b398): `/goal` and `/loop` in consistent, observable use. Consumes
+    the Slice-2 dispatch-time guard (`primitive_check_guard.py` +
+    `primitive_check_matchers.py` ROWS) and the Slice-1 currency corpus
+    (`docs/capability-corpus/`) as the surfaces it extends.
+
+    This amendment:
+      1. RULES D-ADOPT.1 (the master's D-CLP.2 made precise):
+         native-`/goal` vs bespoke `autonomy_continuation.py` →
+         KEEP-BOTH-SCOPED. Read off the actual pos3 hook 2026-06-14, it is a
+         Stop-event idle-recovery queue dispatcher over a durable
+         cross-turn workstream-queue (token-delta + task-count safety caps),
+         NOT a single-task drive-to-goal mechanism. `/goal` is the inverse
+         shape (single-task, checkable completion, autonomous halt) and is
+         ALREADY the keep-going leg of `handsoff-loop`. The two do not
+         overlap on the load-bearing axis; `/goal` becomes the default
+         keep-going leg for single-task work, the bespoke hook is retained
+         for queue-dispatch with the retention reason recorded, and NO pos3
+         edit is triggered (the pos3 file is out of this canonical fence —
+         plan §3 boundary note; halt trigger 2 guards a retire-misread).
+         (AC.CLP-ADOPT.1)
+      2. Closes the doctrine-check coverage gap: adds ONE `goal.md`-keyed
+         matcher row to `primitive_check_matchers.py` (build-verb +
+         keep-going-shape proximity, two-tier deny/warn per the Slice-2
+         sibling rows) so a bespoke keep-going dispatch is caught on the
+         production PreToolUse path — the slice as the doctrine's worked
+         example. The Slice-2 bidirectional corpus↔matcher coverage guard
+         keeps the new `goal.md` from drifting uncovered. (AC.CLP-ADOPT.5 ★)
+      3. Authors the Class B corpus entry the corpus lacks:
+         `docs/capability-corpus/claude-code/goal.md` (sibling
+         disambiguation `/goal` vs `/loop` vs `/schedule` vs
+         background-agents), matching the existing entry shape; adds the
+         reciprocal `/goal` disambiguation to the existing `loop.md`
+         (currently absent). Both refresh-kept by Slice-1 machinery
+         thereafter. (AC.CLP-ADOPT.4)
+      4. Demonstrates observable use:
+         - ★ AC.CLP-ADOPT.2: a keep-going fixture through the production
+           `handsoff-loop` flow drives via `/goal` on a real task with NO
+           pre-arranged state, halting at goal-met. Real `claude -p` leg,
+           default Sonnet, NO Anthropic API key, `--bare` never used.
+         - AC.CLP-ADOPT.3: a cadence-shaped in-session request routes to
+           `/loop` per the catalogue (`loop-command` SKILL + `loop.md`),
+           observable in the record. No new `/loop` mechanism — its
+           adoption is already structurally guarded (Slice-2 row) +
+           catalogued (D-ADOPT.3).
+      5. Back-reference SKILL alignment (if needed): `handsoff-loop` /
+         `goal-command` / `loop-command` gain a pointer to the D-ADOPT.1
+         record. The SKILLs already name `/goal` as the keep-going leg;
+         likely a reference edit, not a behavior change.
+
+    Out with named handoffs: `autonomy_continuation.py` retirement is NOT
+    triggered (D-ADOPT.1 keeps it; were a future owner ruling to flip to
+    replace, the pos3 edit is a tracked workspace chore, master §7.6); the
+    runtime/persona-path doctrine check for NORMAL-USE workspaces (master §2
+    row 4 "second" — own cycle); wider gap-table primitive adoptions
+    (master §7.4); nothing graduates from pos3 to loam-proper in this slice
+    (D-ADOPT.4).
+
+    NO public-action steps; LOCAL only; NO Anthropic API key anywhere.
+    `/goal` + `/loop` adopted as native primitives, never forked. BASELINE
+    HEAD 8e91b429 at sub-plan authoring; counter 186 next free; builder
+    confirms both at apply time (concurrent sibling plan-authors may advance
+    main between authoring and apply).

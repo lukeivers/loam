@@ -1,0 +1,81 @@
+schema_version: 1
+amendment:
+  number: 190  # Next sequential after Slice B (189, sealed 0aaf7763). The
+               # builder CONFIRMS the exact number at `loam amend apply`
+               # against the live counter (feedback_version_numbers_at_release_time).
+               # Baselines on Slice B's seal (serial in one tree, D-PFSE.5).
+  slug: principle-foundation-structural-enforcement-s-c
+  title: "principle-foundation-structural-enforcement Slice C — STOP-HOOK CONTRIBUTOR FRAMEWORK (AC.PFSE.4, AC.PFSE.7, AC.PFSE.2★). Builds the Stop-hook contributor FRAMEWORK FRESH (D-PFSE.3 / RF-2 — the existing cli_stop is single-purpose memory-write with NO contributor registry; the Stop-hook contract requires exit-0-always + fast-return, which the framework preserves). stop_contributor.py: a StopContributor Protocol + StopAdvisory + an ordered StopContributorRegistry (register/compose, duplicate-name reject, fail-soft per contributor) + build_stop_output (emits a non-blocking `systemMessage` ONLY, NEVER `decision:block` — advisory, not a gate) + run_stop_contributors (production entry, fail-soft end-to-end). The Stop-output contract was confirmed against the Claude Code Stop-hook docs (systemMessage = user-visible non-blocking; empty stdout = no effect). stop_contributors_builtin.py ships the two contributors: permission_ask_contributor (AC.PFSE.4 — flags a CLOSING-line permission-ask on authorized work per feedback_no_closing_line_permission_asks; closing-region-scoped so a mid-reply clarifying question is NOT flagged; advisory) + terminology_drift_contributor (AC.PFSE.7 — flags a built/sealed/merged/published claim whose named SHA the git ref graph does not contain per feedback_published_state_only_from_git_refs; PARTIAL, bounded to the claim-names-a-sha shape; fail-open when git is unavailable). stop_emitter.cli_stop wires the framework AFTER the memory-write pipeline, fail-soft: it runs the contributors over the recovered outbound reply and emits the composed systemMessage — preserving the exit-0-always + fast-return contract (AC.M.4, stop_emitter:478, plan halt-trigger 1). ★ outcome-altitude AC.PFSE.2★: a real persona-CLI `stop` subprocess fire of a permission-ask reply through the PRODUCTION Stop envelope path, NO pre-arranged state, yields the systemMessage advisory + rc 0; a clean reply emits empty stdout. NO Anthropic API key; NO LLM on the Stop hot path (deterministic regex + bounded git-read)."
+
+# BASELINE: confirmed at apply time against the Slice B SEAL commit
+# (serial dependency — Slice B's gates sealed before Slice C builds).
+# Slice B sealed at 0aaf7763 (Amendment #189, dev-sdlc+hands-off-lifecycle
+# at 58ee606). The baseline is the commit Slice C's source sits on top of:
+# HEAD at Slice C build-start = 0aaf7763 (the Slice B seal). Builder
+# CONFIRMS the actual Slice B seal SHA at apply from the git ref graph
+# (feedback_published_state_only_from_git_refs).
+baseline: "0aaf7763"
+
+plan: docs/plans/principle-foundation-structural-enforcement.md
+
+components:
+  # The Stop-hook contributor framework + the two contributors + the
+  # cli_stop wiring + their tests. Primary-persona is the home of the
+  # Stop CLI (stop_emitter.py / cli stop); persona own-behaviour
+  # (permission-asking) is a primary-persona concern (plan §2 placement).
+  - name: primary-persona
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + status surfaces only.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/principle-foundation-structural-enforcement-s-c.md
+  body: |
+    # principle-foundation-structural-enforcement — Slice C — STOP CONTRIBUTOR FRAMEWORK — apply ladder
+
+    Third of four ordered slices under the candidate plan
+    `docs/plans/principle-foundation-structural-enforcement.md`. Baselines on
+    Slice B's seal (0aaf7763). Builds the Stop-hook contributor framework
+    fresh and lands the two own-behaviour contributors.
+
+    This amendment:
+      1. Builds the Stop-hook contributor FRAMEWORK fresh (D-PFSE.3 / RF-2 —
+         no contributor registry existed; the prior cli_stop is
+         single-purpose memory-write). stop_contributor.py carries the
+         StopContributor Protocol + StopAdvisory + an ordered registry
+         (register/compose, duplicate-name reject, fail-soft per
+         contributor) + build_stop_output (systemMessage ONLY, never
+         decision:block) + run_stop_contributors (fail-soft production
+         entry). The Stop-output contract was confirmed against the Claude
+         Code Stop-hook docs.
+      2. Ships the two contributors (stop_contributors_builtin.py):
+         permission_ask (AC.PFSE.4 — a closing-line permission-ask on
+         authorized work, closing-region-scoped so a mid-reply clarifying
+         question is not flagged) + terminology_drift (AC.PFSE.7 — a
+         built/sealed/merged claim whose named SHA the git ref graph does
+         not contain; PARTIAL, fail-open when git unavailable). Both
+         deterministic; NO LLM on the Stop hot path.
+      3. Wires the framework into cli_stop AFTER the memory-write pipeline,
+         fail-soft — preserving the exit-0-always + fast-return contract
+         (AC.M.4, stop_emitter:478, plan halt-trigger 1). Any error returns
+         None / is swallowed.
+      4. ★ AC.PFSE.2★ (outcome-altitude): a real persona-CLI `stop`
+         subprocess fire of a permission-ask reply through the production
+         Stop envelope path, NO pre-arranged state, yields the systemMessage
+         advisory + rc 0; a clean reply emits empty stdout.
+
+    Out with named handoff: slug-collision detection + the
+    meta-decision-haiku arbiter SKILL (Slice D).
+
+    NO public-action steps; NO Anthropic API key anywhere. BASELINE = Slice B
+    seal (confirmed at apply); counter 190 next free; builder confirms both
+    at apply time. LOCAL only.

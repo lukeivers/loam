@@ -1,0 +1,98 @@
+schema_version: 1
+amendment:
+  number: 189  # Next sequential after Slice A (188, sealed 1b1d5d33). The
+               # builder CONFIRMS the exact number at `loam amend apply`
+               # against the live counter (feedback_version_numbers_at_release_time).
+               # Baselines on Slice A's seal (serial in one tree, D-PFSE.5).
+  slug: principle-foundation-structural-enforcement-s-b
+  title: "principle-foundation-structural-enforcement Slice B — RESEARCH-QUESTION GATE + CONTEXT-LOAD GATE (AC.PFSE.3, AC.PFSE.5). Two structural gates that make principle-discipline mechanical. AC.PFSE.3: a loam feature-research plan cannot advance until all four lens-research questions (Claude-leverage / Primary-persona / Harness / ODD, canonical docs/FUTURE_IDEAS.md Step 3) carry a non-empty section — extends stages.check_gate's research stage with a deterministic section-presence check (NO LLM), OPT-IN via a `lens_research: true` frontmatter flag so generic ODD research is NOT retroactively gated (feedback_odd_cdc_scope; the M5 conflict with AC.OSS-M6.4 resolved by scoping the gate to loam-feature-research). The odd-research template gains the four sections + the flag. AC.PFSE.5: a new dev-sdlc PreToolUse sibling (context_load_gate.py) blocks dispatch (Task) + non-carve-out author (Edit/Write/MultiEdit) until the session's required design corpus is loaded — a DETERMINISTIC loaded-set predicate over the existing corpus-load sentinel's state {loaded,partial,missing}, NOT an LLM relevance judgment (plan halt-trigger 2); dev-mode only; carve-out author edits never gated; fail-open on missing sentinel/session-id; same _gate_helpers NDJSON-audit + dev-mode short-circuit + fail-open envelope (D-PFSE.4). Wired into bootstrapped workspaces via the A4 precedent: first_run_helper._context_load_gate_stanzas (two matcher entries Task + Edit|Write|MultiEdit) + the first_run_settings marker — the ONE hands-off-lifecycle edit (wiring only); test_first_run count assertion rebaselined 6->8 (ODD §4 in-band)."
+
+# BASELINE: confirmed at apply time against the Slice A SEAL commit
+# (serial dependency — Slice A's manifest-checker substrate sealed before
+# Slice B builds). Slice A sealed at 1b1d5d33 (Amendment #188, dev-sdlc at
+# 7313339). The baseline is the commit Slice B's source sits on top of:
+# HEAD at Slice B build-start = 1b1d5d33 (the Slice A seal). Builder
+# CONFIRMS the actual Slice A seal SHA at apply from the git ref graph
+# (feedback_published_state_only_from_git_refs).
+baseline: "1b1d5d33"
+
+plan: docs/plans/principle-foundation-structural-enforcement.md
+
+components:
+  # The research-question gate (stages.check_gate extension + research
+  # template) + the context-load PreToolUse gate + their tests.
+  - name: dev-sdlc
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+  # ADMITTED FOR THE CONTEXT-LOAD-GATE WIRING ONLY (A4 precedent): the
+  # context_load_gate stanza builder in first_run_helper.py + the marker
+  # in first_run_settings.py + the test_first_run count rebaseline + the
+  # wiring test. The component's seal-test is the cross-cutting suite
+  # (H19/H20/H21) and its BASELINE is FROZEN at project-start (H19
+  # frozen-BASELINE convention) — same correction the Slice-2 +
+  # claude-leverage-s2 manifests apply. Any hands-off-lifecycle edit
+  # beyond this wiring is out-of-scope drift; seal-diff review enforces.
+  - name: hands-off-lifecycle
+    seal_test: framework/hands-off-lifecycle/tests/test_cross_cutting.py
+    sidecar: framework/hands-off-lifecycle/tests/SEAL_COMMIT
+    frozen_baseline: true
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + status surfaces only.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/principle-foundation-structural-enforcement-s-b.md
+  body: |
+    # principle-foundation-structural-enforcement — Slice B — GATES — apply ladder
+
+    Second of four ordered slices under the candidate plan
+    `docs/plans/principle-foundation-structural-enforcement.md`. Baselines on
+    Slice A's seal (1b1d5d33). Delivers two structural gates that make
+    principle-discipline mechanical.
+
+    This amendment:
+      1. AC.PFSE.3 — the four-research-question gate. Extends
+         stages.check_gate's research stage with a deterministic
+         section-presence check: a loam feature-research plan cannot advance
+         until all four lens-research questions (Claude-leverage /
+         Primary-persona / Harness / ODD) carry a non-empty section. NO LLM —
+         the check is a parse. The gate is OPT-IN via a `lens_research: true`
+         frontmatter flag so generic ODD research is NOT gated by the four
+         loam-internal lens questions (feedback_odd_cdc_scope — the M5
+         conflict with AC.OSS-M6.4's generic-ODD contract resolved by scope).
+         The odd-research template gains the four sections + the flag.
+      2. AC.PFSE.5 — the context-load gate. A new dev-sdlc PreToolUse sibling
+         blocks dispatch (Task) + non-carve-out author (Edit/Write/MultiEdit)
+         until the session's required design corpus is loaded. A DETERMINISTIC
+         loaded-set predicate over the existing corpus-load sentinel's state
+         {loaded,partial,missing} — NOT an LLM relevance judgment (plan
+         halt-trigger 2, the §3.1 latency ruling). Dev-mode only; carve-out
+         author edits (docs/scratch — how context loads) never gated;
+         fail-open on a missing sentinel/session-id. Same two-tier
+         _gate_helpers NDJSON-audit + dev-mode short-circuit + fail-open
+         envelope (D-PFSE.4).
+      3. Wires the context-load gate into bootstrapped workspaces via the A4
+         precedent: first_run_helper._context_load_gate_stanzas (two matcher
+         entries) + the first_run_settings marker. This is the ONE
+         hands-off-lifecycle edit (wiring only). test_first_run's PreToolUse
+         count assertion rebaselined 6->8 (ODD §4 in-band — Slice B extends
+         the stanza list by two).
+
+    Out with named handoffs: the Stop-hook contributor framework + the
+    permission-ask/terminology-drift contributors + the AC.PFSE.2★
+    outcome-altitude fire (Slice C); slug-collision + the meta-decision-haiku
+    arbiter SKILL (Slice D).
+
+    NO public-action steps; NO Anthropic API key anywhere (every check is
+    deterministic parse/predicate). BASELINE = Slice A seal (confirmed at
+    apply); counter 189 next free; builder confirms both at apply time.
+    LOCAL only.

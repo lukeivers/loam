@@ -860,6 +860,56 @@ def _scaffold_persona_binding(
     return True
 
 
+# knowledge-pack marketplace wiring (AC.CLP-PUSH-WIRE.1/.4; D-PUSH.2) —
+# the IN-FENCE buildable half of distribution. After the workspace is
+# scaffolded, wire the `extraKnownMarketplaces` + `autoUpdate:true`
+# stanza into `<ws>/.claude/settings.json` so the workspace
+# auto-receives the S4a-rendered knowledge pack with ZERO user action
+# after the one-time bootstrap (the §3.1.2 mechanism — third-party
+# marketplaces default auto-update OFF, so the stanza is what delivers
+# true zero-action). The source is a LOCAL `directory` source pointing
+# at the in-repo staged pack (`<framework>/docs/capability-corpus/.pack`)
+# — NO public surface (the public github channel is the S4c ⛔OWNER
+# step). Fail-soft + idempotent, mirroring the persona binding: a clone
+# carrying no staged pack is a no-op (the pack isn't there to point at),
+# and a re-`loam init` is a strict no-op when the stanza is already
+# current. NO repo creation, NO push, NO network.
+def _wire_knowledge_pack_marketplace(
+    *, workspace_root: Path, framework_dir: Path
+) -> bool:
+    """Wire the knowledge-pack marketplace stanza for a fresh workspace.
+
+    Returns True iff this invocation wrote (or rewrote) the stanza.
+    Idempotent (WIRE.4): a re-run on an already-wired workspace is a
+    no-op. Fail-soft: if the in-repo staged pack is absent (a minimal /
+    stripped clone with no `docs/capability-corpus/.pack`), declines
+    (returns False) rather than wiring a stanza pointing at a
+    non-existent local path — the same absent-machinery fail-soft the
+    persona binding uses. The cloned layout roots the framework subtree
+    at `<ws>/framework/framework/` (canonical loam carries a top-level
+    `framework/`), and the corpus lives at canonical `docs/capability-
+    corpus/`, so the staged pack resolves at
+    `<framework_dir>/docs/capability-corpus/.pack`.
+    """
+    from .adapters.marketplace_wiring import (  # noqa: PLC0415 — lazy
+        build_directory_source,
+        write_marketplace_wiring,
+    )
+
+    pack_dir = framework_dir / "docs" / "capability-corpus" / ".pack"
+    if not pack_dir.is_dir():
+        # No staged pack in this clone — nothing to point a local
+        # `directory` marketplace at. Decline (fail-soft); a later
+        # render + re-scaffold can wire it.
+        return False
+
+    result = write_marketplace_wiring(
+        workspace_root=workspace_root,
+        source=build_directory_source(pack_dir.resolve()),
+    )
+    return result.wrote
+
+
 def _stub_tracker_seed_runner_default() -> Any:
     """Return a no-op tracker-seed runner.
 
@@ -1116,6 +1166,16 @@ def bootstrap_new_workspace(
         workspace_root=new_ws_path,
         handle=persona_handle,
         loam_root=framework_dir,
+    )
+
+    # knowledge-pack marketplace wiring (AC.CLP-PUSH-WIRE.1/.4; D-PUSH.2)
+    # — runs AFTER the persona binding so the marketplace stanza
+    # deep-merges alongside the persona's `agent` + SessionStart keys
+    # (operator + persona keys preserved). LOCAL `directory` source
+    # only; NO public surface. Fail-soft + idempotent.
+    _wire_knowledge_pack_marketplace(
+        workspace_root=new_ws_path,
+        framework_dir=framework_dir,
     )
 
     return BootstrapResult(

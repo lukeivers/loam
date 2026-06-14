@@ -14,7 +14,15 @@ amendment:
 # builder CONFIRMS the actual S4a seal SHA at `loam amend apply` and replaces
 # this line (feedback_published_state_only_from_git_refs — baseline verified
 # from the git ref graph, never from S4a's plan prose).
-baseline: "PENDING-S4A-SEAL"   # builder sets to the confirmed S4a seal SHA at apply
+# BASELINE confirmed at S4b build (2026-06-14) from the git ref graph
+# (feedback_published_state_only_from_git_refs). S4a sealed at
+# 27377c31 (Amendment #186, knowledge-pack at f57cdd9) — verified an
+# ancestor of HEAD. The baseline is the commit S4b's source sits on
+# top of: HEAD at build-start = a4d5d31a (the post-S4a-seal FIDRAFT
+# .venv-Py3.13 doc correction; no fence impact). The S4a-rendered pack
+# exists in-repo and is the local marketplace the WIRE.2 ★ leg points
+# at — dependency order (pack-before-wiring) satisfied.
+baseline: "a4d5d31a6efbb8c12fdb6e9ddcc4cc2aa5bfed91"
 
 plan: docs/plans/claude-leverage-program-s4-push.md
 
@@ -31,23 +39,22 @@ components:
     frozen_baseline: false
     extra_allowed_prefixes: []
 
-  # CONDITIONAL — admitted ONLY IF the persona knowledge-surfacing rule
-  # (AC.CLP-PUSH.4) genuinely requires a primary-persona spine/prompt edit
-  # (plan §2 "Persona knowledge-surfacing" row — builder's call). If the
-  # surfacing routes through the existing corpus-lean hook with NO spine
-  # edit, this component is NOT touched and the builder REMOVES this entry
-  # at apply (a fence wider than the work is its own ODD violation). If a
-  # spine edit IS needed, this is its fence; the builder confirms the
-  # seal-test path against the live primary-persona component at apply
-  # (primary-persona uses a cross-cutting AC.alpha suite, not necessarily a
-  # test_no_sealed_amendments.py — CORRECT at apply against the established
-  # precedent, mirroring the S2-doctrine hands-off-lifecycle correction).
-  # Verified at plan time as the named-conditional surface, not pre-committed.
-  - name: primary-persona
-    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py  # CONFIRM/CORRECT at apply
-    sidecar: framework/primary-persona/tests/SEAL_COMMIT
-    frozen_baseline: false
-    extra_allowed_prefixes: []
+  # CONDITIONAL primary-persona component — REMOVED at S4b build
+  # (2026-06-14, builder's call per plan §2 "Persona knowledge-surfacing"
+  # row + plan halt-trigger 4). The persona knowledge-surfacing rule
+  # (AC.CLP-PUSH.4 / AC.CLP-PUSH-WIRE.3) does NOT require a
+  # primary-persona spine/prompt edit: it is satisfied by a deterministic
+  # surfacing-rule artefact (`surface_arrived_knowledge` in
+  # workspace-bootstrap/adapters/marketplace_wiring.py) — a pure function
+  # the persona consumes, taking arrived-pack metadata + a per-user
+  # vocabulary level and returning substance-exposed/vocabulary-tuned
+  # surfacing text (NOT a raw changelog dump). AC.CLP-PUSH.4's
+  # verification ("observe the persona's surfacing on a fixture user
+  # profile") is met by this artefact in the SAME fence as the wiring
+  # that brings the pack in. A fence wider than the work is its own ODD
+  # violation (manifest's own instruction), so the component is removed.
+  # No sealed-component edit outside workspace-bootstrap occurs in this
+  # cycle (halt-trigger 4 not tripped).
 
 # Universal admissions — per amendment #22 ruling #3. Plan-doc + status
 # surfaces only. NO docs/capability-corpus/ admission (corpus is read-only

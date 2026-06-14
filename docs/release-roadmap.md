@@ -429,7 +429,9 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 ---
 
-### Candidate 6 — `release-flow-partial-publish-repair` — A partial publish is self-repairing
+### Candidate 6 — `release-flow-partial-publish-repair` — A partial publish is self-repairing — ✅ BUILT (SEALED LOCAL)
+
+> **SHIPPED-LOCAL 2026-06-11 — no longer a forward candidate.** Built and sealed: seal `df924cd6` (code `3253be11`+`eaeb5929`, apply `f83ce7e0`, §14 backfill `95068b35`), ancestor of HEAD (Tier-0 verified 2026-06-14). All four AC.RFPR.* GREEN incl. the two bonus defects caught in-build (notes plan-doc threading + dry-run-can-push). Retained here as a record per the no-retroactive-delete discipline; the publish-gate it represented is satisfied for the next publish of any class. Plan: `docs/plans/release-flow-partial-publish-repair.md`.
 
 **Slug:** `release-flow-partial-publish-repair`. **Class:** PATCH (DEV). **Scheduling constraint: lands BEFORE the next publish of any class** — queue position does not reflect build-order priority for this entry; it is a publish-gate dependency, not a competing feature build. Inserted 2026-06-11 from the v1.5.0 live incident (owner-directed capture, Discord 1514735212712431887); ordering ratification pending per §7.
 

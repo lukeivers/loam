@@ -24,6 +24,7 @@ and apply unchanged (AC.D-pa.4).
 from __future__ import annotations
 
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,46 @@ import yaml
 SCHEMA_VERSION = 1
 SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def baseline_is_resolvable_commit(
+    baseline: str, repo_root: Path | None
+) -> bool:
+    """Return True iff *baseline* names a REAL resolvable commit-ish.
+
+    Per ``docs/plans/seal-guard-floor-draft-baseline-skip.md``
+    D-GFLOOR2.1: the GUARD-SWEEP FLOOR's manifest-conformance sweep
+    (AC.DPS1.13) validates only manifests whose baseline is anchored
+    to this repo's history; it skips placeholder/draft markers whose
+    baseline resolves at THEIR OWN apply/seal (``PENDING-*``,
+    ``PLAN_DOC_COMMIT``, any non-hex value, or a hex-shaped-but-
+    unresolvable sentinel).
+
+    A baseline is "real" iff it matches ``_SHA_RE`` (the canonical
+    7-40-char lowercase-hex shape — single source of truth) AND
+    ``git rev-parse --verify --quiet <baseline>^{commit}`` resolves
+    in *repo_root*. Non-hex placeholders fail on the shape check
+    alone (no git call). When *repo_root* is None the shape check is
+    the sole gate (callers without a repo handle treat hex-shaped as
+    real).
+    """
+    if not _SHA_RE.match(baseline):
+        return False
+    if repo_root is None:
+        return True
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", f"{baseline}^{{commit}}"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        # git unavailable / repo handle bad — fail-open to shape-only
+        # (do not let an environment hiccup turn a draft-skip into a
+        # false sweep failure; the shape check already passed).
+        return True
+    return proc.returncode == 0
 
 
 class ManifestError(Exception):

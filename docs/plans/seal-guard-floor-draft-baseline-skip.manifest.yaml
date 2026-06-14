@@ -10,7 +10,7 @@ amendment:
 # cycle's source-edit commits), per the house pattern
 # (seal-guard-sweep-floor manifest comment). The builder CONFIRMS
 # against the actual predecessor tip at apply time.
-baseline: "PLAN_DOC_COMMIT"  # builder resolves to the actual SHA at apply
+baseline: "b14e279d"  # the plan-doc commit (confirmed at apply, house pattern)
 
 plan: docs/plans/seal-guard-floor-draft-baseline-skip.md
 plan_doc_ref: docs/plans/sealed/seal-guard-floor-draft-baseline-skip.md

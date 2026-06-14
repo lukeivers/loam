@@ -38,6 +38,7 @@ from loam_amend.manifest import (
     Manifest,
     MissingField,
     NarrativeSpec,
+    baseline_is_resolvable_commit,
     load_manifest,
 )
 
@@ -853,8 +854,23 @@ def test_AC_DPS1_13_existing_manifests_validate_clean() -> None:
         f"expected manifest YAMLs under {plans_dir}; sweep is meaningless "
         "without inputs"
     )
+    # AC.GFLOOR2.{1,2} — D-GFLOOR2.1: validate only manifests whose
+    # baseline is a REAL resolvable commit-ish; SKIP placeholder/draft
+    # markers (PENDING-*, PLAN_DOC_COMMIT, any non-hex / unresolvable
+    # value) whose baseline resolves at THEIR OWN apply/seal. This
+    # decouples an unrelated cycle's seal from in-flight draft plans'
+    # not-yet-resolved baselines while keeping the class-5 protection
+    # for applied/sealed (real-baseline) manifests fully intact.
     failures: list[tuple[Path, str]] = []
     for manifest_path in manifest_paths:
+        raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        baseline = (raw or {}).get("baseline")
+        if not isinstance(baseline, str) or not baseline_is_resolvable_commit(
+            baseline, repo_root
+        ):
+            # Draft / placeholder baseline — not yet anchored to this
+            # repo's history; validated at its own apply/seal, not here.
+            continue
         try:
             load_manifest(manifest_path)
         except Exception as exc:  # noqa: BLE001 — capture all failures

@@ -1,0 +1,53 @@
+# User-state migration — v1.6.0 (claude-leverage program + principle-foundation
+# structural-enforcement + GUARD-SWEEP FLOOR + ProgramBench retirement)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.6.0 bundles the
+# 148-commit post-v1.5.0 backlog: the claude-leverage program (two new
+# framework tools — capability-refresh, knowledge-pack — plus primitive-check
+# guards and /goal+/loop adoption), principle-foundation structural
+# enforcement (manifest substrate + research-question/context-load gates +
+# Stop-hook contributors + arbiter SKILL), the GUARD-SWEEP FLOOR in
+# `loam amend seal`, and the full ProgramBench retirement.
+
+version: v1.6.0
+slug: v1-6-0-claude-leverage-and-principle-foundation
+slice: "v1.6.0 MINOR (claude-leverage program: NEW capability-refresh + knowledge-pack components, primitive-check guards, /goal+/loop adoption; principle-foundation structural-enforcement; GUARD-SWEEP FLOOR at seal; ProgramBench full retirement)"
+date: 2026-06-18
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.6.0 adds two new framework tools, new structural-enforcement hooks/guards
+  + a SKILL, a new seal-time guard sweep, and retires dev-internal tooling —
+  none of which change pre-existing stored .loam/ user state.
+  (1) capability-refresh is a deterministic Class-A corpus-refresh tool under
+  framework/tools/capability-refresh/ — it READS the capability corpus and
+  refreshes framework-side knowledge; it writes no user .loam/ artifact and
+  re-schemas nothing in user state. (2) knowledge-pack is a deterministic
+  corpus->skills-pack renderer under framework/tools/knowledge-pack/ — it READS
+  the corpus and renders to a SEPARATE marketplace repo; it does not touch a
+  user's .loam/ state. (3) The principle-foundation structural-enforcement
+  surface (principle-manifest substrate, research-question/context-load gates,
+  primary-persona Stop-hook contributors, slug-collision detection,
+  meta-decision-haiku arbiter SKILL) adds checks/hooks that operate on
+  in-flight dispatch + framework files — no user artifact is written, moved, or
+  re-schemad. (4) The GUARD-SWEEP FLOOR adds a location-agnostic sweep at
+  `loam amend seal` time over fence-discovered files — a dev-time seal check,
+  no user state. (5) ProgramBench retirement DELETES dev-internal,
+  never-shipped tooling (programbench-revival tree + 20 PB tests) — recoverable
+  from git history (87403522); it removes no user .loam/ state. (6) The 18
+  ride-along fixes are backward-compatible defect closures within existing
+  surfaces. A user upgrading from v1.5.0 to v1.6.0 needs no state migration.
+  Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a
+# pure code revert; no data move. The ProgramBench deletions are
+# dev-internal framework tooling, not user state, and are recoverable
+# from git history.
+reversible: true
+removes_user_state: false
+idempotent: true

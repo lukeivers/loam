@@ -1,7 +1,7 @@
 # Release integration — v1.6.0
 
 **Status:** PREP COMPLETE → gates GREEN (owner-authorized publish — Luke,
-`<CHANNEL + MSG-ID + DATE — DISPATCHER FILLS BEFORE PUBLISH>`)
+Discord 1517132647233617950 + 1517135734908256296, 2026-06-18)
 **Working tree:** `/Users/lukeivers/loam` (branch `main`; the 148-commit
 post-v1.5.0 backlog is already a clean linear fast-forward stack on the
 published v1.5.0 baseline — no isolated release worktree needed)

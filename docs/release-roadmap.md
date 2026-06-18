@@ -206,7 +206,7 @@ v0.4.0 + v0.4.1 + v0.4.2 + v0.4.3 ALL SHIPPED PUBLIC 2026-05-09 (loam/main advan
 
 **v1.5.0 MINOR (frame-kernel SubagentStart correctives + KEEL adoption Phase 1 MINOR over v1.4.0 (owner-authorized publish: Luke, Discord 1514378120, 2026-06-10 16:17 CDT).) SHIPPED PUBLIC 2026-06-10** (tag `v1.5.0`, annotated `fc4210d`; seal `31ac1d7`).
 
-**v1.6.0 MINOR (loam continuously refreshes its own capability knowledge, pushes a knowledge corpus to the marketplace, prefers Claude-native primitives by default, and structurally enforces its principle foundation — claude-leverage program + principle-foundation structural-enforcement + GUARD-SWEEP FLOOR + ProgramBench retirement; owner-authorized publish: Luke, `<CHANNEL + MSG-ID + DATE — DISPATCHER FILLS BEFORE PUBLISH>`.) SHIPPED LOCAL — public tag + push via the release run.**
+**v1.6.0 MINOR (loam continuously refreshes its own capability knowledge, pushes a knowledge corpus to the marketplace, prefers Claude-native primitives by default, and structurally enforces its principle foundation — claude-leverage program + principle-foundation structural-enforcement + GUARD-SWEEP FLOOR + ProgramBench retirement; owner-authorized publish: Luke, Discord 1517132647233617950 + 1517135734908256296, 2026-06-18.) SHIPPED LOCAL — public tag + push via the release run.**
 
 ## §4 Priority-ordered candidate queue (next-release pipeline)
 

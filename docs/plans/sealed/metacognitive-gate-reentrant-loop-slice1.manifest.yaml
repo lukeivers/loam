@@ -52,7 +52,18 @@ amendment:
 # Out of scope (plan §7): the persistent self-model + goal/valence stack +
 #   cross-session continuity (SLICE 2); the curated global workspace; a
 #   standalone surprise detector; any phenomenal-experience claim; publish.
-baseline: "c0c584f4"
+# BASELINE: applied historically at the slice plan-doc commit `c0c584f4`
+# (the apply commit `d8b71827` records that bump). Advanced here to
+# `708a66ec` AFTER the seal, because an unrelated owner-ratified dev-sdlc
+# corrective cycle (`6542865f..708a66ec` — the AC.PBRET.5 D-K11 register
+# addition that cleared the cross-component sweep blocking THIS seal)
+# interleaved between this slice's apply and its seal. Pinning the
+# re-apply/post-seal-dry-run window at the pre-seal tip `708a66ec` keeps
+# the deliberate-reasoning fence's invariant check honest — the window
+# `708a66ec..HEAD` is fully in-fence (framework/deliberate-reasoning/ +
+# docs/plans/). House "advance baseline past unrelated interleaved
+# commits" pattern; the historical apply semantics are unchanged.
+baseline: "708a66ec"
 
 plan: docs/plans/metacognitive-gate-reentrant-loop-slice1.md
 

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-deliberate-reasoning"
+version = "0.1.0"
+description = "Gated, evidence-bound deliberate-reasoning layer over the inference engine (slice 1) — metacognitive gate + re-entrant loop + pre-registered experiment."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+package-dir = {"loam.deliberate_reasoning" = "src/loam/deliberate_reasoning"}
+packages = ["loam.deliberate_reasoning"]

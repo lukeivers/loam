@@ -1,0 +1,157 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: metacognitive-gate-reentrant-loop-slice1
+  title: "deliberate-reasoning-layer slice 1 — metacognitive gate + evidence-bound re-entrant loop + pre-registered experiment (default-OFF, gated, blind-judged)"
+
+# BASELINE: the commit immediately preceding this slice's source-edit
+# commit (the house HEAD~1 advance pattern). Re-baselined by the builder to
+# the actual source-edit BASELINE at build time.
+#
+# NEW-COMPONENT first-seal fence — framework/deliberate-reasoning/:
+#   The gate + the deliberate loop + the pre-registered experiment harness
+#   are a NET-NEW component (plan §2 placement: a turn-level harness layer
+#   sibling to intent_classifier.py's shape; reuse-vs-fresh was the
+#   builder's call per ODD §1.1 — built fresh, cited intent_classifier.py
+#   + framework/self-correction/ as precedent only).
+#
+# AC families locked per docs/plans/metacognitive-gate-reentrant-loop-slice1.md §5:
+#   AC.MGRL.1  — gate emits escalate/don't-escalate + the firing trigger
+#                from observable signals, no LLM call on the don't-escalate
+#                path.
+#   AC.MGRL.2  — default-OFF no-op: a non-escalated turn returns the draft
+#                byte-identical; no deliberate-loop tokens spent.
+#   AC.MGRL.3  — the deliberate loop runs draft→adversarial evidence-bound
+#                critique→revise→re-check; the no-degradation guard returns
+#                the original draft when critique finds no evidence-backed
+#                improvement.
+#   AC.MGRL.4  — a pre-registration artefact fixes the task set, metric
+#                definitions, "better", and the theory-vs-generic
+#                discriminator; its commit is an ancestor of the first
+#                scored-run commit (git-ancestry evidence).
+#   AC.MGRL.5  — baseline-vs-escalated comparison scored by a judge BLIND to
+#                the hypothesis/arm (the judge signature excludes any arm
+#                label).
+#   AC.MGRL.6  — the result reports the aggregate generic-lift delta AND the
+#                flagged-vs-unflagged theory discriminator SEPARATELY; the
+#                theory verdict is distinct from "escalation helped on
+#                average".
+#   AC.MGRL.7  — ships default-OFF: a single explicit reversible opt-in; off
+#                => harness unchanged.
+#   AC.MGRL.OA ★ — outcome-altitude: escalation fires through the production
+#                entry-point (process_turn) with NO pre-arranged state — a
+#                real turn carrying a genuine trigger signal yields an
+#                escalation decision + a deliberate-loop invocation + a
+#                recorded firing trigger.
+#
+# Dispatcher ruling carried in (plan §0 / D-MGRL.4): all THREE observable
+#   triggers (low_confidence, novelty, stakes) ship in slice 1; the
+#   surprise/prediction-error trigger is deferred to slice 2.
+#
+# Out of scope (plan §7): the persistent self-model + goal/valence stack +
+#   cross-session continuity (SLICE 2); the curated global workspace; a
+#   standalone surprise detector; any phenomenal-experience claim; publish.
+baseline: "c0c584f4"
+
+plan: docs/plans/metacognitive-gate-reentrant-loop-slice1.md
+
+components:
+  - name: deliberate-reasoning
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/deliberate-reasoning/tests/test_no_sealed_amendments.py
+    sidecar: framework/deliberate-reasoning/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/deliberate-reasoning/seals/SEAL_COMMIT.metacognitive-gate-reentrant-loop-slice1
+  body: |
+    # deliberate-reasoning-layer slice 1 — metacognitive gate +
+    evidence-bound re-entrant loop + pre-registered experiment — apply ladder
+
+    Per `docs/plans/metacognitive-gate-reentrant-loop-slice1.md` (RATIFIED
+    @ c0c584f4) — implements §4 of the source proposal
+    `workspace/.scratch/claude-output/consciousness-emulation-harness-design.md`
+    (the smallest viable first experiment: the gate + the evidence-bound
+    re-entrant loop), with the §0 honest-boundary carried as a HARD
+    pre-registration requirement.
+
+    Scope (plan §2 + §5 + §7): NEW component
+    `framework/deliberate-reasoning/`. A turn-level GATE decides per-turn
+    whether the fast inference path answers (don't-escalate) or a
+    DELIBERATE, evidence-bound, re-entrant LOOP engages — default OFF,
+    escalating only on a defined observable trigger set (low_confidence,
+    novelty, stakes — all three per the dispatcher's D-MGRL.4 ruling). A
+    PRE-REGISTERED experiment fixes the metric, task set, blind-judge
+    protocol, and the theory-prediction-vs-generic-lift discriminator
+    BEFORE any scored run.
+
+    AC families (plan §5):
+
+      - AC.MGRL.1 — deterministic, LLM-free gate (D-MGRL.1): escalate /
+        don't-escalate + the firing trigger, from observable signals, no
+        LLM call on the don't-escalate path. Sibling in shape to
+        intent_classifier.py.
+      - AC.MGRL.2 — default-OFF no-op (D-MGRL.5): a non-escalated turn
+        returns the draft byte-identical; the critic is never called (no
+        deliberate-loop tokens spent).
+      - AC.MGRL.3 — the deliberate loop (D-MGRL.2): draft → adversarial
+        evidence-bound critique → revise → re-check, with a NO-DEGRADATION
+        guard that returns the original draft when critique finds no
+        evidence-backed improvement. The structural answer to the proposal
+        §3 always-on-self-critique-degrades trap.
+      - AC.MGRL.4 — pre-registration (D-MGRL.3): the artefact fixes the
+        task set, metric definitions, "better", and the theory-vs-generic
+        discriminator; the pre-reg commit is an ancestor of the first
+        scored-run commit (git-ancestry tamper-evidence,
+        feedback_published_state_only_from_git_refs).
+      - AC.MGRL.5 — blind judge: the scorer's signature
+        (prompt, answer, canonical_answer) structurally excludes any
+        arm/hypothesis label; baseline-vs-escalated scored blind.
+      - AC.MGRL.6 — the result reports the aggregate generic-lift delta AND
+        the flagged-vs-unflagged theory discriminator SEPARATELY; "the
+        theory's prediction held" is a distinct verdict from "escalation
+        helped on average".
+      - AC.MGRL.7 — ships default-OFF: a single explicit reversible opt-in
+        (LOAM_DELIBERATE_REASONING env var / TurnConfig flag); off =>
+        harness unchanged.
+      - AC.MGRL.OA ★ (outcome-altitude) — escalation fires through the
+        production entry-point (process_turn) with NO pre-arranged state:
+        a real turn carrying a genuine trigger signal yields an escalation
+        decision + a deliberate-loop invocation + a recorded firing trigger
+        (feedback_test_outcome_altitude_required).
+
+    Method-level choices are the builder's call per ODD §1.1; the plan
+    fixed the ACs (§5), the named decisions (D-MGRL.1..5), the fence (§7),
+    and the halt triggers (§8), not the implementation.
+
+    HONEST-BOUNDARY note (plan §0 / §8 trigger 2, NON-NEGOTIABLE): the
+    pre-registered metric is exact-match correctness against a
+    machine-checkable canonical answer over a FROZEN task set — objective
+    and non-gameable (subjective-quality tasks were deliberately excluded).
+    The bundled reference experiment run uses a deterministic, evidence-
+    bound reference critic with access to the answer key; it demonstrates
+    the harness + discriminator MECHANICS end-to-end (verdict
+    THEORY-PREDICTION-CONFIRMED on the reference run), NOT a theory
+    confirmation on a real model. A real confirmation requires the
+    LLM-critic run (claude -p, the slice's optional follow-on per
+    PRE_REGISTRATION §6) over the identical task set + judge + verdict rule.
+    A null or generic-lift-only result remains a VALID outcome (RF-3).
+
+    Predecessor: c0c584f4 — the RATIFIED plan-doc commit (main tip @
+    plan-authoring).
+
+    NEW-component first-seal fence on `framework/deliberate-reasoning/`.
+    The sidecar is created at this seal (no prior seal to advance).
+
+ac_count: 8

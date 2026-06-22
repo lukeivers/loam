@@ -1,0 +1,61 @@
+{
+  "_comment": "FROZEN by PRE_REGISTRATION.md §1. Each item has a single machine-checkable canonical answer. trigger_intended names which gate trigger the item is constructed to carry; 'none' items are control items the gate is expected to decline (the discriminator's negative arm). Do not edit after the first scored run.",
+  "items": [
+    {
+      "id": "lc-01",
+      "prompt": "What is 17 multiplied by 23?",
+      "canonical_answer": "391",
+      "task_class": "arithmetic",
+      "trigger_intended": "low_confidence"
+    },
+    {
+      "id": "lc-02",
+      "prompt": "What is 144 divided by 12?",
+      "canonical_answer": "12",
+      "task_class": "arithmetic",
+      "trigger_intended": "low_confidence"
+    },
+    {
+      "id": "nov-01",
+      "prompt": "What is the capital of Australia?",
+      "canonical_answer": "canberra",
+      "task_class": "geography",
+      "trigger_intended": "novelty"
+    },
+    {
+      "id": "nov-02",
+      "prompt": "Which planet is known as the Red Planet?",
+      "canonical_answer": "mars",
+      "task_class": "astronomy",
+      "trigger_intended": "novelty"
+    },
+    {
+      "id": "stk-01",
+      "prompt": "Critical: what is the boiling point of water at sea level in degrees Celsius? This must be correct.",
+      "canonical_answer": "100",
+      "task_class": "science",
+      "trigger_intended": "stakes"
+    },
+    {
+      "id": "stk-02",
+      "prompt": "This is important and must be right: how many sides does a hexagon have?",
+      "canonical_answer": "6",
+      "task_class": "geometry",
+      "trigger_intended": "stakes"
+    },
+    {
+      "id": "none-01",
+      "prompt": "What is 2 plus 2?",
+      "canonical_answer": "4",
+      "task_class": "arithmetic",
+      "trigger_intended": "none"
+    },
+    {
+      "id": "none-02",
+      "prompt": "What color is the clear daytime sky?",
+      "canonical_answer": "blue",
+      "task_class": "general",
+      "trigger_intended": "none"
+    }
+  ]
+}

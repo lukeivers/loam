@@ -1,0 +1,10 @@
+# pbret-register-v160-retirement-record-keeps (PATCH) — register two pre-existing v1.6.0 completed-work records (release-integration-v1-6-0.md + the v1.6.0 migration yaml) as AC.PBRET.5 ProgramBench-sweep justified keeps (D-K11, D-K9 historical-record class). Both files DOCUMENT the retirement of ProgramBench (the release record lists it as a bundled work-slice; the migration yaml records the PB deletions as a declared no-op) — historical retirement-records, re-verified NOT live usages. Per the D-K10 precedent the §10 register sealed into docs/plans/sealed/ with the retirement plan, so the keep lives in this test's REGISTERED_KEEPS + is surfaced in the build report, not in sealed audit history. Guard stays ENFORCING: the mutation-detection sibling still goes RED on injected strays; the assertion is not weakened. Ladders up to existing AC.PBRET.5 via its designed exception path.
+
+slug: pbret-register-v160-retirement-record-keeps
+components: dev-sdlc
+baseline: 6542865f
+amendment-commit: fea022dac8c212a9d8bd995bc5ab250826e3e2a9
+plan-doc: docs/plans/sealed/pbret-register-v160-retirement-record-keeps.md
+acs-satisfied: 1
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

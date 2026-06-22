@@ -37,7 +37,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # mirroring the dev-sdlc seal-test's amendment-#139 orphan-cleanup bump).
 # WHY: between this slice's apply (`d8b71827`) and its seal, an UNRELATED
 # owner-ratified dev-sdlc corrective cycle landed five commits
-# (`6542865f..708a66ec` — the AC.PBRET.5 ProgramBench-sweep D-K11 register
+# (`6542865f..708a66ec` — the AC.PBRET.5 retirement-sweep D-K11 register
 # addition that cleared the cross-component sweep blocking THIS very seal).
 # Those dev-sdlc commits are correctly sealed under their own fence; pinning
 # the slice fence's diff window at the pre-seal tip `708a66ec` excludes them

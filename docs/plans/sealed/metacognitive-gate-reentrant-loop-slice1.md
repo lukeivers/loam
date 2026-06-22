@@ -210,12 +210,12 @@ Native Claude / Claude Code primitives considered for each new mechanism (per `c
 
 Placeholder mirroring the D-MGRL.* IDs declared in §3 + any D-build.* the builder narrates. Backfilled with commit SHAs at seal (or in the experiment result-doc if shipped as an experiment artefact rather than a sealed amendment).
 
-- D-MGRL.1 (deterministic gate) — SHA: _pending build_
-- D-MGRL.2 (adversarial evidence-bound loop + no-degradation guard) — SHA: _pending build_
-- D-MGRL.3 (pre-registration + blind judge + theory-vs-generic discriminator) — SHA: _pending build_
-- D-MGRL.4 (slice-1 trigger set) — SHA: _pending build_
-- D-MGRL.5 (default-OFF cost governor) — SHA: _pending build_
-- D-build.* (builder-narrated method decisions) — _pending build_
+- D-MGRL.1 (deterministic gate) — SHA: `01acd52d` (source-edit; gate.py — the deterministic LLM-free gate)
+- D-MGRL.2 (adversarial evidence-bound loop + no-degradation guard) — SHA: `01acd52d` (source-edit; loop.py)
+- D-MGRL.3 (pre-registration + blind judge + theory-vs-generic discriminator) — SHA: `01acd52d` (source-edit; experiment/PRE_REGISTRATION.md + judge.py + runner.py)
+- D-MGRL.4 (slice-1 trigger set — all three observable triggers low_confidence/novelty/stakes) — SHA: `01acd52d` (source-edit; gate.py trigger set)
+- D-MGRL.5 (default-OFF cost governor) — SHA: `01acd52d` (source-edit; turn.py + the LOAM_DELIBERATE_REASONING opt-in)
+- D-build.* (builder-narrated method decisions) — all five D-MGRL.* decisions landed together in the single slice feat commit `01acd52d`; the seal-window method decisions (baseline advances past the JOB-A interleaving) are recorded in commits `052e23ff` (seal-fence BASELINE), `80cd7705` (PB-stem reword), `1fdc2e02` (sealed-manifest baseline).
 
 ### Commit SHAs
 

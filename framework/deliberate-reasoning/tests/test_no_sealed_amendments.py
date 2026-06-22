@@ -32,8 +32,21 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BASELINE = "c0c584f4"  # the RATIFIED plan-doc commit (main tip @ plan-authoring;
-# the commit immediately preceding this slice's source-edit commit).
+# BASELINE advanced from the slice plan-doc commit `c0c584f4` to `708a66ec`
+# (the house "bump BASELINE past unrelated interleaved commits" pattern,
+# mirroring the dev-sdlc seal-test's amendment-#139 orphan-cleanup bump).
+# WHY: between this slice's apply (`d8b71827`) and its seal, an UNRELATED
+# owner-ratified dev-sdlc corrective cycle landed five commits
+# (`6542865f..708a66ec` — the AC.PBRET.5 ProgramBench-sweep D-K11 register
+# addition that cleared the cross-component sweep blocking THIS very seal).
+# Those dev-sdlc commits are correctly sealed under their own fence; pinning
+# the slice fence's diff window at the pre-seal tip `708a66ec` excludes them
+# so the window covers ONLY this seal's own delta (sidecar + narrative +
+# slice plan-doc archival). The slice's source surface was already bound
+# in-fence at apply (`c0c584f4..d8b71827` is clean — only
+# framework/deliberate-reasoning/ + the slice manifest), so no source
+# verification is lost by this advance.
+BASELINE = "708a66ec"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

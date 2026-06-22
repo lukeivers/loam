@@ -102,6 +102,21 @@ REGISTERED_KEEPS: frozenset[str] = frozenset(
         # precedent this entry lives here and is surfaced in the build
         # report (guard-breach-inventory 2026-06-12, RED #1).
         "docs/plans/broken-suite-family-fixes.md",
+        # D-K11 — v1.6.0 release/retirement-record docs (BUILD-TIME
+        # additions via the halt-trigger-4 mechanism; surfaced in the
+        # build report). Both files are completed-work v1.6.0 records
+        # whose every PB mention DOCUMENTS the retirement itself (the
+        # release-integration record lists "(d) ProgramBench full
+        # retirement" as one of the bundled work-slices; the migration
+        # yaml records the PB deletions as a no-op state change). This
+        # is the D-K9 historical-record class. Per the D-K10 precedent,
+        # the plan §10 D-PBRET.6 register sealed into docs/plans/sealed/
+        # with the retirement plan, so editing it would rewrite the
+        # owner-carved-out audit trail (D-K1/D-K2) — the keep lives here
+        # and is surfaced in the build report (deliberate-reasoning
+        # slice-1 seal, cross-component sweep breach, 2026-06-22).
+        "docs/plans/release-integration-v1-6-0.md",
+        "docs/state-migrations/v1-6-0-claude-leverage-and-principle-foundation.migration.yaml",
     }
 )
 

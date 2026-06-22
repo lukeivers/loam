@@ -89,3 +89,10 @@ READ-ONLY inputs (re-verified, not edited).
 ## §14 Method-decision register (populated at build + seal time)
 
 SHA register: TBD-AT-SEAL (source …; apply …; seal …).
+
+### Commit SHAs
+
+- Amendment commit: `fea022dac8c212a9d8bd995bc5ab250826e3e2a9` —
+  `chore(amend): pbret-register-v160-retirement-record-keeps manifest+apply — dev-sdlc BASELINE+sidecar bump to 6542865`
+- Seal commit: `dfda5bbff1a7da77f65f7764ada50354c42fed4e` —
+  `chore(seals): pbret-register-v160-retirement-record-keeps — dev-sdlc at fea022d`

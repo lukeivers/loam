@@ -1,0 +1,41 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time). PATCH — a justified-keep
+  # register addition to the AC.PBRET.5 guard; version derives at
+  # release time.
+  slug: pbret-register-v160-retirement-record-keeps
+  title: "pbret-register-v160-retirement-record-keeps (PATCH) — register two pre-existing v1.6.0 completed-work records (release-integration-v1-6-0.md + the v1.6.0 migration yaml) as AC.PBRET.5 ProgramBench-sweep justified keeps (D-K11, D-K9 historical-record class). Both files DOCUMENT the retirement of ProgramBench (the release record lists it as a bundled work-slice; the migration yaml records the PB deletions as a declared no-op) — historical retirement-records, re-verified NOT live usages. Per the D-K10 precedent the §10 register sealed into docs/plans/sealed/ with the retirement plan, so the keep lives in this test's REGISTERED_KEEPS + is surfaced in the build report, not in sealed audit history. Guard stays ENFORCING: the mutation-detection sibling still goes RED on injected strays; the assertion is not weakened. Ladders up to existing AC.PBRET.5 via its designed exception path."
+
+# BASELINE: the plan-doc commit (the commit immediately preceding this
+# cycle's source-edit commit), per the house pattern
+# (seal-guard-floor-draft-baseline-skip manifest comment). Confirmed
+# against the actual predecessor tip at apply time.
+baseline: "6542865f"  # the plan-doc commit (confirmed at apply, house pattern)
+
+plan: docs/plans/pbret-register-v160-retirement-record-keeps.md
+plan_doc_ref: docs/plans/sealed/pbret-register-v160-retirement-record-keeps.md
+
+components:
+  # ONE sealed fence: dev-sdlc. The only source surface touched is the
+  # AC.PBRET.5 guard test under plugins/dev-sdlc/tests/ — inside the
+  # plugin's allowed prefix.
+  - name: dev-sdlc
+    new_component: false
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions: the plan pair only. The two flagged v1.6.0 docs
+# are READ-ONLY inputs to the fix (re-verified, never edited here).
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: plugins/dev-sdlc/seals/SEAL_COMMIT.pbret-register-v160-retirement-record-keeps
+
+# One existing AC (AC.PBRET.5); no NEW AC family — the corrective
+# ladders up to AC.PBRET.5 via the designed REGISTERED_KEEPS exception.
+ac_count: 1

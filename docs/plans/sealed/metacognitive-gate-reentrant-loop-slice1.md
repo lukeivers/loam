@@ -217,6 +217,12 @@ Placeholder mirroring the D-MGRL.* IDs declared in §3 + any D-build.* the build
 - D-MGRL.5 (default-OFF cost governor) — SHA: _pending build_
 - D-build.* (builder-narrated method decisions) — _pending build_
 
+### Commit SHAs
+
+- Amendment commit: `80cd7705067c612d3fca82342c4a597197996e65` —
+  `fix(deliberate-reasoning): reword PB-stem out of slice-1 fence-test BASELINE comment`
+- Seal commit: `a61565907d20e64f2829a69daa7ff154dd2a30e3` —
+  `chore(seals): metacognitive-gate-reentrant-loop-slice1 — deliberate-reasoning at 80cd770`
 ## §15 Backwards-compat verification (populated/confirmed at build time)
 
 - With the deliberate layer disabled (default), the full existing turn-level test suite passes unchanged (AC.MGRL.7).

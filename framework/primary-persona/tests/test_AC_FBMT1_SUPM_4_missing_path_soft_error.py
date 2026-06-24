@@ -32,23 +32,40 @@ def test_AC_FBMT1_SUPM_4_missing_target_warning_surfaced(tmp_path: Path):
         source="message",
         group_id="testgroup",
     )
-    # Annotate with a path that DOES NOT exist anywhere.
+    # Annotate with a path that DOES NOT exist anywhere, plus a close
+    # date so the record carries a concrete validity interval.
     files = list((memory_dir / "episodes" / "testgroup").rglob("*.md"))
     assert files
     path = files[0]
     text = path.read_text(encoding="utf-8")
     annotated = text.replace(
         "group_id: testgroup\n",
-        "group_id: testgroup\nsuperseded-by: ./this-path-does-not-exist.md\n",
+        "group_id: testgroup\n"
+        "superseded-by: ./this-path-does-not-exist.md\n"
+        "superseded-date: 2026-06-01T00:00:00+00:00\n",
     )
     path.write_text(annotated, encoding="utf-8")
 
-    # Run search; the call should NOT raise even though the marker
-    # target is missing.
+    # PRECEDESSOR-CONTRACT MIGRATION (memory-supersession cycle): the
+    # superseded record is FILTERED from the default view (AC.SUP.1), so
+    # the warning/penalty path is exercised on the ``as_of`` history view
+    # where the marked record survives the filter. The default-view call
+    # must still NOT raise.
+    default_result = store.search(
+        query="alpha beta",
+        group_ids=["testgroup"],
+        num_results=5,
+    )
+    assert "episodes" in default_result
+
+    # History view inside the record's valid window: the marker is read,
+    # the penalty applies, and the missing-target warning surfaces.
+    as_of = datetime(2026, 5, 25, 0, 0, 0, tzinfo=timezone.utc)
     result = store.search(
         query="alpha beta",
         group_ids=["testgroup"],
         num_results=5,
+        as_of=as_of,
     )
     assert "episodes" in result
     # The warning surface (module-level list) carries the missing-
@@ -81,7 +98,7 @@ def test_AC_FBMT1_SUPM_4_missing_target_still_applies_penalty(tmp_path: Path):
         source="message",
         group_id="testgroup",
     )
-    # Annotate the second with a non-existent target.
+    # Annotate the second with a non-existent target + a close date.
     orphan_files = list(
         (memory_dir / "episodes" / "testgroup").rglob("orphan-with-bad-marker.md")
     )
@@ -89,14 +106,22 @@ def test_AC_FBMT1_SUPM_4_missing_target_still_applies_penalty(tmp_path: Path):
     text = orphan_files[0].read_text(encoding="utf-8")
     annotated = text.replace(
         "group_id: testgroup\n",
-        "group_id: testgroup\nsuperseded-by: ./nonexistent.md\n",
+        "group_id: testgroup\n"
+        "superseded-by: ./nonexistent.md\n"
+        "superseded-date: 2026-06-01T00:00:00+00:00\n",
     )
     orphan_files[0].write_text(annotated, encoding="utf-8")
 
+    # History view inside the orphan's valid window: both records are
+    # returned and the orphan is demoted despite the missing target
+    # (the penalty still applies — SUPM.4's property, preserved on the
+    # as_of view since the default view now filters the orphan).
+    as_of = datetime(2026, 5, 25, 0, 0, 0, tzinfo=timezone.utc)
     result = store.search(
         query="alpha beta gamma",
         group_ids=["testgroup"],
         num_results=5,
+        as_of=as_of,
     )
     episodes = result["episodes"]
     idx_keeper = next(

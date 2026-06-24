@@ -628,6 +628,7 @@ class FileMemoryStore:
         query: str,
         group_ids: list[str] | None,
         num_results: int = 5,
+        as_of: datetime | None = None,
     ) -> dict[str, Any]:
         """Return the canonical retrieval-result shape for ``query``.
 
@@ -641,6 +642,18 @@ class FileMemoryStore:
         ``nodes`` are always ``[]`` for the file-based provider
         (no edge / entity extraction at v0.1.0). ``episodes`` carries
         the BM25-or-grep-ranked top-N.
+
+        AC.SUP.1 / AC.SUP.2 — supersession validity-interval filtering:
+          * ``as_of is None`` (DEFAULT current view): superseded
+            (closed-interval) records are FILTERED OUT — the current
+            fact wins, the stale one never surfaces. This is the
+            default the persona reads, so a corrected fact no longer
+            has to be re-stated.
+          * ``as_of`` (an aware datetime): the HISTORY view — returns
+            records whose validity interval CONTAINS ``as_of``
+            (``valid_from <= as_of < valid_to``), so a record stale
+            now-but-current-as-of-τ is reachable. Proves filtering ≠
+            deletion.
         """
         if not query or not query.strip():
             return _empty_result(query)
@@ -660,6 +673,7 @@ class FileMemoryStore:
                 query=query,
                 group_ids=group_ids,
                 num_results=num_results,
+                as_of=as_of,
             )
         except (sqlite3.Error, OSError):
             episodes = []
@@ -668,6 +682,7 @@ class FileMemoryStore:
                 query=query,
                 group_ids=group_ids,
                 num_results=num_results,
+                as_of=as_of,
             )
         return {
             "query": query,
@@ -923,6 +938,7 @@ class FileMemoryStore:
         query: str,
         group_ids: list[str] | None,
         num_results: int,
+        as_of: datetime | None = None,
     ) -> list[dict[str, Any]]:
         index_path = self.memory_dir / SEARCH_INDEX_NAME
         if not index_path.exists():
@@ -1014,6 +1030,7 @@ class FileMemoryStore:
             num_results=num_results,
             now=datetime.now(timezone.utc),
             memory_root=self.memory_dir,
+            as_of=as_of,
         )
 
     def _grep_search(
@@ -1022,6 +1039,7 @@ class FileMemoryStore:
         query: str,
         group_ids: list[str] | None,
         num_results: int,
+        as_of: datetime | None = None,
     ) -> list[dict[str, Any]]:
         """Fallback retrieval — scan the most recent N episode files
         and rank by raw term-occurrence count.
@@ -1119,6 +1137,7 @@ class FileMemoryStore:
             num_results=num_results,
             now=datetime.now(timezone.utc),
             memory_root=self.memory_dir,
+            as_of=as_of,
         )
 
 
@@ -1435,6 +1454,134 @@ def _superseded_marker_target_missing(
     return not target.exists()
 
 
+#: The supersession marker frontmatter keys (the convention authored by
+#: :func:`supersession.mark_superseded`; the same keys the existing
+#: ``_superseded_marker`` honor reads). Defined module-locally so the
+#: validity-interval reader composes on the marker without importing
+#: ``supersession`` (which would create an import cycle).
+_SUPERSEDED_BY_KEY = "superseded-by"
+_SUPERSEDED_DATE_KEY = "superseded-date"
+
+
+# --- AC.SUP.1 / AC.SUP.2 / AC.SUP.3 — validity-interval supersession ---
+#
+# The supersession marker (``superseded-by`` + ``superseded-date``,
+# written by :func:`supersession.mark_superseded`) is PROMOTED here into
+# a real bitemporal validity interval. A record's interval is
+# ``[valid_from, valid_to)``:
+#
+#   * ``valid_from`` = the episode's ``reference_time`` (its creation /
+#     ingest instant; the same field the recency channel reads).
+#   * ``valid_to``   = the marker's ``superseded-date`` (the instant the
+#     successor closed this record's interval AT CREATION — AC.SUP.3),
+#     or ``None`` for an OPEN interval (not superseded — the default).
+#
+# The DEFAULT current view FILTERS closed-interval records out
+# (AC.SUP.1: current-over-stale, the marked record is removed not merely
+# demoted — this is the gap the old ``SUPERSEDED_PENALTY`` left open).
+# An explicit ``as_of τ`` query returns a record whose interval CONTAINS
+# τ (``valid_from <= τ < valid_to``), so history stays reachable
+# (AC.SUP.2: filtering ≠ deletion). With no marker the interval is open
+# and the record is always current (AC.SUP.5: retrieval keys ONLY on
+# interval state, so un-marking restores prior behaviour exactly).
+
+
+def _supersession_interval(
+    path_str: str,
+) -> tuple[datetime | None, datetime | None]:
+    """Read the record at ``path_str`` and return its validity interval
+    ``(valid_from, valid_to)`` (AC.SUP.1 / AC.SUP.3).
+
+    ``valid_from`` is the record's ``reference_time``; ``valid_to`` is
+    the ``superseded-date`` marker (close instant) or ``None`` (open —
+    not superseded). Composes on the EXISTING marker convention rather
+    than a new on-disk schema: ``superseded-date`` IS the close
+    timestamp. Fail-soft — an unreadable file / absent fields returns
+    ``(None, None)`` (an open interval; the record is treated as current
+    rather than the call raising, mirroring :func:`_superseded_marker`).
+    """
+    if not path_str:
+        return (None, None)
+    try:
+        content = Path(path_str).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return (None, None)
+    front, _ = _split_frontmatter(content)
+    valid_from = _parse_reference_time(str(front.get("reference_time", "")))
+    valid_to: datetime | None = None
+    marker = front.get(_SUPERSEDED_BY_KEY)
+    if isinstance(marker, str) and marker:
+        valid_to = _parse_reference_time(
+            str(front.get(_SUPERSEDED_DATE_KEY, ""))
+        )
+        # A marked record with an unparseable / absent close date still
+        # carries a closed interval (it IS superseded). Use a far-future
+        # sentinel close so the default view filters it (close known to
+        # exist) while an ``as_of`` query can still reach it before the
+        # sentinel. The marker's PRESENCE is the close signal; the date
+        # only refines WHERE the close falls (AC.SUP.1 keys on
+        # superseded-ness, not on a parseable date).
+        if valid_to is None:
+            valid_to = _SUPERSEDED_SENTINEL_CLOSE
+    return (valid_from, valid_to)
+
+
+def _interval_current(
+    interval: tuple[datetime | None, datetime | None],
+) -> bool:
+    """Whether ``interval`` is OPEN (current) — i.e. not superseded
+    (AC.SUP.1). An open interval (``valid_to is None``) is current; a
+    closed interval is filtered from the default view."""
+    return interval[1] is None
+
+
+def _interval_contains(
+    interval: tuple[datetime | None, datetime | None], as_of: datetime
+) -> bool:
+    """Whether ``interval`` contains the instant ``as_of`` —
+    ``valid_from <= as_of < valid_to`` (AC.SUP.2, the ``as_of`` history
+    path). An open interval (``valid_to is None``) contains every
+    instant at/after ``valid_from``. A missing ``valid_from`` is treated
+    as unbounded-below (the record existed before any recorded start)."""
+    valid_from, valid_to = interval
+    if valid_from is not None and as_of < valid_from:
+        return False
+    if valid_to is not None and as_of >= valid_to:
+        return False
+    return True
+
+
+def _filter_by_interval(
+    rows: list[dict[str, Any]], *, as_of: datetime | None
+) -> list[dict[str, Any]]:
+    """Apply the supersession validity-interval FILTER (AC.SUP.1 /
+    AC.SUP.2) — the default-current-view filter, or the ``as_of``
+    history view when ``as_of`` is supplied.
+
+    * ``as_of is None`` (default current view): keep only OPEN-interval
+      (not-superseded) records — the closed/stale records are FILTERED
+      OUT, not merely demoted. This is the architectural change.
+    * ``as_of is not None`` (history query): keep records whose interval
+      CONTAINS ``as_of`` — so a record stale-as-of-now but current-as-of
+      τ is returned (filtering ≠ deletion).
+    """
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        interval = _supersession_interval(str(row.get("path", "")))
+        if as_of is None:
+            if _interval_current(interval):
+                out.append(row)
+        else:
+            if _interval_contains(interval, as_of):
+                out.append(row)
+    return out
+
+
+#: Far-future close sentinel for a marked record whose ``superseded-date``
+#: is unparseable/absent (the marker's PRESENCE still closes the interval).
+_SUPERSEDED_SENTINEL_CLOSE = datetime(9999, 12, 31, tzinfo=timezone.utc)
+
+
 # AC.FBMT1.SUPM.4: warnings collected during a single ``_blend_recency``
 # call are appended here so tests and the contributor can observe the
 # soft-error surface without a stdlib ``logging`` dependency. Cleared at
@@ -1544,6 +1691,7 @@ def _compose_score(
     num_results: int,
     now: datetime,
     memory_root: Path,
+    as_of: datetime | None = None,
 ) -> list[dict[str, Any]]:
     """Compose BM25 with the supersession penalty (and, only when the
     :func:`activation_enabled` switch is ON, the power-law activation
@@ -1571,6 +1719,20 @@ def _compose_score(
     """
     global _LAST_RANKER_WARNINGS  # noqa: PLW0603 — AC.FBMT1.SUPM.4 surface
     _LAST_RANKER_WARNINGS = []
+    if not rows:
+        return []
+    # AC.SUP.1 / AC.SUP.2 — apply the validity-interval FILTER FIRST,
+    # BEFORE scoring + the top-N cut. The default current view
+    # (``as_of is None``) removes closed-interval (superseded) records
+    # entirely (current-over-stale); an ``as_of`` query keeps records
+    # whose interval contains that instant (history reachable). This is
+    # the promotion of the old demote-not-filter ``SUPERSEDED_PENALTY``
+    # into a real filter — the penalty below still applies to whatever
+    # survives the filter (it is a no-op on the default view since the
+    # only rows carrying a marker are filtered out there, but it remains
+    # correct for an ``as_of`` view where a marked-but-in-window record
+    # survives and should still rank under an unmarked one).
+    rows = _filter_by_interval(rows, as_of=as_of)
     if not rows:
         return []
     # AC.EVX.2 — the default-off switch. OFF: the access log is never

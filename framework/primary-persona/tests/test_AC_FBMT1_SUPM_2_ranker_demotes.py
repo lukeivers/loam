@@ -47,32 +47,58 @@ def test_AC_FBMT1_SUPM_2_ranker_demotes_superseded_below_unsuperseded(tmp_path: 
         source="message",
         group_id="testgroup",
     )
-    # Manually annotate the second file with ``superseded-by:``.
-    # The writer doesn't emit this field yet (that's a future
-    # amendment); the supersession-marker convention is an
-    # operator-authored annotation on existing memory files.
+    # Manually annotate the second file with ``superseded-by:`` +
+    # ``superseded-date:`` — a concrete validity interval. The
+    # supersession-marker convention is an operator/persona-authored
+    # annotation on existing memory files.
     sup_file = list((memory_dir / "episodes" / "testgroup").rglob("old-rule.md"))
     assert sup_file, "fixture: old-rule file not written"
     sup_path = sup_file[0]
     text = sup_path.read_text(encoding="utf-8")
     annotated = text.replace(
         "group_id: testgroup\n",
-        "group_id: testgroup\nsuperseded-by: ./keeper-rule.md\n",
+        "group_id: testgroup\n"
+        "superseded-by: ./keeper-rule.md\n"
+        "superseded-date: 2026-06-01T00:00:00+00:00\n",
     )
     sup_path.write_text(annotated, encoding="utf-8")
 
-    result = store.search(
+    # PRECEDESSOR-CONTRACT MIGRATION (memory-supersession cycle, plan §2):
+    # SUPM.2 originally asserted demote-not-filter in the DEFAULT view.
+    # The SUP promotion FILTERS the superseded record from the default
+    # view (AC.SUP.1). The demote-below-unsuperseded property SUPM.2
+    # protects now holds on the ``as_of`` HISTORY view, where both
+    # records are returned and the marked one is demoted by
+    # SUPERSEDED_PENALTY.
+
+    # Default view: the superseded old-rule is FILTERED out; the keeper
+    # remains (AC.SUP.1).
+    default_result = store.search(
         query="alpha beta gamma",
         group_ids=["testgroup"],
         num_results=5,
     )
-    episodes = result["episodes"]
-    # Both files should be returned (AC.FBMT1.SUPM.3 — not filtered).
+    default_paths = [ep["path"] for ep in default_result["episodes"]]
+    assert any(p.endswith("keeper-rule.md") for p in default_paths)
+    assert not any(p.endswith("old-rule.md") for p in default_paths), (
+        "superseded old-rule must be filtered from the default current "
+        f"view (AC.SUP.1); got: {default_paths}"
+    )
+
+    # History view (as_of inside old-rule's valid window): BOTH records
+    # are returned, and old-rule is DEMOTED below keeper-rule
+    # (SUPM.2's demote-not-delete property, preserved).
+    as_of = datetime(2026, 5, 25, 0, 0, 0, tzinfo=timezone.utc)
+    history = store.search(
+        query="alpha beta gamma",
+        group_ids=["testgroup"],
+        num_results=5,
+        as_of=as_of,
+    )
+    episodes = history["episodes"]
     paths = [ep["path"] for ep in episodes]
     assert any(p.endswith("keeper-rule.md") for p in paths)
     assert any(p.endswith("old-rule.md") for p in paths)
-    # The unsuperseded file ranks BEFORE the superseded file
-    # (lower index = higher rank).
     idx_keeper = next(
         i for i, ep in enumerate(episodes) if ep["path"].endswith("keeper-rule.md")
     )
@@ -81,7 +107,8 @@ def test_AC_FBMT1_SUPM_2_ranker_demotes_superseded_below_unsuperseded(tmp_path: 
     )
     assert idx_keeper < idx_old, (
         f"superseded file (old-rule) should rank below unsuperseded "
-        f"(keeper-rule); got positions {idx_keeper} and {idx_old}"
+        f"(keeper-rule) in the history view; got positions "
+        f"{idx_keeper} and {idx_old}"
     )
 
 

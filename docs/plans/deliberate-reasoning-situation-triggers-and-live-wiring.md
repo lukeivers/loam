@@ -1,6 +1,6 @@
 # deliberate-reasoning-situation-triggers-and-live-wiring — replace conversation-keyword gate triggers with situation/behavior signals, and wire the proven gate+loop into live primary-session turns (default-OFF, no collateral)
 
-**Status:** DRAFT — surfaced to the owner (Luke) for ratification BEFORE any build. NOT yet cleared. Sub-plan-doc (slice 3 of the deliberate-reasoning-layer program — the situation-trigger redesign + live-wiring slice). **Class:** MINOR (HARNESS-LAYER) — version derives at release time (`feedback_version_numbers_at_release_time`; do NOT pre-assign).
+**Status:** RATIFIED FOR BUILD — owner (Luke) cleared 2026-06-24 (Discord msg 1519454574954676265: "go ahead with the build on using the action-matching thing as you recommended… i'm ok with the background service"). D-SIT.1–6 ratified as recommended; **D-SIT.3 action-matching line explicitly approved** — pattern-matching the pending tool ARGUMENT's structure is admissible (the line is SOURCE = action-structure, NOT technique). Build dispatched off this commit. Sub-plan-doc (slice 3 of the deliberate-reasoning-layer program — the situation-trigger redesign + live-wiring slice). **Class:** MINOR (HARNESS-LAYER) — version derives at release time (`feedback_version_numbers_at_release_time`; do NOT pre-assign).
 
 **Working directory:** `/Users/lukeivers/loam` (canonical loam, `main`).
 

@@ -1,0 +1,150 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: handsoff-df6-nontech-visible-candidates
+  title: "handsoff-loop Slice DF amendment — candidate designs framed for the user's tech level (default NON-TECHNICAL); a non-tech user is never offered a CLI/daemon-primary candidate (AC.DF.6)"
+
+# BASELINE: 65c1f27d — canonical main tip (the Slice DF + Slice HB seals already
+# landed; this amendment follows on). The handsoff-loop family seals against the
+# workspace-bootstrap component anchor (the source lives under
+# framework/tools/handsoff-loop/, inside the workspace-bootstrap seal-test's
+# admitted framework/tools/ prefix — same pattern as the Slice DF / Slice HB
+# seals), so the seal-diff is scoped 65c1f27d..<seal>.
+#
+# Owner-directed amendment (ruling
+# 2026-06-24-design-first-non-tech-user-visible-outputs): rehearsal-1 generated a
+# command-line-tool candidate (option 1) and a "file-watch daemon" candidate
+# (option 3) for a non-technical accounting-firm owner — developer machinery the
+# target user cannot operate. The design stage was generating in IMPLEMENTATION
+# framing, not user-outcome framing. This is the loam prime directive applied to
+# the design stage: the user brings WHAT in THEIR terms; the design they review
+# must be in their vocabulary (visible outcomes), never the machinery.
+#
+# The amendment encodes "infer/assume the user's tech level (DEFAULT
+# non-technical) and constrain the candidate space accordingly" — NOT hardcode
+# web-only. For a non-tech user every surfaced candidate is something they can
+# personally SEE and USE (a visible/interactive experience OR a sensible
+# automated delivery), and NO surfaced candidate's primary interaction is a CLI /
+# daemon / background-watch / drop-folder surface. Enforced two ways: a
+# tech-level-partitioned direction-seed set + a prompt constraint (the generation
+# layer), AND a held-out structural classifier (is_nontech_operable) that drops a
+# CLI/daemon-primary candidate even if the prompt slips (the guarantee). AC
+# surface AC.DF.6. Plan §5.
+baseline: "65c1f27d"
+
+plan: docs/plans/handsoff-design-first-and-build-heartbeat.md
+plan_doc_ref: docs/plans/handsoff-design-first-and-build-heartbeat.md
+
+ac_count: 1
+
+smoke_outcome: "For a non-technical user (the default), the design stage surfaces only see-and-use / sensible-delivery candidates; a CLI or file-watch-daemon candidate the model proposes is never offered to them."
+
+# Single-component fence. Seal anchor: framework/workspace-bootstrap/. The
+# generate_candidate_designs tech-level framing (generative.py — the seed
+# partition, the prompt constraint, the held-out is_nontech_operable classifier,
+# the user_tech_level parameter) and the AC.DF.6 test file land at
+# framework/tools/handsoff-loop/ (inside the workspace-bootstrap seal-test's
+# admitted framework/tools/ prefix). The plan-doc + manifest land under the
+# docs/plans/ universal prefix. All admitted by
+# framework/workspace-bootstrap/tests/test_no_sealed_amendments.py.
+# extra_allowed_prefixes EMPTY — mirrors the Slice DF / Slice HB seals that
+# sealed cleanly against workspace-bootstrap on this exact handsoff-loop surface.
+components:
+  - name: workspace-bootstrap
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/workspace-bootstrap/tests/test_no_sealed_amendments.py
+    sidecar: framework/workspace-bootstrap/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/odd-in-loam.md
+    - docs/odd-methodology.md
+    - docs/FUTURE_IDEAS.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/STATE.md
+
+narrative:
+  target: framework/hands-off-lifecycle/seals/SEAL_COMMIT.handsoff-df6-nontech-visible-candidates
+  body: |
+    # handsoff-loop Slice DF amendment — non-tech-user-framed candidate designs
+
+    2026-06-24. An owner-directed amendment to the sealed Slice DF (design-first
+    front stage) per docs/plans/handsoff-design-first-and-build-heartbeat.md §5
+    (AC.DF.6). Empirically motivated: a live rehearsal generated candidate
+    designs framed as a command-line tool and a "file-watch daemon" — developer
+    machinery the target non-technical user (a small-firm owner) cannot operate.
+    The design-generation must assume a non-technical user by default and produce
+    candidates the user can actually SEE, understand, and choose between.
+
+    MOTIVE (prime directive, Lens 0). The user brings WHAT they want in THEIR
+    terms; loam owns HOW; the design they review must be in their vocabulary
+    (visible outcomes), never the machinery. Rehearsal-1 surfaced this defect
+    cheaply, before the room — which is the rehearsal's purpose.
+
+    Single-component fence on the workspace-bootstrap anchor (the handsoff-loop
+    family's seal anchor — source under framework/tools/handsoff-loop/, inside
+    the workspace-bootstrap seal-test's admitted framework/tools/ prefix; same
+    pattern as the Slice DF / Slice HB seals).
+
+    Change (generative.py):
+
+      - NEW: generate_candidate_designs gains a user_tech_level parameter
+        (DEFAULT "non_technical" — the owner ruling + the demo case). The
+        candidate space is framed for the tech level: a non-tech user draws
+        direction seeds ONLY from see-and-use / sensible-delivery families (no
+        CLI / daemon / drop-folder seed); a technical user gets the full seed
+        set (the constraint is "infer level, constrain space", NOT hardcode
+        web-only).
+      - NEW: a tech-level prompt constraint — for a non-tech user the
+        per-candidate prompt forbids the developer-machinery surfaces and demands
+        a candidate stating what the user PERSONALLY does + what the OUTPUT looks
+        like (a visible/interactive experience OR a sensible automated delivery,
+        e.g. the finished result emailed on a schedule).
+      - NEW: is_nontech_operable(form_factor, tool_plan) — a held-out STRUCTURAL
+        classifier (domain-blind, prompt-blind) that drops any candidate whose
+        primary interaction reads as a CLI / daemon / background-watch /
+        drop-folder surface, UNLESS the same text clearly names a
+        visible/delivery affordance (a scheduled EMAIL report is operable). For a
+        non-tech user the candidate loop applies this filter, so the user is
+        NEVER surfaced a candidate they cannot operate even if the model ignores
+        the prompt. The classifier never sees the generation prompt — it is the
+        falsifiable AC.DF.6 check.
+      - UNCHANGED: the single-design generate_design path; the AC.GEN.2
+        domain-blindness (the classifier keys on interaction-surface vocabulary,
+        NOT any business domain — the rehearsal's domain context is named only in
+        the AC.DF.6 test + the plan-doc, never in source); the
+        choose_design_fn=None non-interactive S6 path (no user_tech_level is
+        passed at the call site, so the default non-tech framing flows through
+        without touching build_from_intent.py).
+
+    AC surface:
+
+      - AC.DF.6 — candidate designs are framed for the user's tech level
+        (defaulting NON-TECHNICAL); a non-tech user is never offered a candidate
+        whose primary interaction is developer machinery. Verified by a held-out
+        structural classifier the generator never saw + an outcome-altitude live
+        test (env-gated) that runs a real generation over the rehearsal ask and
+        asserts every surfaced candidate is non-tech operable.
+
+    Method-level choices are the builder's call per ODD §1.1: the two-layer
+    enforcement (seed partition + prompt constraint at generation; held-out
+    classifier at filter) gives the non-tech user a clean candidate set even if
+    one layer slips. A technical user keeps the full machinery space (the
+    follow-up: inferring the tech level upstream so a CONFIRMED technical user
+    gets technical candidates — the demo case is non-tech and is covered by the
+    default).
+
+    Out of scope: inferring the user's tech level upstream in intake (the default
+    non-tech covers the demo + the owner ruling; the technical-user inference is a
+    surfaced follow-up); a clickable mockup; changing the build / freeze / verify
+    spine; pushing to origin (owner-gated — LOCAL seal only).
+
+    BASELINE 65c1f27d — canonical main tip. workspace-bootstrap's SEAL_COMMIT
+    sidecar advances to this amendment's seal SHA at seal time. LOCAL seal only.

@@ -251,17 +251,20 @@ Native Claude / Claude Code primitives considered for each new mechanism (per `c
 
 Placeholder mirroring the D-SIT.* IDs declared in §3 + any D-build.* the builder narrates. Backfilled with commit SHAs at seal.
 
-- D-SIT.1 (HYBRID structural-first; ship structural floor (i), defer option-(ii) escalation default-OFF) — SHA: _(build)_
-- D-SIT.2 (v1 situation set: UNBOUNDED_OP / REPEAT_FAILED / MACHINE_IRREVERSIBLE / HIGH_BLAST_RADIUS) — SHA: _(build)_
-- D-SIT.3 (structural-vs-keyword line: admissible = action structure + result history; inadmissible = prompt/draft NL content) — SHA: _(build)_
-- D-SIT.4 (wiring via existing PreToolUse hook pattern; framework-decision + hook-adapter separation; compose-not-override) — SHA: _(build)_
-- D-SIT.5 (default-OFF preserved; zero-collateral live invariant; option-(ii) independently default-OFF) — SHA: _(build)_
-- D-SIT.6 (slice-2a keyword matcher superseded as input contract; self-model folded in as structural-signal conditioning source) — SHA: _(build)_
-- D-build.* (builder-narrated method decisions) — SHA: _(build)_
+- D-SIT.1 (HYBRID structural-first; ship structural floor (i), defer option-(ii) escalation default-OFF) — BUILT: `signals.py` is the LLM-free structural floor; `escalation.py` is the option-(ii) seam, DEFAULT-OFF behind its own independent switch `LOAM_DELIBERATE_REASONING_SELF_ASSESS`, off the v1 hot path. SHA: see Commit SHAs.
+- D-SIT.2 (v1 situation set: UNBOUNDED_OP / REPEAT_FAILED / MACHINE_IRREVERSIBLE / HIGH_BLAST_RADIUS) — BUILT: the four `SituationSignal` detectors in `signals.py`, each with a positive/negative test (`test_AC_TRIG_2_*`) + the incident-replay (`test_AC_TRIG_4_*`). SHA: see Commit SHAs.
+- D-SIT.3 (structural-vs-keyword line: admissible = action structure + result history; inadmissible = prompt/draft NL content) — BUILT: detectors read only `PendingAction` + `ToolResultRing` (no prompt/draft field — enforced by dataclass SHAPE, `test_AC_TRIG_3_*`); the `_HEDGE_RE`/`_STAKES_RE` keyword detectors DEMOTED behind `keyword_triggers_enabled` (default OFF). RF-5 argument-pattern-matching admitted per owner ratification (D-SIT.3 action-matching line). SHA: see Commit SHAs.
+- D-SIT.4 (wiring via existing PreToolUse hook pattern; framework-decision + hook-adapter separation; compose-not-override) — BUILT: `wiring.py` mirrors the `in_thread_work_budget_guard` envelope + fail-open + warn/block contract; framework owns the gate DECISION, the adapter owns the harness ADAPTATION; `safety_guard_blocked` short-circuit is compose-not-override (`test_AC_WIRE_3_*`). SHA: see Commit SHAs.
+- D-SIT.5 (default-OFF preserved; zero-collateral live invariant; option-(ii) independently default-OFF) — BUILT: reuses slice-1's `LOAM_DELIBERATE_REASONING` (`TurnConfig`); the live invariant (gate fires on ZERO of the normal corpus) is `test_AC_WIRE_2_*`; the option-(ii) switch is independent (`test_AC_WIRE_4_*`). SHA: see Commit SHAs.
+- D-SIT.6 (slice-2a keyword matcher superseded as input contract; self-model folded in as structural-signal conditioning source) — RECORDED (no slice-2a code touched; halt-trigger-6 check: `SelfAttribution.matches()` is NOT live anywhere — grep over framework/ + .claude/ returned zero live hits). The integration-seam redirect is recorded for slice-2a's eventual un-pause. SHA: see Commit SHAs.
+- D-build.1 (the keyword detectors are DEMOTED, not deleted: the slice-1 `evaluate_gate` contract SHAPE + slice-1 callers' enum members are preserved; the legacy keyword behavior is reachable only via the explicit `keyword_triggers_enabled` opt-in — a documented deprecation per plan §15, and the minimal honest change that keeps the slice-1 sealed suite green while removing keyword-on-conversation from the live path). The two slice-1 tests that asserted keyword-default-firing (`test_AC_MGRL_1_*`, `test_AC_MGRL_OA_*`) were updated to pass the explicit opt-in, in-fence, with D-SIT.3 deprecation comments.
+- D-build.2 (BLOCK vs WARN severity split: MACHINE_IRREVERSIBLE / HIGH_BLAST_RADIUS BLOCK-toward-rethink; UNBOUNDED_OP / REPEAT_FAILED WARN-and-surface — the cases where run-then-rethink is itself the harm block, the rest warn; a method call within AC.WIRE.1's outcome).
+- D-build.3 (halt-trigger-5 ruling: NOVELTY RETAINED — `task_class` is a caller-supplied label derived from a static task-set field in the slice-1 experiment, NOT a prompt keyword-scan; admissible mechanism per D-SIT.3 edge case; verified by `test_AC_TRIG_3_novelty_label_is_structurally_supplied_not_prompt_derived`).
 
 ### Commit SHAs
 
-- Amendment commit: _(backfilled at seal)_
+- BASELINE: `abe41b5e` (the RATIFIED slice-3 plan-doc commit; immediately precedes the first source-edit commit — house HEAD~1 pattern).
+- Amendment / apply commit: _(backfilled at seal)_
 - Seal commit: _(backfilled at seal)_
 
 ## §15 Backwards-compat verification (populated/confirmed at build time)

@@ -31,8 +31,15 @@ from loam.deliberate_reasoning.gate import GateSignals, Trigger, evaluate_gate
 
 
 def test_AC_MGRL_1_trigger_present_escalates_and_records_trigger():
-    # A hedged draft carries the low-confidence signal.
-    signals = GateSignals(draft_text="I think it's probably 42.")
+    # A hedged draft carries the low-confidence signal. Slice-3 DEMOTED the
+    # conversation-keyword triggers off the default live path (D-SIT.3); the
+    # legacy keyword behavior is preserved only via the explicit opt-in
+    # `keyword_triggers_enabled=True` (the documented deprecation seam, plan
+    # §15). This test exercises that retained deprecation path; the live path
+    # is structural-only (see test_AC_TRIG_1_*).
+    signals = GateSignals(
+        draft_text="I think it's probably 42.", keyword_triggers_enabled=True
+    )
     decision = evaluate_gate(signals)
     assert decision.escalate is True
     assert Trigger.LOW_CONFIDENCE in decision.triggers

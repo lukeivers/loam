@@ -51,11 +51,19 @@ def test_AC_MGRL_OA_real_turn_escalates_end_to_end_no_prearranged_state():
     # genuinely novel (absent from the empty recent set), and the prompt
     # carries genuine stakes framing. The gate must decide escalate on its
     # own from these real signals.
+    # Slice-3 DEMOTED the conversation-keyword triggers (LOW_CONFIDENCE /
+    # STAKES) off the default live path (D-SIT.3). This slice-1 OA test
+    # exercises the retained deprecation path via the explicit opt-in so the
+    # hedge + stakes keyword triggers still fire here (the documented
+    # deprecation, plan §15); NOVELTY is structurally derived and fires
+    # regardless. The slice-3 live outcome-altitude surface is
+    # test_AC_WIRE_OA_*.
     signals = GateSignals(
         draft_text="I think the answer is probably 371.",  # genuinely hedged
         task_class="multiplication-novel",
         recent_task_classes=frozenset(),  # genuinely novel
         prompt_text="Critical: what is 17 times 23? This must be correct.",  # stakes
+        keyword_triggers_enabled=True,  # retained deprecation path (D-SIT.3)
     )
 
     result = process_turn(

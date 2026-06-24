@@ -264,8 +264,10 @@ Placeholder mirroring the D-SIT.* IDs declared in §3 + any D-build.* the builde
 ### Commit SHAs
 
 - BASELINE: `abe41b5e` (the RATIFIED slice-3 plan-doc commit; immediately precedes the first source-edit commit — house HEAD~1 pattern).
-- Amendment / apply commit: _(backfilled at seal)_
-- Seal commit: _(backfilled at seal)_
+- Source-edit commit: `e68cd687` (feat — signals/wiring/escalation + gate refactor + 43 new AC tests + 2 slice-1 deprecation-opt-in updates).
+- Manifest-finalize commit: `2d28ea40` (baseline + RATIFIED status).
+- Amendment / apply commit: `565d7ae4` (`loam amend apply` — sidecar+BASELINE bump to abe41b5e).
+- Seal commit: `4fcbdec4` (`loam amend seal` — sidecar advanced to 565d7ae4; verified on main; post-seal `apply --dry-run` clean; 78 component tests green).
 
 ## §15 Backwards-compat verification (populated/confirmed at build time)
 

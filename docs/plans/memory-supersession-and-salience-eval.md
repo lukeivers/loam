@@ -214,11 +214,39 @@ The eval-measurement mechanism leans on a native primitive where one exists:
 
 ## §14 Method-decision register (populated at build time; SHA-backfilled at seal)
 
-- **D-SCOPE.1** — committed core (A+C) vs gated probe (B) split. _SHA: pending._
-- **D-RCT.1** — run-capped vs skip on Gate B; merge-vs-recorded-null disposition. _SHA: pending._
-- **D-PROBE.1** — contradiction-probe set size + fact-type coverage. _SHA: pending._
-- **D-GOLD.1** — gold-set + QA-set hand-labeling effort. _SHA: pending._
-- **D-HARNESS.1** — harness promotion path out of pos3 `.scratch`. _SHA: pending._
+Build SHAs: pre-registration anchor `90f42515`; source+tests `e0eff95e`;
+apply + seal SHAs backfilled at §14a below.
+
+- **D-SCOPE.1** — committed core (A+C) vs gated probe (B) split. ADOPTED as
+  written. SUP + E2E shipped; RCT authored separable + gated. _SHA: e0eff95e._
+- **D-RCT.1** — run-capped vs skip on Gate B; merge-vs-recorded-null
+  disposition. RAN it; NOT-EARNED (CI [-0.0013, +0.0569] straddles zero,
+  p=0.233). Pre-committed drop rule fired: mechanism NOT merged into
+  production; recorded as a valid null in
+  `framework/primary-persona/eval/RESULTS.md`. The probe code lives in the
+  eval harness (the surface that produced the null), never in the
+  production ranker (AC.RCT.4). _SHA: e0eff95e._
+- **D-PROBE.1** — contradiction-probe set size + fact-type coverage. 8
+  triples covering all four real supersession fact-types (decision_ruling,
+  personal_fact, version_state_fact, config_fact), grounded in real corpus
+  supersessions (e.g. the Apple-Valley-vs-Lubbock location ruling).
+  _SHA: 90f42515 (frozen by the pre-reg)._
+- **D-GOLD.1** — gold-set + QA-set hand-labeling effort. 8 contradiction +
+  8 control QA-over-memory items, frozen by the pre-registration.
+  _SHA: 90f42515._
+- **D-HARNESS.1** — harness promotion path out of pos3 `.scratch`. ADOPTED —
+  canonical home at `framework/primary-persona/eval/` (in-fence; faithful
+  live-import of `FileMemoryStore.search`). _SHA: e0eff95e._
+
+### §14a Amendment register (apply + seal)
+
+- Pre-registration anchor: `90f42515` (anachronism-firewall ancestor).
+- Source + tests (scored-run commit, descendant of the anchor): `e0eff95e`.
+- Apply: _backfilled at apply._
+- Seal: _backfilled at seal._
+- Gate results (eval/RESULTS.md): Gate A Currentness@1=1.0 +
+  History-reachable=1.0 (0/8 failures); Gate C gain_on_contradiction=+6,
+  gain_on_control=0; Gate B NOT-EARNED (dropped as null).
 
 ## §15 Backwards-compat verification
 

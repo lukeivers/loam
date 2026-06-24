@@ -1,0 +1,43 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time). MINOR — a new memory
+  # capability (supersession via validity intervals + an answer-level
+  # outcome gate); version derives at release time.
+  slug: memory-supersession-and-salience-eval
+  title: "memory-supersession-and-salience-eval (MINOR) — promote the superseded-by/superseded-date marker into a real bitemporal VALIDITY INTERVAL so the DEFAULT memory view FILTERS superseded records out of 'current' (current-over-stale, AC.SUP.1=Currentness@1 1.0 zero-tolerance) while history stays reachable on an explicit as_of query (AC.SUP.2=1.0); the write that creates the successor closes the prior record's interval at creation (AC.SUP.3); reversible (AC.SUP.5); composes on the predecessor seals (file_memory SUPERSEDED_PENALTY + supersession.py marking + corpus_index honor), not a new schema. ★ outcome-altitude AC.E2E.1: the REAL retrieval+answer path with NO pre-arranged state answers contradiction items strictly better post-change (gain_on_contradiction=+6: pre 0/8 -> post 6/8) with NO control regression, scored by a blind judge (AC.E2E.2). RCT (reference-count tie-breaker) ran as the pre-committed FALSIFICATION PROBE: paired BCa bootstrap CI [-0.0013,+0.0569] STRADDLES ZERO, permutation p=0.233 -> NOT-EARNED -> DROPPED (default-OFF, never wired into the production ranker; AC.RCT.4) and recorded as a valid null (D-RCT.1), the same disposition that killed co-citation spread. Anachronism firewall: probe sets frozen at the pre-registration commit 90f42515, a git ancestor of the scored-run commit e0eff95e (AC.SUP.6/E2E.3/RCT.1)."
+
+# BASELINE: the pre-registration anchor commit 90f42515 — the commit
+# immediately preceding this cycle's source-edit commit e0eff95e (the
+# pre-reg froze the probe sets with NO source-behavior change). The
+# builder CONFIRMS against the actual predecessor tip at apply time
+# (house pattern, seal-guard-sweep-floor manifest comment).
+baseline: "90f42515"
+
+plan: docs/plans/memory-supersession-and-salience-eval.md
+plan_doc_ref: docs/plans/sealed/memory-supersession-and-salience-eval.md
+
+components:
+  # ONE sealed fence: primary-persona. The validity-interval filter +
+  # as_of path land in file_memory.py; the SUP/E2E/RCT AC tests + the
+  # promoted eval harness (D-HARNESS.1) live under
+  # framework/primary-persona/ (in-fence).
+  - name: primary-persona
+    new_component: false
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (amendment #22 ruling #3): the plan pair only.
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: docs/plans/sealed/memory-supersession-and-salience-eval.md
+
+# 13 ACs across three families: AC.SUP.{1..6}, AC.E2E.{1..3},
+# AC.RCT.{1..4}. AC.E2E.1 is outcome-altitude (real entry-point, no
+# pre-arranged state).
+ac_count: 13

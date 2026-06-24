@@ -572,6 +572,10 @@ acceptance criteria, not just product features.
 - BASELINE: `bad861e0` (canonical main tip at plan-authoring).
 - Slice DF — code / apply / seal: `e5ff74b4` / `f7f78d2a` / `014dd9ad`.
 - Slice HB — code / apply / seal: `cf34067d` / `2efda4ba` / `1a094701`.
+- Slice DF amendment (AC.DF.6 — non-tech candidate framing) — baseline
+  `65c1f27d`; code / apply / seal: `3050e0e5` / `6ba1a60f` / `f4b7e079`. Manifest
+  `docs/plans/handsoff-df6-nontech-visible-candidates.manifest.yaml`. LOCAL seal
+  only — not pushed.
 
 ### Method-decision register (Slice DF, narrated at build)
 

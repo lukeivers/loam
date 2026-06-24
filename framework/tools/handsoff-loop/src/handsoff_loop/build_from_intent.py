@@ -39,8 +39,11 @@ from .convergence import (
     run_to_convergence,
 )
 from .generative import (
+    CandidateDesign,
+    GateCriterion,
     GeneratedDesign,
     GenerationUnavailable,
+    generate_candidate_designs,
     generate_design,
     render_verdict,
     resolve_command,
@@ -83,16 +86,77 @@ def interactive_answer(question: str) -> str:
 
 
 @dataclass
+class ChosenDesign:
+    """The user's settled choice from the candidate designs (AC.DF.2/.3).
+
+    The intake-surface ``choose_design_fn(candidates)`` returns one of
+    these (or ``None`` for "declined / abandoned" — a distinct
+    non-built terminal).  ``index`` selects the candidate; the optional
+    tweak fields carry the user's edits, which are folded into the
+    chosen :class:`GeneratedDesign` BEFORE the (untouched) freeze
+    (AC.DF.3):
+
+      * ``objective`` — a changed objective sentence;
+      * ``add_criteria`` — gate criteria the user added;
+      * ``remove_criteria`` — substrings of gate criteria to drop;
+      * ``gate_plain`` — a changed plain "done-when" statement.
+
+    A tweak is a property of the chosen design; the choice UI (numbered
+    terminal prompt, a channel reply, a test double) is the caller's —
+    this carrier is the contract between the surface and the freeze."""
+
+    index: int = 0
+    objective: str | None = None
+    gate_plain: str | None = None
+    add_criteria: list[str] = field(default_factory=list)
+    remove_criteria: list[str] = field(default_factory=list)
+
+
+def apply_design_tweaks(
+    design: GeneratedDesign, chosen: ChosenDesign,
+) -> GeneratedDesign:
+    """Fold the user's tweaks into the buildable design (AC.DF.3).
+
+    ``design`` is the full buildable design generated for the chosen
+    direction.  Returns a new :class:`GeneratedDesign` reflecting the
+    EDITED design (the frozen gate + build briefs are derived from this,
+    not the raw machine output).  No tweak fields => the design is
+    returned unchanged."""
+    import dataclasses as _dc
+
+    new_objective = chosen.objective or design.objective
+    new_gate_plain = chosen.gate_plain or design.gate_plain
+    criteria = [
+        c for c in design.gate_criteria
+        if not any(rm and rm.lower() in c.criterion.lower()
+                   for rm in chosen.remove_criteria)
+    ]
+    for added in chosen.add_criteria:
+        text = str(added).strip()
+        if text:
+            criteria.append(GateCriterion(criterion=text, traceable_to=""))
+    if (new_objective == design.objective
+            and new_gate_plain == design.gate_plain
+            and criteria == list(design.gate_criteria)):
+        return design
+    return _dc.replace(
+        design, objective=new_objective, gate_plain=new_gate_plain,
+        gate_criteria=criteria)
+
+
+@dataclass
 class BuildFromIntentResult:
     """The end-to-end run outcome, evidence-first."""
 
     terminal: str  # "done" | "honest-negative" | "not-approved" |
-    #               "understanding-failed" | "generation-failed"
+    #               "understanding-failed" | "generation-failed" |
+    #               "design-not-chosen" (AC.DF.2: user declined a design)
     run_dir: str
     verdict_text: str = ""
     intent: RequestIntent | None = None
     answers: dict = field(default_factory=dict)
     grounding: GroundingOutcome | None = None
+    candidates: list[CandidateDesign] = field(default_factory=list)
     design: GeneratedDesign | None = None
     convergence: ConvergenceResult | None = None
     narration: list[str] = field(default_factory=list)
@@ -108,6 +172,7 @@ class BuildFromIntentResult:
             "answers": dict(self.answers),
             "grounding": (self.grounding.as_evidence()
                           if self.grounding else None),
+            "candidates": [c.as_evidence() for c in self.candidates],
             "design": self.design.as_evidence() if self.design else None,
             "convergence": (self.convergence.as_evidence()
                             if self.convergence else None),
@@ -132,6 +197,8 @@ def run_build_from_intent(
     workspace_dir: Path,
     approve_fn=None,
     answer_fn=None,
+    choose_design_fn=None,
+    n_candidates: int = 3,
     say=print,
     model: str = "sonnet",
     leg_ceiling_s: float = DEFAULT_LEG_CEILING_S,
@@ -147,6 +214,19 @@ def run_build_from_intent(
     questions when a live user is reachable; when None, surfaced
     questions are recorded as an un-answered human gate and the run
     proceeds on the plain reading of the ask — honestly noted.
+
+    ``choose_design_fn(candidates) -> ChosenDesign | None`` is the
+    design-first front stage (AC.DF.*): when provided, the pipeline
+    generates ``n_candidates`` materially-distinct candidate designs
+    AFTER research and surfaces them for the user to review / tweak /
+    SELECT before any build starts.  Returning ``None`` (declined /
+    abandoned) terminates the run with the distinct ``design-not-chosen``
+    terminal — NO gate is frozen and NO build dispatches (AC.DF.2).  A
+    returned :class:`ChosenDesign` proceeds the build on exactly the
+    chosen (optionally tweaked) design (AC.DF.3).  When ``choose_design_fn
+    is None`` (standing hands-off — the sealed non-interactive S6 path)
+    the single-design ``generate_design`` path runs UNCHANGED and the
+    build proceeds on it byte-for-byte as before this slice (AC.DF.4).
     """
     t0 = time.monotonic()
     workspace_dir = Path(workspace_dir)
@@ -265,8 +345,66 @@ def run_build_from_intent(
         record, watch_dir=run_dir, say=_say,
         interval_s=heartbeat_interval_s)
     try:
-        design = generate_design(intent, grounding, answers=answers,
-                                 model=model)
+        if choose_design_fn is None:
+            # AC.DF.4 — the sealed non-interactive S6 path: the
+            # single-design generate_design runs UNCHANGED, byte-for-byte
+            # as before this slice. No candidate generation, no choice
+            # gate; standing hands-off auto-builds on the one design.
+            design = generate_design(intent, grounding, answers=answers,
+                                     model=model)
+        else:
+            # AC.DF.1 — the design-first front stage: N materially-
+            # distinct candidate designs, surfaced for review BEFORE the
+            # freeze + any build dispatch.
+            candidates = generate_candidate_designs(
+                intent, grounding, n=n_candidates, answers=answers,
+                model=model)
+            result.candidates = candidates
+            record.emit(
+                "planning", "candidate designs generated for review",
+                candidate_count=len(candidates),
+                form_factors=[c.form_factor for c in candidates])
+            record.narrate(
+                "planning",
+                f"I came up with {len(candidates)} different ways to "
+                "build this. Pick the one that fits — you can tweak it "
+                "before I start:", say=_say)
+            for i, cand in enumerate(candidates):
+                record.narrate(
+                    "planning",
+                    f"  {i + 1}. {cand.form_factor} — {cand.tool_plan}",
+                    say=_say)
+            # AC.DF.2 — the build loop does NOT start until the user
+            # settles a design. choose_design_fn is the intake surface
+            # (numbered prompt / channel reply / test double — the
+            # caller's, mirroring approve_fn). None back = declined.
+            chosen = choose_design_fn(candidates)
+            if chosen is None:
+                design = None
+            else:
+                idx = max(0, min(int(getattr(chosen, "index", 0)),
+                                 len(candidates) - 1))
+                picked = candidates[idx]
+                # The full buildable design (gate_files, verification
+                # scripts, sub-task briefs) is generated for the CHOSEN
+                # direction only — the chosen candidate's direction
+                # conditions the single-design generation through the
+                # existing clarifications seam (no new generate_design
+                # contract). This is the budget-safe split (D-build.2).
+                direction_answers = dict(answers)
+                direction_answers["Chosen design direction to build"] = (
+                    picked.as_direction_brief())
+                base_design = generate_design(
+                    intent, grounding, answers=direction_answers,
+                    model=model)
+                # AC.DF.3 — the user's tweaks propagate into the frozen
+                # gate + build briefs (the EDITED design, not the raw
+                # machine output).
+                design = apply_design_tweaks(base_design, chosen)
+                record.emit(
+                    "planning", "design chosen + buildable gate generated",
+                    chosen_index=idx, form_factor=picked.form_factor,
+                    tweaked=(design is not base_design))
     except GenerationUnavailable as exc:
         record.narrate(
             "verdict",
@@ -277,6 +415,16 @@ def run_build_from_intent(
         return _finish(record, result, t0)
     finally:
         beat_stop.set()
+
+    # AC.DF.2 — the user declined / abandoned: NO gate is frozen and NO
+    # build sub-task dispatches; a distinct non-built terminal.
+    if design is None:
+        record.narrate(
+            "verdict",
+            "Understood — none of those designs were what you wanted, so "
+            "I didn't build anything. Nothing was changed.", say=_say)
+        result.terminal = "design-not-chosen"
+        return _finish(record, result, t0)
     result.design = design
 
     gate_dir = run_dir / "gate"

@@ -89,10 +89,11 @@ amendment:
 #   experiment (untouched + paused); re-running the slice-1 experiment with the
 #   new triggers; publish.
 #
-# STATUS: DRAFT — NOT YET RATIFIED. Surfaced to the owner (Luke) for
-#   ratification before any build. The builder finalizes baseline + the
-#   components/fence detail at build time once ratified.
-baseline: "_(set at build time — main tip preceding the first source-edit)_"
+# STATUS: RATIFIED FOR BUILD (owner cleared 2026-06-24, Discord
+#   1519454574954676265; plan-doc commit abe41b5e). Baseline finalized to
+#   abe41b5e (the ratified plan-doc commit, immediately preceding the first
+#   source-edit commit e68cd687). Built + sealed on main.
+baseline: "abe41b5e"
 
 plan: docs/plans/deliberate-reasoning-situation-triggers-and-live-wiring.md
 

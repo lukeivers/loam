@@ -1,0 +1,180 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deliberate-reasoning-situation-triggers-and-live-wiring
+  title: "deliberate-reasoning slice 3 — replace conversation-keyword gate triggers with situation/behavior signals + wire the proven gate+loop into live primary-session turns (default-OFF, zero-collateral)"
+
+# BASELINE: the commit immediately preceding this slice's source-edit
+# commit (the house HEAD~1 advance pattern). The builder re-baselines to the
+# actual source-edit BASELINE at build time (confirm against `main` tip per
+# feedback_sync_check_before_build_on_checkout).
+#
+# SEALED-COMPONENT amendment fence — framework/deliberate-reasoning/:
+#   This slice EXTENDS the SEALED slice-1 component (seal a6156590). The
+#   gate.py trigger-substrate edits (new situation-signal detectors; retire/
+#   demote the _HEDGE_RE/_STAKES_RE conversation-keyword detectors; verify-or-
+#   retire NOVELTY) are ADDITIVE + manifest-declared, never a silent widening
+#   (feedback_dispatch_explicit_loam_amend_apply). The evaluate_gate(GateSignals)
+#   -> GateDecision contract shape is preserved; the loop + the production
+#   entry-point are unchanged in shape (composes-with, not rewrite). The
+#   builder runs `loam amend apply` + `loam amend seal` against this fence.
+#
+# LIVE-WIRING fence — the PreToolUse hook adapter:
+#   The live-wiring lands a NEW PreToolUse hook composing with the existing
+#   pos3/.claude/hooks/ guard pattern (in_thread_work_budget_guard.py /
+#   wd_discipline_guard.py), registered in .claude/settings.json. Whether the
+#   hook adapter ships in canonical loam's framework/ harness layer or in the
+#   workspace .claude/hooks/ surface is the builder's placement call (§2);
+#   the framework owns the gate DECISION, the hook owns the harness ADAPTATION.
+#   Any workspace-side settings/hook edits are universal-path admissions, not
+#   framework-source edits (compatible with the wd_discipline_guard's own
+#   allow-list).
+#
+# AC families locked per docs/plans/deliberate-reasoning-situation-triggers-and-live-wiring.md §5:
+#   AC.TRIG.1  — escalation driven by situation signals (pending-action
+#                structure + recent tool-result history), NOT by keyword-
+#                scanning the user's prompt or the model's draft; the two
+#                dissociate (structural-signal turn with no keywords escalates;
+#                keyword turn with a safe action does not).
+#   AC.TRIG.2  — the v1 situation set (UNBOUNDED_OP / REPEAT_FAILED /
+#                MACHINE_IRREVERSIBLE / HIGH_BLAST_RADIUS) each fires on its
+#                positive fixture and declines its negative, LLM-free.
+#   AC.TRIG.3  — detectors read admissible sources only (tool name, tool-
+#                argument structure, target path, recent tool-result
+#                metadata); no detector reads the NL prompt/draft; any retained
+#                NOVELTY-style label is verified structural-derivation or retired.
+#   AC.TRIG.4  — the 2026-06-24 runaway-regex incident shape, replayed as a
+#                fixture, escalates (>=UNBOUNDED_OP + REPEAT_FAILED) where the
+#                slice-1 keyword gate would NOT have fired.
+#   AC.WIRE.1  — the gate fires inside a LIVE primary-session turn (PreToolUse
+#                hook -> gate -> loop) and the loop's deliberate output
+#                affects the outcome; a safe turn produces none.
+#   AC.WIRE.2 ★ — no-collateral / default-OFF: ships default-OFF; with it on, a
+#                turn with NO structural signal is byte-identical to baseline;
+#                the gate fires on ZERO normal turns (live form of slice-1's
+#                gain_on_unflagged == 0).
+#   AC.WIRE.3  — composes with the existing PreToolUse safety guards without
+#                regressing them; a hard block from a safety guard is not
+#                overridden; ordering is deterministic in settings.json.
+#   AC.WIRE.4  — the option-(ii) per-turn LLM self-assessment escalation is
+#                default-OFF + independently gated; the v1 structural floor
+#                runs LLM-free (zero claude -p calls on the hot path); enabling
+#                the escalation is a single reversible switch separate from
+#                LOAM_DELIBERATE_REASONING.
+#   AC.WIRE.OA ★ — outcome-altitude: a LIVE end-to-end real-situation fire
+#                through the production wiring with NO pre-arranged gate state
+#                yields escalation + a loop intervention that changes the
+#                outcome, AND the same enabled config over normal turns yields
+#                ZERO collateral.
+#
+# Plan-authoring rulings carried in (plan §3):
+#   D-SIT.1 — HYBRID, structural-first: ship structural floor (i) in v1;
+#             defer option-(ii) LLM self-assessment as a default-OFF escalation.
+#   D-SIT.2 — v1 situation set = the four §3.2 structural signals.
+#   D-SIT.3 — structural-vs-keyword line: admissible = pending-action structure
+#             + result history; inadmissible = prompt/draft NL content.
+#   D-SIT.4 — wiring via the existing PreToolUse hook pattern; framework-
+#             decision + hook-adapter separation; compose-not-override.
+#   D-SIT.5 — default-OFF preserved (LOAM_DELIBERATE_REASONING); zero-collateral
+#             live invariant; option-(ii) independently default-OFF.
+#   D-SIT.6 — slice-2a's SelfAttribution.matches() prompt-keyword matcher
+#             superseded as input contract; the self-model folds in as a
+#             structural-signal CONDITIONING source (not a parallel keyword
+#             scan); slice-2a's behavior-shaping EXPERIMENT untouched + paused.
+#
+# Out of scope (plan §7): always-on per-turn LLM self-assessment (deferred,
+#   default-OFF); the draft-QUALITY coverage class (NAMED GAP, routed to the
+#   deferred escalation); the surprise/prediction-error trigger; slice-2a's
+#   experiment (untouched + paused); re-running the slice-1 experiment with the
+#   new triggers; publish.
+#
+# STATUS: DRAFT — NOT YET RATIFIED. Surfaced to the owner (Luke) for
+#   ratification before any build. The builder finalizes baseline + the
+#   components/fence detail at build time once ratified.
+baseline: "_(set at build time — main tip preceding the first source-edit)_"
+
+plan: docs/plans/deliberate-reasoning-situation-triggers-and-live-wiring.md
+
+components:
+  - name: deliberate-reasoning
+    new_component: false           # EXTENDS the sealed slice-1 component
+    seal_test: framework/deliberate-reasoning/tests/test_no_sealed_amendments.py
+    sidecar: framework/deliberate-reasoning/tests/SEAL_COMMIT
+    frozen_baseline: false
+    # extra_allowed_prefixes finalized by the builder at apply time if the
+    # live-wiring hook adapter lands inside the framework harness layer.
+    extra_allowed_prefixes: []
+
+# Universal admissions — per the house pattern (mirrors slice-1 manifest).
+# The live-wiring's .claude/settings.json + workspace hook edits are workspace
+# universal-path admissions, not framework-source edits.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+narrative:
+  target: framework/deliberate-reasoning/seals/SEAL_COMMIT.deliberate-reasoning-situation-triggers-and-live-wiring
+  body: |
+    # deliberate-reasoning slice 3 — situation/behavior triggers + live-wiring
+    # (default-OFF, zero-collateral) — apply ladder
+
+    Per docs/plans/deliberate-reasoning-situation-triggers-and-live-wiring.md.
+    Consumes the slice-1 confirmed-scoped outcome (seal a6156590; the gated
+    gate->loop corrects re-derivable errors on flagged turns with zero
+    collateral) and acts on its named "wire it into live primary-persona
+    turns" follow-on, while REPLACING the slice-1 conversation-keyword trigger
+    substrate (_HEDGE_RE over draft_text, _STAKES_RE over prompt_text) per the
+    owner's objection to keyword-on-conversation triggers.
+
+    Scope (plan §2 + §5 + §7): EXTENDS the SEALED framework/deliberate-reasoning/
+    component. (1) A new SITUATION-SIGNAL substrate feeding the gate from the
+    pending action's structure + recent tool-result history, retiring the
+    conversation-keyword detectors; the evaluate_gate(GateSignals) ->
+    GateDecision contract shape preserved. (2) The v1 situation set —
+    UNBOUNDED_OP, REPEAT_FAILED, MACHINE_IRREVERSIBLE, HIGH_BLAST_RADIUS — all
+    calibrated to fire on the 2026-06-24 runaway-regex incident. (3) LIVE-WIRING
+    through the EXISTING PreToolUse hook pattern (composing with
+    in_thread_work_budget_guard / wd_discipline_guard), engaging the slice-1
+    re-think loop on a fire, under the default-OFF LOAM_DELIBERATE_REASONING
+    switch. (4) The zero-collateral / default-OFF guarantee carried forward as
+    a LIVE invariant (the gate fires on zero normal turns).
+
+    AC families (plan §5): AC.TRIG.{1..4} (situation-trigger substrate) +
+    AC.WIRE.{1..4} (live-wiring + no-collateral) + AC.WIRE.OA (outcome-altitude
+    live end-to-end real-situation fire with zero collateral).
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the ACs (§5), the named decisions (D-SIT.1..6), the fence (§5/§8), and the
+    halt triggers (§8), not the implementation.
+
+    KEY DESIGN RULINGS carried in (plan §3): the (i)/(ii)/(iii) fork is ruled
+    HYBRID structural-first (ship the free structural floor in v1; defer the
+    costly per-turn LLM self-assessment as a default-OFF escalation — the
+    cheap logprob form is not exposed on the subscription/claude -p path, so
+    always-on (ii) is the per-turn-token trap slice-1 ruled out). The
+    structural-vs-keyword line: admissible signals read the pending action's
+    structure + recent tool-result metadata; inadmissible signals read the
+    NL prompt/draft content. NOVELTY retained only if structurally derived,
+    else retired. Slice-2a's prompt-keyword matcher superseded as an input
+    contract; the self-model folds in as a structural-signal conditioning
+    source, not a parallel keyword scan; slice-2a's experiment untouched +
+    paused.
+
+    HONEST GAP (plan §10 RF-3, NON-HIDDEN): v1 does NOT cover the draft-QUALITY
+    class (a subtly-wrong answer with no risky action + no repeated failure);
+    it trades that (weakly served by the removed hedge-regex) for clean
+    action-runaway coverage (the actual incident). The draft-quality class
+    routes to the deferred option-(ii) escalation.
+
+    Predecessor: the RATIFIED plan-doc commit (set at build time once the
+    owner ratifies this DRAFT).
+
+    SEALED-component amendment fence on framework/deliberate-reasoning/ (the
+    slice-1 sidecar is ADVANCED at this seal, not created).
+
+ac_count: 9

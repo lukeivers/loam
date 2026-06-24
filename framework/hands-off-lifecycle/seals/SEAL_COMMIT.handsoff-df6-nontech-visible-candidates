@@ -1,0 +1,75 @@
+# handsoff-loop Slice DF amendment — non-tech-user-framed candidate designs
+
+2026-06-24. An owner-directed amendment to the sealed Slice DF (design-first
+front stage) per docs/plans/handsoff-design-first-and-build-heartbeat.md §5
+(AC.DF.6). Empirically motivated: a live rehearsal generated candidate
+designs framed as a command-line tool and a "file-watch daemon" — developer
+machinery the target non-technical user (a small-firm owner) cannot operate.
+The design-generation must assume a non-technical user by default and produce
+candidates the user can actually SEE, understand, and choose between.
+
+MOTIVE (prime directive, Lens 0). The user brings WHAT they want in THEIR
+terms; loam owns HOW; the design they review must be in their vocabulary
+(visible outcomes), never the machinery. Rehearsal-1 surfaced this defect
+cheaply, before the room — which is the rehearsal's purpose.
+
+Single-component fence on the workspace-bootstrap anchor (the handsoff-loop
+family's seal anchor — source under framework/tools/handsoff-loop/, inside
+the workspace-bootstrap seal-test's admitted framework/tools/ prefix; same
+pattern as the Slice DF / Slice HB seals).
+
+Change (generative.py):
+
+  - NEW: generate_candidate_designs gains a user_tech_level parameter
+    (DEFAULT "non_technical" — the owner ruling + the demo case). The
+    candidate space is framed for the tech level: a non-tech user draws
+    direction seeds ONLY from see-and-use / sensible-delivery families (no
+    CLI / daemon / drop-folder seed); a technical user gets the full seed
+    set (the constraint is "infer level, constrain space", NOT hardcode
+    web-only).
+  - NEW: a tech-level prompt constraint — for a non-tech user the
+    per-candidate prompt forbids the developer-machinery surfaces and demands
+    a candidate stating what the user PERSONALLY does + what the OUTPUT looks
+    like (a visible/interactive experience OR a sensible automated delivery,
+    e.g. the finished result emailed on a schedule).
+  - NEW: is_nontech_operable(form_factor, tool_plan) — a held-out STRUCTURAL
+    classifier (domain-blind, prompt-blind) that drops any candidate whose
+    primary interaction reads as a CLI / daemon / background-watch /
+    drop-folder surface, UNLESS the same text clearly names a
+    visible/delivery affordance (a scheduled EMAIL report is operable). For a
+    non-tech user the candidate loop applies this filter, so the user is
+    NEVER surfaced a candidate they cannot operate even if the model ignores
+    the prompt. The classifier never sees the generation prompt — it is the
+    falsifiable AC.DF.6 check.
+  - UNCHANGED: the single-design generate_design path; the AC.GEN.2
+    domain-blindness (the classifier keys on interaction-surface vocabulary,
+    NOT any business domain — the rehearsal's domain context is named only in
+    the AC.DF.6 test + the plan-doc, never in source); the
+    choose_design_fn=None non-interactive S6 path (no user_tech_level is
+    passed at the call site, so the default non-tech framing flows through
+    without touching build_from_intent.py).
+
+AC surface:
+
+  - AC.DF.6 — candidate designs are framed for the user's tech level
+    (defaulting NON-TECHNICAL); a non-tech user is never offered a candidate
+    whose primary interaction is developer machinery. Verified by a held-out
+    structural classifier the generator never saw + an outcome-altitude live
+    test (env-gated) that runs a real generation over the rehearsal ask and
+    asserts every surfaced candidate is non-tech operable.
+
+Method-level choices are the builder's call per ODD §1.1: the two-layer
+enforcement (seed partition + prompt constraint at generation; held-out
+classifier at filter) gives the non-tech user a clean candidate set even if
+one layer slips. A technical user keeps the full machinery space (the
+follow-up: inferring the tech level upstream so a CONFIRMED technical user
+gets technical candidates — the demo case is non-tech and is covered by the
+default).
+
+Out of scope: inferring the user's tech level upstream in intake (the default
+non-tech covers the demo + the owner ruling; the technical-user inference is a
+surfaced follow-up); a clickable mockup; changing the build / freeze / verify
+spine; pushing to origin (owner-gated — LOCAL seal only).
+
+BASELINE 65c1f27d — canonical main tip. workspace-bootstrap's SEAL_COMMIT
+sidecar advances to this amendment's seal SHA at seal time. LOCAL seal only.

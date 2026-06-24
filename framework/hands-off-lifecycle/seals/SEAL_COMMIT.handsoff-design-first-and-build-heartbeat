@@ -1,0 +1,106 @@
+# handsoff-loop — design-first front stage + build-time progress heartbeat
+
+2026-06-24. Two additive subsystems on the sealed build_from_intent S1–S5
+path per `docs/plans/handsoff-design-first-and-build-heartbeat.md` §5
+(AC.DF.* + AC.HB.*). Owner-directed: a design-first front stage with a real
+user-validation gate, and a build-time progress heartbeat — both demo-
+acceptance-relevant for the TMC on-site demo (the design stage is the fast,
+interactive, room-safe centerpiece; the heartbeat is what makes the slow
+async build presentable). Owner ruled the accounting-back-office demo
+quality is a genuine BUILD TARGET for the design stage, not an over-claim.
+
+MOTIVE (prime directive, Lens 0). Design-first IS the surface-the-inferred-
+intent-for-verification step made concrete on the build path: understand →
+research → N implementation-agnostic candidate designs → user reviews /
+tweaks / SELECTS one → THEN the expensive build runs on the settled design.
+The heartbeat guards the "goes silent / no real memory" betrayal during the
+7–32 min build by surfacing genuine artifact-probe progress to the channel
+the user is actually on.
+
+Single-component fence on the workspace-bootstrap anchor (the handsoff-loop
+family's seal anchor — source under framework/tools/handsoff-loop/, inside
+the workspace-bootstrap seal-test's admitted framework/tools/ prefix; same
+pattern as the AC.TPI / AC.BRC / AC.SWARM seals).
+
+Slice DF (design-first front stage):
+
+  - NEW: generate_candidate_designs(intent, grounding, *, n=3) in
+    generative.py — N materially-distinct implementation-agnostic candidate
+    designs from the domain-blind generation contract (the existing
+    generate_design stays as the n=1 path). Each candidate carries a polished
+    sample-output rendering at the accounting-demo bar (spec + sample-output
+    core; static-HTML preview a gated stretch).
+  - NEW: a design-validation stage in build_from_intent.py between planning
+    and the freeze, driven by an injected choose_design_fn(candidates) ->
+    ChosenDesign. The build loop (freeze → converge → verify) does NOT start
+    until the user settles a design; user tweaks are folded into the chosen
+    GeneratedDesign before the UNCHANGED freeze. choose_design_fn=None
+    (standing hands-off) → auto-pick candidate 0, preserving the sealed non-
+    interactive S6 path byte-behaviour.
+  - KEPT: the existing pre-research intent-confirm approval gate (a cheaper,
+    earlier "right category?" check) — two gates, two purposes (SAL-DF-2).
+
+Slice HB (build-time progress heartbeat):
+
+  - NEW: a channel-aware say / notify_fn factory in progress.py — routes the
+    heartbeat to the user's ACTIVE channel (Discord/Telegram) via an injected
+    notify_fn the workspace wires to the shared channel module
+    (post_to_active_channel / _detect_active_channel); loam ships a terminal
+    (print) default. NO pos3-only import in loam source — the channel code
+    (3db9360, which itself says "do not port from here") stays in the
+    workspace; the loam slice composes via injection (SAL-HB-1 / H-3).
+  - NEW: a cross-beat PROGRESS delta over convergence.probe_liveness (newest-
+    mtime advance OR run-record line gained since the last probe) — progress,
+    not mere liveness (SAL-HB-2); honors feedback_dead_agent_detection_via_
+    artifact_probe (probe artifacts, never poller cadence).
+  - NEW: stall detection — alive-but-not-progressing for ≥K consecutive
+    probes surfaces a DISTINCT stall message (vs the normal progress beat).
+  - Channel cadence (~300s) + immediate stage-transition / stall / done
+    posts; the run record keeps the 120s audit-grade fidelity. Alert-only —
+    no auto-retry (mirrors 3db9360's alert-only discipline).
+
+AC surface:
+
+  - AC.DF.1 — the pipeline produces ≥2 (default 3) materially-distinct
+    candidate designs, surfaced for choice BEFORE the freeze + any build
+    dispatch.
+  - AC.DF.2 — the build loop does NOT start until the user settles a design
+    (decline → distinct design-not-chosen terminal; choose → build on the
+    chosen design).
+  - AC.DF.3 — the chosen design's user tweaks propagate into the frozen gate
+    + build briefs.
+  - AC.DF.4 — non-interactive runs (choose_design_fn=None) are byte-
+    behaviour-preserved; the sealed AC.REQ.* / AC.GEN.* / AC.PRG.* / AC.CVG.*
+    suites stay green.
+  - AC.DF.5 (outcome-altitude) — a candidate's sample-output rendering on a
+    real ask, no pre-arranged state, satisfies a checkable quality rubric
+    derived from the accounting demo (verified by a check the generator never
+    saw) — the owner's demo-quality-as-build-target ruling made falsifiable.
+  - AC.HB.1 — the build leg surfaces periodic status on the user's active
+    channel (Discord/Telegram) with a terminal fallback.
+  - AC.HB.2 — heartbeats carry artifact-probe PROGRESS evidence, never bare
+    aliveness.
+  - AC.HB.3 — a stall (alive-but-not-progressing) is detected + surfaced
+    distinctly.
+  - AC.HB.4 — the heartbeat composes the existing alerting infra via injected
+    notify_fn (no reinvention); the sealed AC.PRG write-then-say contract +
+    all S1–S5 honesty controls are intact.
+  - AC.HB.5 (outcome-altitude) — a real build run with real artifacts landing
+    yields ≥1 captured progress post reflecting an actual artifact, and post-
+    run audit_progress reports gap_within_bound: true.
+
+Method-level choices are the builder's call per ODD §1.1 (plan §14
+register: D-build.1 candidate-design generation; D-build.2 sample-output
+rendering; D-build.3 design-validation gate wiring; D-build.4 channel-aware
+notify_fn injection; D-build.5 progress-delta + stall detection).
+
+Out of scope (plan §7): auto-retry on stall (alert-only); the pos3→loam port
+of channel_notify.py / the watchdog (coordinate-later #19/#81 — composed via
+injection, not ported); a clickable interactive mockup; changing the build /
+freeze / verify spine; multi-round design negotiation; pushing to origin
+(owner-gated release later — LOCAL seal only).
+
+BASELINE bad861e0 — canonical main tip at plan-authoring. workspace-
+bootstrap's SEAL_COMMIT sidecar advances to each slice's seal SHA at seal
+time. LOCAL seal only — the minor ships as its own release later under owner
+gate.

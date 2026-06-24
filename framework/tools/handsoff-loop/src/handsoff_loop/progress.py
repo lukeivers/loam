@@ -105,6 +105,38 @@ class RunRecord:
         return out
 
 
+# Slice HB — the channel-post cadence: the run record keeps the
+# HEARTBEAT_INTERVAL_S audit-grade fidelity, but channel posts (the
+# Discord/Telegram ping) are throttled to this calmer interval to avoid
+# notification fatigue (D-4) — with an IMMEDIATE post on stall onset and
+# on the done surface, regardless of this throttle.
+CHANNEL_INTERVAL_S = 300.0
+
+# Slice HB — a stall is alive-but-not-progressing for this many
+# consecutive beats (D-5; ~6 min at the 120s probe).
+STALL_AFTER_BEATS = 3
+
+
+def channel_say(notify_fn=print, *, prefix: str = ""):
+    """The injection seam (D-6 / SAL-HB-1 / AC.HB.4): wrap an injected
+    channel-post callable as a ``say``-shaped callable.
+
+    ``notify_fn(text)`` is the workspace-wired channel post (the pos3
+    workspace passes a closure over the shared channel module's
+    ``post_to_active_channel``; loam ships the terminal default
+    ``print``).  loam source NEVER imports a workspace channel file —
+    the channel surface enters ONLY through this injected callable, so
+    the framework stays general-purpose (H-3: a hard import of a
+    workspace channel module is a fence violation).
+    """
+    notify = notify_fn if notify_fn is not None else print
+
+    def _say(line: str) -> None:
+        notify(f"{prefix}{line}" if prefix else line)
+
+    return _say
+
+
 def start_heartbeat(
     record: RunRecord,
     *,
@@ -112,31 +144,102 @@ def start_heartbeat(
     say=print,
     interval_s: float = HEARTBEAT_INTERVAL_S,
     probe_fn=None,
+    notify_fn=None,
+    channel_interval_s: float = CHANNEL_INTERVAL_S,
+    stall_after_beats: int = STALL_AFTER_BEATS,
+    run_record_path: Path | None = None,
 ) -> "threading.Event":
     """Keep the user-visible surface alive during a long leg.
 
-    Every ``interval_s`` while the returned stop-event is unset, emit
-    + say a heartbeat whose message carries artifact-probe liveness
-    EVIDENCE (AC.PRG.2 — a heartbeat is a verified claim, not a vibe).
+    Sealed substrate (AC.PRG.1 / AC.PRG.2 — UNCHANGED by default): every
+    ``interval_s`` while the returned stop-event is unset, write-then-say
+    a heartbeat to the run record + ``say`` whose message carries
+    artifact-probe EVIDENCE (a heartbeat is a verified claim, not a
+    vibe).  With the Slice-HB params at their defaults
+    (``notify_fn=None``) this is byte-behaviour-identical to the sealed
+    heartbeat — the AC.PRG suites stay green (AC.HB.4).
+
+    Slice HB (AC.HB.1–.3) — additive, engaged ONLY when ``notify_fn`` is
+    wired:
+
+      * the probe is the cross-beat :func:`convergence.probe_progress`
+        delta, so each beat carries PROGRESS evidence (did new work land
+        since the last beat?), not bare liveness (AC.HB.2 / SAL-HB-2);
+      * a periodic plain-language status is posted to the user's ACTIVE
+        channel via ``notify_fn`` at the calmer ``channel_interval_s``
+        cadence (D-4) — the run record keeps the full ``interval_s``
+        fidelity, the channel gets a calmer ping (AC.HB.1).  With no
+        ``notify_fn`` wired the status surfaces only on the main thread
+        (the ``say`` terminal), which is the fallback AC.HB.1 names;
+      * when progress flatlines for ``stall_after_beats`` consecutive
+        beats the heartbeat surfaces a DISTINCT stall message (different
+        from the normal progress beat) so the user can tell "moving"
+        from "stuck" (AC.HB.3) — the stall post fires IMMEDIATELY on
+        onset, bypassing the channel throttle.
+
     Returns the stop event; callers set it when the leg completes.
     """
-    from .convergence import probe_liveness
+    from .convergence import probe_liveness, probe_progress
 
-    probe = probe_fn if probe_fn is not None else probe_liveness
     stop = threading.Event()
+    record_path = (Path(run_record_path) if run_record_path is not None
+                   else record.path)
 
     def _beat() -> None:
+        prev: dict | None = None
+        last_channel_post = 0.0
+        stalled = False  # tracks stall ONSET so it posts once, distinctly
         while not stop.wait(interval_s):
-            state = probe(Path(watch_dir))
-            if state.get("alive"):
+            if probe_fn is not None:
+                state = probe_fn(Path(watch_dir))
+                progressed = state.get("progressed_since_last")
+                stall_beats = state.get("stall_beats", 0)
+            elif notify_fn is not None:
+                state = probe_progress(
+                    Path(watch_dir), prev=prev,
+                    run_record_path=record_path)
+                progressed = state.get("progressed_since_last")
+                stall_beats = state.get("stall_beats", 0)
+                prev = state
+            else:
+                # Sealed default path (AC.PRG.* byte-preserved).
+                state = probe_liveness(Path(watch_dir))
+                progressed = None
+                stall_beats = 0
+
+            is_stall = stall_beats >= stall_after_beats
+            if is_stall:
+                msg = ("Heads up — the build is still alive but hasn't "
+                       "written anything new for a while "
+                       f"({state.get('progress_evidence', state['evidence'])}). "
+                       "Watching; I'll say so the moment it moves again.")
+            elif progressed:
+                msg = ("Still working — new progress just landed on disk "
+                       f"({state.get('progress_evidence', state['evidence'])}).")
+            elif state.get("alive"):
                 msg = ("Still working — progress is actively landing "
                        f"on disk ({state['evidence']}).")
             else:
                 msg = ("Still here — the current step is running and "
                        "hasn't written new files yet "
                        f"({state['evidence']}).")
-            record.narrate("heartbeat", msg, say=say,
-                           liveness=state)
+            # Write-then-say: the run record carries the claim before the
+            # user sees it (AC.PRG.2 / AC.HB.4 — intact for every line,
+            # channel-posted or not).
+            record.narrate("heartbeat", msg, say=say, liveness=state,
+                           is_stall=is_stall,
+                           progressed_since_last=progressed)
+
+            # AC.HB.1/.3 — the channel surface (injected): throttled
+            # periodic post, but an IMMEDIATE post on stall onset.
+            if notify_fn is not None:
+                now = time.monotonic()
+                stall_onset = is_stall and not stalled
+                due = (now - last_channel_post) >= channel_interval_s
+                if stall_onset or due or last_channel_post == 0.0:
+                    notify_fn(msg)
+                    last_channel_post = now
+                stalled = is_stall
 
     t = threading.Thread(target=_beat, name="bfi-heartbeat", daemon=True)
     t.start()

@@ -27,6 +27,7 @@ first-class, never softened.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -184,5 +185,115 @@ def probe_liveness(run_dir: Path, *, stale_after_s: float = 300.0) -> dict:
         "evidence": f"newest artifact mtime {round(age, 1)}s ago",
         "newest_artifact": newest[1],
         "artifact_age_s": round(age, 1),
+        "newest_mtime": newest[0],
         "probed_at": now,
     }
+
+
+def probe_progress(
+    run_dir: Path,
+    *,
+    prev: dict | None = None,
+    run_record_path: Path | None = None,
+    stale_after_s: float = 300.0,
+) -> dict:
+    """Cross-beat PROGRESS (not bare liveness) from run ARTIFACTS (AC.HB.2).
+
+    ``probe_liveness`` answers "is anything fresh?" (LIVENESS — newest
+    artifact age).  This answers the distinct question "did something
+    NEW land since the last time I looked?" (PROGRESS), which is what
+    the heartbeat needs to tell "moving" from "stuck" (SAL-HB-2).
+
+    Progress is the DELTA between consecutive probes, measured two ways
+    (D-5 — either is sufficient): the newest-artifact mtime ADVANCED, OR
+    the run record gained ≥1 line.  ``prev`` is the prior return of this
+    function (None on the first beat — the first beat reports
+    ``progressed_since_last=None``, neither progress nor stall, since
+    there is no prior state to delta against).  ``run_record_path`` is
+    the run record whose line-count growth is the second progress
+    signal; when omitted, only the mtime-advance signal is used.
+
+    Honors ``feedback_dead_agent_detection_via_artifact_probe`` by
+    construction: the delta is computed from disk artifacts (mtime,
+    run-record line count), never from poller cadence or a self-report.
+
+    Self-narration is NOT progress.  The heartbeat writes its own beats
+    to the run record inside ``run_dir``; counting that churn as build
+    progress would mask every stall (the beat that asks "did anything
+    move?" would itself look like movement).  So the newest-artifact
+    scan EXCLUDES ``run_record_path``, and the run-record line signal
+    counts only build-meaningful events — ``heartbeat``-stage lines (the
+    beats themselves) are excluded.
+    """
+    run_dir = Path(run_dir)
+    record_path = Path(run_record_path) if run_record_path is not None else None
+    state = probe_liveness(run_dir, stale_after_s=stale_after_s)
+
+    # Newest BUILD-ARTIFACT mtime, excluding the run record's own churn.
+    newest_mt: float | None = None
+    newest_name = ""
+    if run_dir.exists():
+        for p in run_dir.rglob("*"):
+            if not p.is_file():
+                continue
+            if record_path is not None and p.resolve() == record_path.resolve():
+                continue
+            try:
+                mt = p.stat().st_mtime
+            except OSError:
+                continue
+            if newest_mt is None or mt > newest_mt:
+                newest_mt = mt
+                newest_name = str(p)
+    state["progress_mtime"] = newest_mt
+    state["progress_artifact"] = newest_name
+
+    # Build-meaningful run-record lines (heartbeat beats excluded).
+    record_lines = 0
+    if record_path is not None and record_path.exists():
+        try:
+            for ln in record_path.read_text(encoding="utf-8").splitlines():
+                ln = ln.strip()
+                if not ln:
+                    continue
+                try:
+                    ev = json.loads(ln)
+                except ValueError:
+                    record_lines += 1
+                    continue
+                if ev.get("stage") != "heartbeat":
+                    record_lines += 1
+        except OSError:
+            record_lines = 0
+    state["record_lines"] = record_lines
+
+    if prev is None:
+        state["progressed_since_last"] = None
+        state["stall_beats"] = 0
+        state["progress_evidence"] = "first probe — no prior state to compare"
+        return state
+
+    prev_mt = prev.get("progress_mtime")
+    # Progress on the artifact axis: the newest build artifact's mtime
+    # advanced, OR a build artifact appeared where there was none.
+    mtime_advanced = (
+        newest_mt is not None
+        and (prev_mt is None or newest_mt > prev_mt))
+    record_grew = record_lines > prev.get("record_lines", 0)
+    progressed = bool(mtime_advanced or record_grew)
+    state["progressed_since_last"] = progressed
+    # Consecutive non-progressing beats accrue toward a stall; any
+    # progress resets the counter.
+    state["stall_beats"] = 0 if progressed else prev.get("stall_beats", 0) + 1
+    if progressed:
+        bits = []
+        if mtime_advanced:
+            bits.append("a newer artifact landed")
+        if record_grew:
+            bits.append("the run record gained a line")
+        state["progress_evidence"] = " and ".join(bits)
+    else:
+        state["progress_evidence"] = (
+            "no new artifact and no new run-record line since the last "
+            f"check ({state['stall_beats']} consecutive)")
+    return state

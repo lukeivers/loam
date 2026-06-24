@@ -200,6 +200,7 @@ def run_build_from_intent(
     choose_design_fn=None,
     n_candidates: int = 3,
     say=print,
+    notify_fn=None,
     model: str = "sonnet",
     leg_ceiling_s: float = DEFAULT_LEG_CEILING_S,
     max_refine_attempts: int = DEFAULT_MAX_REFINE_ATTEMPTS,
@@ -227,6 +228,16 @@ def run_build_from_intent(
     is None`` (standing hands-off — the sealed non-interactive S6 path)
     the single-design ``generate_design`` path runs UNCHANGED and the
     build proceeds on it byte-for-byte as before this slice (AC.DF.4).
+
+    ``notify_fn(text)`` is the channel-aware heartbeat seam (Slice HB,
+    AC.HB.*): when wired (the workspace passes a closure over the shared
+    channel module), the long build leg posts periodic plain-language
+    progress + a distinct stall surface to the user's ACTIVE channel
+    (Discord/Telegram) at the calmer channel cadence; loam imports NO
+    workspace channel file — the channel surface enters ONLY through this
+    injected callable (SAL-HB-1 / H-3).  When ``notify_fn is None`` the
+    heartbeat surfaces on the main thread (terminal) exactly as before
+    this slice — byte-behaviour-preserved (AC.HB.4).
     """
     t0 = time.monotonic()
     workspace_dir = Path(workspace_dir)
@@ -467,9 +478,13 @@ def run_build_from_intent(
                          tighter_acceptance=st["tighter_acceptance"],
                          check_command="true")
                  for st in design.sub_tasks]
+    # AC.HB.1–.3 — the build leg is the long async leg (10-40 min); its
+    # heartbeat is channel-aware via the injected notify_fn (Slice HB).
+    # notify_fn=None keeps the sealed terminal-only behaviour (AC.HB.4).
     beat_stop = start_heartbeat(
         record, watch_dir=run_dir, say=_say,
-        interval_s=heartbeat_interval_s)
+        interval_s=heartbeat_interval_s,
+        notify_fn=notify_fn)
     try:
         convergence = run_to_convergence(
             objective=intent.objective,

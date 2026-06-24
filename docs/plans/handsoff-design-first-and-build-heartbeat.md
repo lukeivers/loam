@@ -540,16 +540,51 @@ acceptance criteria, not just product features.
 
 ### Commit SHAs
 
-(backfilled at seal time)
-
 - BASELINE: `bad861e0` (canonical main tip at plan-authoring).
-- Slice DF — code / apply / seal: `<backfill>`.
-- Slice HB — code / apply / seal: `<backfill>`.
+- Slice DF — code / apply / seal: `e5ff74b4` / `f7f78d2a` / `014dd9ad`.
+- Slice HB — code / apply / seal: `<not built — separate later slice>`.
+
+### Method-decision register (Slice DF, narrated at build)
+
+- **D-build.1 — candidate-design generation mechanism:** N per-candidate
+  dispatches (the §11 "N dispatches" alternative), NOT one batched N-object
+  response. Empirical driver: a single batched N=3 dispatch carrying full
+  gate_files timed out at the 900s ceiling; a batched N=3 *lightweight* dispatch
+  returned in ~170s but the model mis-nested trailing braces on the deeply-nested
+  sample_output ~1-in-3 (a structural corruption, not a recoverable escaping
+  issue, so a parse-repair heuristic was rejected as unsafe). Per-candidate
+  dispatch is ~half the JSON size and parsed 3/3 clean. A rotating
+  `_DIRECTION_SEEDS` bias + accrue-time distinctness give materially-distinct
+  directions (SAL-DF-3). Each call carries a finite parse-retry bound
+  (`CANDIDATES_PARSE_ATTEMPTS=3`).
+- **D-build.2 — sample-output rendering mechanism:** spec + a structured
+  `sample_output` dict (the rendering substrate; a caller lays it out as text or
+  HTML). The heavy buildable gate (gate_files, verification scripts) is generated
+  for the CHOSEN direction only via the UNCHANGED `generate_design` — the
+  budget-safe split. The static-HTML preview (D-2 stretch) stays gated/unbuilt.
+- **D-build.3 — design-validation gate wiring:** injected
+  `choose_design_fn(candidates) -> ChosenDesign | None`; `None` (standing
+  hands-off) keeps the single-design path byte-for-byte (AC.DF.4); a returned
+  `ChosenDesign` conditions a `generate_design` call on the chosen direction and
+  folds tweaks (`apply_design_tweaks`) into the gate before the unchanged freeze
+  (AC.DF.3); `None` back from the fn = `design-not-chosen` terminal, no freeze,
+  no dispatch (AC.DF.2).
 
 ### Verification (Tier-0)
 
-(backfilled at seal time — AC.DF.* + AC.HB.* test results + the sealed-suite
-regression confirmation.)
+- AC.DF.1–.5 tests authored at AC altitude (`tests/test_AC_DF_*.py`), one file
+  per AC. AC.DF.5 marked outcome-altitude.
+- Offline DF suite: 17 passed (the AC.DF.5 live test env-gated/skipped offline).
+- AC.DF.5 outcome-altitude LIVE: PASS 2/2 — real `claude -p`, no pre-arranged
+  state, a real candidate's sample-output met the held-out `design_rubric_check`
+  the generator never saw. The owner's "demo quality is a real build target"
+  ruling is a verified, non-hollow pass.
+- Sealed-suite regression (AC.DF.4 / H-4): 89 passed, 2 skipped — the sealed
+  AC.REQ/GEN/PRG/CVG spine stays green; the non-interactive path is byte-preserved.
+- AC.GEN.2 zero-vertical-code sweep: zero domain-vocabulary hits in pipeline
+  source (the rubric's accounting-demo provenance is named only here + in the
+  AC.DF.5 test, never in source).
+- Seal: `014dd9ad`; post-seal `apply --dry-run` clean. LOCAL only — not pushed.
 
 ---
 

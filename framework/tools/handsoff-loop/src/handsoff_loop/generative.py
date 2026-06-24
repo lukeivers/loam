@@ -489,6 +489,109 @@ CANDIDATES_TIMEOUT_S = 600
 CANDIDATES_PARSE_ATTEMPTS = 3
 
 
+# --- tech-level framing of the candidate space (AC.DF.6) -------------
+#
+# Candidate designs are framed for the USER'S tech level, DEFAULTING to a
+# NON-TECHNICAL user (the owner ruling
+# `2026-06-24-design-first-non-tech-user-visible-outputs`).  For a
+# non-technical user every surfaced candidate must be something they can
+# personally SEE and USE without developer skill — a visible/interactive
+# experience OR a sensible automated delivery — and NO candidate may hand
+# them developer machinery (a command-line tool, a daemon /
+# background-watch service they must manage, a drop-folder to configure).
+# This is the prime directive applied to the design stage: the user
+# brings WHAT in their terms; the design they review is in their
+# vocabulary (visible outcomes), never the machinery.
+#
+# The constraint is enforced two ways so a non-tech user is guaranteed a
+# clean candidate set even if one layer slips: (1) the direction SEEDS
+# the non-tech user draws from are partitioned to the see-and-use /
+# sensible-delivery families (no CLI / daemon seed is offered to a
+# non-tech user), and the prompt carries an explicit tech-level
+# constraint; (2) a held-out STRUCTURAL classifier (is_nontech_operable)
+# drops any candidate whose primary interaction still reads as a CLI /
+# daemon / background-watch surface.  The classifier is the falsifiable
+# AC.DF.6 check — it runs over the candidate's own fields, never sees the
+# generation prompt, and is domain-blind (it keys on interaction-surface
+# vocabulary, NOT on any business domain — AC.GEN.2).
+
+# Tech-level labels.  Only "non_technical" is constrained here; "technical"
+# leaves the full seed set + no surface constraint.  The DEFAULT is
+# non-technical (the owner ruling + the demo case).
+TECH_LEVEL_NON_TECHNICAL = "non_technical"
+TECH_LEVEL_TECHNICAL = "technical"
+
+# Interaction-surface vocabulary that DISQUALIFIES a candidate for a
+# non-technical user — a CLI / daemon / background-watch primary surface
+# (the rehearsal-1 failure: a "command-line tool" candidate + a
+# "file-watch daemon" candidate offered to a non-technical user, who
+# cannot operate either; the domain context is named in the AC.DF.6 test +
+# the plan-doc, never here).  Domain-blind: these name developer-machinery
+# interaction surfaces, no business domain (AC.GEN.2).  Whole-word matched
+# so "report" does not
+# trip on "port" and a benign "the service emails you" delivery phrasing
+# is handled by the positive-affordance check below, not by a bare
+# substring.
+_NONTECH_DISQUALIFYING_TERMS = (
+    "command-line", "command line", "commandline", "cli",
+    "terminal", "shell command", "run this command",
+    "daemon", "background service", "background process",
+    "file-watch", "file watcher", "watch folder", "watched folder",
+    "drop folder", "drop-folder", "watch a folder", "watches a folder",
+    "cron job", "crontab", "config file", "configuration file",
+    "edit the config", "set up a folder",
+)
+
+# Positive affordances that mark a candidate as non-tech operable — a
+# visible/interactive experience the user opens, OR a sensible automated
+# delivery (the finished result arrives, e.g. by email).  A candidate
+# whose primary surface trips a disqualifying term is rescued ONLY if its
+# direction label clearly names a delivery/visible affordance (a
+# "scheduled email report" is fine even though "scheduled" is adjacent to
+# the daemon family).
+_NONTECH_OPERABLE_TERMS = (
+    "app", "web", "website", "page", "screen", "dashboard", "portal",
+    "form", "wizard", "assistant", "chat", "review queue", "review-queue",
+    "email", "emails you", "emailed", "sent to you", "arrives", "inbox",
+    "report you open", "document you open", "delivered", "notification",
+)
+
+
+def is_nontech_operable(form_factor: str, tool_plan: str = "") -> tuple[bool, str]:
+    """Held-out structural check: is this candidate operable by a
+    NON-TECHNICAL user with a visible / delivered output? (AC.DF.6).
+
+    Returns ``(ok, reason)``.  Domain-blind, prompt-blind: it reads only
+    the candidate's interaction-surface vocabulary (the form_factor label
+    + tool_plan prose), never the generation prompt and never any
+    business domain.  A candidate is DISQUALIFIED for a non-tech user when
+    its primary surface reads as developer machinery — a command-line
+    tool, a daemon / background-watch service, a drop-folder to configure
+    — UNLESS the same text clearly names a sensible-delivery or visible
+    affordance (a scheduled EMAIL report is operable; a background daemon
+    the user must manage is not).
+
+    This is the falsifiable AC.DF.6 check the generator never saw."""
+    blob = f"{form_factor}\n{tool_plan}".lower()
+    has_operable = any(t in blob for t in _NONTECH_OPERABLE_TERMS)
+    hit = next((t for t in _NONTECH_DISQUALIFYING_TERMS if t in blob), None)
+    if hit is None:
+        # No developer-machinery surface named — operable by construction
+        # (a plain visible/interactive or delivery candidate).
+        return True, "no developer-machinery surface; non-tech operable"
+    if has_operable:
+        # A disqualifying term appears, but a visible/delivery affordance
+        # also does (e.g. "scheduled" + "emails you the report") — the
+        # primary surface the user touches is the visible/delivered one.
+        return True, (
+            f"names {hit!r} but also a non-tech affordance — primary "
+            "surface is visible/delivered")
+    return False, (
+        f"primary interaction is developer machinery ({hit!r}); a "
+        "non-technical user cannot operate it — disqualified for a "
+        "non-tech user (AC.DF.6)")
+
+
 # Per-candidate (ONE design) prompt. Each candidate is its own bounded
 # dispatch — N dispatches, not one N-object response (the §11 sanctioned
 # alternative).  A single-candidate JSON is ~half the size of the
@@ -497,14 +600,16 @@ CANDIDATES_PARSE_ATTEMPTS = 3
 # rich sample_output got mis-nested).  {direction_seed} rotates the
 # direction across the N calls so the candidates come out materially
 # distinct; {avoid_block} names the directions already taken so a later
-# call does not collide with an earlier one.
+# call does not collide with an earlier one.  {tech_constraint} carries
+# the tech-level framing (AC.DF.6) — for a non-tech user it forbids the
+# developer-machinery surfaces.
 _CANDIDATE_PROMPT = """\
 You are the design step of a build pipeline. Nothing about this
 deliverable exists yet. Propose ONE candidate design for the ask, in
 this DESIGN DIRECTION: {direction_seed}. This is a review candidate —
 keep it light (no code, no verification scripts); the full buildable
 plan is generated later if the person picks this one.
-{avoid_block}
+{tech_constraint}{avoid_block}
 The confirmed intent:
 \"\"\"{intent_block}\"\"\"
 
@@ -539,8 +644,11 @@ Return ONLY a JSON object (no prose, no code fence) with EXACTLY:
 # The rotating direction seeds — generic design DIRECTIONS, NOT vertical
 # branches (AC.GEN.2: these name interaction/form-factor families, no
 # business domain). The seed biases distinctness; the model still derives
-# the actual design from the live ask.
-_DIRECTION_SEEDS = [
+# the actual design from the live ask.  TWO seed sets, partitioned by tech
+# level (AC.DF.6): a non-technical user draws ONLY from see-and-use /
+# sensible-delivery families (no CLI / daemon seed); a technical user gets
+# the full set.
+_DIRECTION_SEEDS_TECHNICAL = [
     "a one-shot command-line tool that does the whole job in a single run",
     "an interactive review-queue app that surfaces ambiguous items for a "
     "human to resolve",
@@ -550,6 +658,71 @@ _DIRECTION_SEEDS = [
     "a single self-contained report generator that produces one rich "
     "document",
 ]
+
+# Non-technical seed set (the DEFAULT — the owner ruling + the demo case).
+# Every direction here is something a non-technical user can personally
+# SEE and USE: a visible/interactive experience they open, OR a sensible
+# automated delivery where the finished result ARRIVES (e.g. emailed on a
+# schedule).  NO command-line / daemon / drop-folder direction — those are
+# developer machinery a non-tech user cannot operate (AC.DF.6).  Still
+# domain-blind: these name interaction/form-factor families, no business
+# domain (AC.GEN.2).
+_DIRECTION_SEEDS_NON_TECHNICAL = [
+    "a simple web page or app the person opens in their browser, reviews "
+    "the result on screen, and approves with a click",
+    "an interactive review-queue screen that shows the items needing a "
+    "person's eyes and lets them fix each one in place",
+    "a sensible automated delivery: the finished, ready-to-read result is "
+    "emailed to the person on a schedule, no setup for them to manage",
+    "a step-by-step assistant the person talks to in plain language and "
+    "that shows them the result as they go",
+    "a single polished report the person opens and reads — one rich "
+    "document laid out for a non-technical reader",
+]
+
+# Back-compat alias: the historical _DIRECTION_SEEDS name = the full
+# technical set (the pre-AC.DF.6 behaviour for a technical user).
+_DIRECTION_SEEDS = _DIRECTION_SEEDS_TECHNICAL
+
+
+# The tech-level constraint injected into the per-candidate prompt
+# (AC.DF.6).  For a non-technical user it forbids the developer-machinery
+# surfaces and demands a see-and-use / sensible-delivery candidate stating
+# what the user PERSONALLY does + what the OUTPUT looks like.
+_NONTECH_PROMPT_CONSTRAINT = """\
+
+The person you are designing for is NON-TECHNICAL. The candidate MUST be
+something they can personally SEE and USE without any developer skill:
+either (a) a visible/interactive experience they open — a web page, an
+app, a screen, a form, a report they read — or (b) a sensible automated
+delivery where the finished result ARRIVES for them (for example, it is
+emailed to them on a schedule). State plainly WHAT THE PERSON PERSONALLY
+DOES (and it must be doable by a non-technical person) and WHAT THE OUTPUT
+LOOKS LIKE (a visible result). Do NOT propose a command-line tool, a
+script they run in a terminal, a daemon or background service they have to
+manage, a folder they must set up for files to be dropped into, or
+anything that assumes they can operate developer machinery — those are
+forbidden for this person.
+"""
+
+_TECHNICAL_PROMPT_CONSTRAINT = ""
+
+
+def _seeds_for(user_tech_level: str) -> list[str]:
+    """The direction-seed set for the user's tech level (AC.DF.6).
+
+    Non-technical (the default) → the see-and-use / sensible-delivery
+    seeds only; technical → the full set."""
+    if user_tech_level == TECH_LEVEL_TECHNICAL:
+        return _DIRECTION_SEEDS_TECHNICAL
+    return _DIRECTION_SEEDS_NON_TECHNICAL
+
+
+def _tech_constraint_for(user_tech_level: str) -> str:
+    """The prompt constraint string for the user's tech level (AC.DF.6)."""
+    if user_tech_level == TECH_LEVEL_TECHNICAL:
+        return _TECHNICAL_PROMPT_CONSTRAINT
+    return _NONTECH_PROMPT_CONSTRAINT
 
 
 def _candidate_from_payload(raw: dict) -> CandidateDesign:
@@ -587,12 +760,13 @@ def generate_candidate_designs(
     grounding: GroundingOutcome | None,
     *,
     n: int = 3,
+    user_tech_level: str = TECH_LEVEL_NON_TECHNICAL,
     answers: dict[str, str] | None = None,
     model: str = "sonnet",
     llm_json_fn=None,
     timeout: int = CANDIDATES_TIMEOUT_S,
 ) -> list[CandidateDesign]:
-    """Generate N materially-distinct candidate designs (AC.DF.1).
+    """Generate N materially-distinct candidate designs (AC.DF.1, AC.DF.6).
 
     N bounded dispatches — one per candidate (the §11-sanctioned "N
     dispatches" alternative; D-build.1).  Each call asks for ONE design
@@ -613,6 +787,17 @@ def generate_candidate_designs(
     :class:`GenerationUnavailable` (the design-first stage cannot
     surface a real choice from one design).
 
+    The candidate space is framed for the user's tech level
+    (``user_tech_level``), DEFAULTING to a NON-TECHNICAL user (the owner
+    ruling + the demo case; AC.DF.6).  For a non-tech user the direction
+    seeds are partitioned to see-and-use / sensible-delivery families (no
+    CLI / daemon seed), the prompt forbids developer-machinery surfaces,
+    AND a held-out structural classifier (``is_nontech_operable``) drops
+    any candidate whose primary interaction still reads as a CLI / daemon /
+    background-watch surface — so a non-tech user is NEVER surfaced a
+    candidate they cannot operate, even if the model ignores the prompt
+    constraint.
+
     Each per-candidate dispatch carries a finite parse-retry bound
     (CANDIDATES_PARSE_ATTEMPTS) for the occasional malformed-JSON
     transient — the honest-bound discipline (a bounded best, not
@@ -627,6 +812,9 @@ def generate_candidate_designs(
             intent_block += f"\nClarifications from the user: {qa}"
     g_block, trace_rule = _grounding_block(grounding)
     dispatch = llm_json_fn if llm_json_fn is not None else _claude_json
+    seeds = _seeds_for(user_tech_level)
+    tech_constraint = _tech_constraint_for(user_tech_level)
+    enforce_nontech = user_tech_level != TECH_LEVEL_TECHNICAL
 
     def _one(direction_seed: str, taken: list[str]) -> CandidateDesign | None:
         avoid_block = ""
@@ -636,6 +824,7 @@ def generate_candidate_designs(
                 "DIFFERENT from these): " + "; ".join(taken) + "\n")
         prompt = _CANDIDATE_PROMPT.format(
             direction_seed=direction_seed, avoid_block=avoid_block,
+            tech_constraint=tech_constraint,
             intent_block=intent_block, objective=intent.objective,
             grounding_block=g_block)
         last_exc: Exception | None = None
@@ -666,10 +855,20 @@ def generate_candidate_designs(
     candidates: list[CandidateDesign] = []
     taken: list[str] = []
     for i in range(n):
-        seed = _DIRECTION_SEEDS[i % len(_DIRECTION_SEEDS)]
+        seed = seeds[i % len(seeds)]
         cand = _one(seed, taken)
         if cand is None:
             continue
+        # AC.DF.6 — for a non-technical user, drop any candidate whose
+        # primary interaction is developer machinery (CLI / daemon /
+        # background-watch) even though the prompt forbade it. The
+        # held-out classifier is the guarantee the user is NEVER surfaced
+        # a candidate they cannot operate; it never saw the generation
+        # prompt and is domain-blind.
+        if enforce_nontech:
+            ok, _why = is_nontech_operable(cand.form_factor, cand.tool_plan)
+            if not ok:
+                continue
         # Skip a candidate that collided with an earlier direction — the
         # distinctness bar is enforced as candidates accrue (SAL-DF-3).
         if cand.form_factor.strip().lower() in {

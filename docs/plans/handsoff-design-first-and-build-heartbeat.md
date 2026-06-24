@@ -267,6 +267,34 @@ acceptance criteria, not just product features.
   rubric; does not prescribe the prompt or renderer. *This is the owner's "demo
   quality is a real build target" ruling, made into a falsifiable AC.*
 
+- **AC.DF.6 — candidate designs are framed for the user's tech level
+  (defaulting NON-TECHNICAL); a non-tech user is never offered a candidate whose
+  primary interaction is developer machinery.** Candidate generation infers /
+  assumes the user's tech level and constrains the candidate space accordingly,
+  defaulting to a NON-TECHNICAL user when the level is not established. For a
+  non-technical user, every surfaced candidate is something the user can
+  personally SEE and USE without developer skill — a visible/interactive
+  experience (a page/screen/app they open) OR a sensible automated delivery (e.g.
+  the finished result is emailed to them on a schedule) — and NO surfaced
+  candidate's primary interaction is a command-line tool, a daemon /
+  background-watch service the user must manage, a drop-folder to configure, or
+  any surface that presumes the user can operate developer machinery. *Outcome,
+  not method:* asserts the surfaced candidate set for a non-tech user contains
+  only see-and-use / sensible-delivery shapes and excludes CLI/daemon-primary
+  shapes; does not prescribe how the tech level is inferred or how the
+  constraint is applied (a prompt constraint, a seed partition, a post-filter, or
+  any combination all satisfy it). *Satisfiable other ways:* a generation prompt
+  that forbids the technical surfaces, OR a held-out classifier that drops a
+  CLI/daemon candidate, OR both — all pass. *This is the owner ruling
+  (`2026-06-24-design-first-non-tech-user-visible-outputs`) made into a
+  falsifiable AC: rehearsal-1 generated a CLI candidate (option 1) and a
+  "file-watch daemon" candidate (option 3) for a non-technical accounting-firm
+  owner — meaningless to that user; AC.DF.6 fails any candidate set that hands a
+  non-tech user a CLI/daemon-primary option.* **Mark: tech-level inference
+  beyond the non-tech default (so a confirmed TECHNICAL user gets technical
+  candidates) is a surfaced follow-up — the demo case is non-tech and is fully
+  covered by the default; AC.DF.6 closes on the non-tech guarantee.*
+
 ### Slice HB — AC.HB.* (build-time progress heartbeat)
 
 - **AC.HB.1 — the build leg surfaces periodic progress to the user's active
@@ -309,6 +337,7 @@ acceptance criteria, not just product features.
   method:* asserts a genuine end-to-end progress signal against a live run.
 
 **Slice DF seal closes on:** AC.DF.1–.5.
+**Slice DF amendment (non-tech candidate framing) seal closes on:** AC.DF.6.
 **Slice HB seal closes on:** AC.HB.1–.5.
 
 ---

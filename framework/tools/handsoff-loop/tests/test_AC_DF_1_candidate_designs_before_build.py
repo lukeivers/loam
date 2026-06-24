@@ -103,11 +103,14 @@ def test_multiple_distinct_candidates_generated():
 def test_candidates_default_to_three():
     calls = {"n": 0}
 
+    # Operable (non-tech) form factors — the DEFAULT path is non-technical
+    # (AC.DF.6), so the fixtures must be see-and-use / sensible-delivery
+    # shapes, not CLI/daemon (which the default path now drops).
     def _fn(prompt, *, model="sonnet", timeout=0):
         i = calls["n"]
         calls["n"] = i + 1
-        ff = ["one-shot CLI", "interactive review-queue app",
-              "scheduled background normalizer"][i % 3]
+        ff = ["web review app", "interactive review-queue app",
+              "scheduled email report"][i % 3]
         return {"result": json.dumps(_candidate(ff, f"s{i}"))}
 
     cands = generate_candidate_designs(_intent(), _grounding(),

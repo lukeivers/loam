@@ -542,7 +542,7 @@ acceptance criteria, not just product features.
 
 - BASELINE: `bad861e0` (canonical main tip at plan-authoring).
 - Slice DF — code / apply / seal: `e5ff74b4` / `f7f78d2a` / `014dd9ad`.
-- Slice HB — code / apply / seal: `<not built — separate later slice>`.
+- Slice HB — code / apply / seal: `cf34067d` / `2efda4ba` / `1a094701`.
 
 ### Method-decision register (Slice DF, narrated at build)
 
@@ -585,6 +585,65 @@ acceptance criteria, not just product features.
   source (the rubric's accounting-demo provenance is named only here + in the
   AC.DF.5 test, never in source).
 - Seal: `014dd9ad`; post-seal `apply --dry-run` clean. LOCAL only — not pushed.
+
+### Method-decision register (Slice HB, narrated at build)
+
+- **D-build.4 — channel-aware `say` / `notify_fn` injection (per D-6 /
+  SAL-HB-1 / H-3):** the injection seam is `channel_say(notify_fn, *, prefix)`
+  in `progress.py` — wraps an injected channel-post callable as a `say`-shaped
+  callable; loam ships `print` as the terminal default. `start_heartbeat` was
+  extended ADDITIVELY (new kwargs `notify_fn` / `channel_interval_s` /
+  `stall_after_beats` / `run_record_path`, all defaulting to the sealed
+  behaviour) rather than forked — with `notify_fn=None` the loop is
+  byte-behaviour-identical to the sealed heartbeat, so the AC.PRG suites stay
+  green by construction (AC.HB.4). `run_build_from_intent` gained a `notify_fn`
+  param threaded to the long build-leg heartbeat; the research + planning legs
+  keep the terminal-only `start_heartbeat` (the build leg is the long async
+  leg AC.HB.5 targets). NO pos3-only channel file is imported anywhere in loam
+  source — verified by a fence test scanning import-statement shapes for
+  `channel_notify` / `stopfailure_alert` / `refusal_watchdog` /
+  `post_to_active_channel` / `_detect_active_channel` (AC.HB.4 / H-3).
+- **D-build.5 — progress-delta + stall detection (per D-5 / SAL-HB-2):**
+  `convergence.probe_progress(run_dir, *, prev, run_record_path)` — a cross-beat
+  delta over `probe_liveness`: progress = newest BUILD-artifact mtime advanced
+  (or a build artifact appeared where there was none) OR the run record gained a
+  build-meaningful line. **The run record's OWN heartbeat churn is EXCLUDED**
+  from both signals (the newest-artifact scan skips `run_record.jsonl`; the
+  line-count signal skips `heartbeat`-stage events) — without this exclusion the
+  heartbeat's own narration writes would look like progress and mask every
+  stall in the real pipeline (the beat that asks "did anything move?" would
+  itself be the movement). Stall = `stall_beats >= STALL_AFTER_BEATS` (default
+  3) consecutive non-progressing beats; any progress resets the counter. The
+  stall surfaces a DISTINCT message and fires an IMMEDIATE channel post on onset,
+  bypassing the channel throttle (AC.HB.3). Channel cadence `CHANNEL_INTERVAL_S`
+  (default 300s) throttles channel posts while the run record keeps the full
+  `HEARTBEAT_INTERVAL_S` (120s) audit fidelity (D-4). Honors
+  `feedback_dead_agent_detection_via_artifact_probe` by construction (the delta
+  is computed from disk artifacts, never poller cadence).
+
+### Verification (Tier-0, Slice HB)
+
+- AC.HB.1–.5 tests authored at AC altitude (`tests/test_AC_HB_*.py`), one file
+  per AC. AC.HB.5 marked outcome-altitude.
+- HB suite: 14 passed (offline). AC.HB.5 outcome-altitude PASSES OFFLINE — it
+  invokes the production heartbeat entry point (`start_heartbeat`) against a
+  live run dir where a REAL worker thread writes REAL artifacts to disk over
+  time (no pre-arranged run-record state), captures the channel surface via a
+  real `notify_fn`, and the held-out sealed `audit_progress` verifier (which
+  never saw the emission) reports `gap_within_bound: true` with zero
+  write-then-say breaches. Not a stub: a genuine end-to-end progress signal off
+  real disk activity.
+- Sealed-suite regression (AC.HB.4 / H-1): full offline handsoff-loop suite
+  93 passed, 2 skipped (the 2 skips are env-gated live OA tests) — the sealed
+  AC.REQ/GEN/PRG/CVG/DF spine stays green; the non-interactive heartbeat path is
+  byte-preserved with `notify_fn=None`.
+- SAL-HB-1 / H-3 honored: no workspace channel module imported in loam source
+  (the `channel_notify.py` / watchdog stay in pos3; loam composes via the
+  `notify_fn` injection seam only). The pos3→loam port stays a coordinate-later
+  follow-up (§9 / tasks #19/#81).
+- Seal: `1a094701`; post-seal `apply --dry-run` clean; workspace-bootstrap
+  fence seal-test green (`bad861e0..2efda4ba` contains only admitted prefixes).
+  LOCAL only — not pushed (owner-gated).
 
 ---
 

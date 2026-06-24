@@ -1,6 +1,6 @@
 # Memory supersession (validity intervals) + salience-tie-breaker falsification probe — plan
 
-**Status:** PLAN-ONLY (objective + scope + named decisions + AC ladder). NOT ratified; NOT built. Surfaced to owner for ratification before any build dispatch. Plan-before-code gate.
+**Status:** RATIFIED FOR BUILD — owner (Luke) cleared 2026-06-24 (Discord msg 1519475975740592341: "Ratifying the build. Let's go."). Committed core = **SUP** (supersession via validity intervals) + **E2E** (answer-level outcome gate). **RCT** (reference-count tie-breaker) ships as the pre-committed **drop-if-CI-straddles-zero falsification probe** (owner default: run unless explicitly skipped; not skipped). Build dispatched off this commit. Plan-before-code gate satisfied.
 **WD:** canonical loam (`/Users/lukeivers/loam`). This plan-doc lives at `docs/plans/memory-supersession-and-salience-eval.md`.
 **Predecessors / load-bearing prior seals:**
 - `amendment-134-fbm-tier1-foundations` (the `superseded-by:` frontmatter convention + the episode-ranker honor surface).

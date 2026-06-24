@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "frozen_by": "framework/primary-persona/eval/PRE_REGISTRATION.md",
+    "purpose": "Gate A (SUP) contradiction triples (A, A', Q). Grounded in the four real supersession fact-types (plan D-PROBE.1). n=1 per fact-type buys COVERAGE not statistical power; the set is sized for fact-type coverage above the floor.",
+    "currentness_at_1_bar": 1.0,
+    "history_reachable_bar": 1.0,
+    "zero_tolerance": true,
+    "timestamps_frozen_pre_build": true
+  },
+  "triples": [
+    {
+      "id": "sup-loc-001",
+      "fact_type": "personal_fact",
+      "grounded_in": "keep-pace 2026-06-10-owner-location-apple-valley-mn (a real supersession that happened)",
+      "stale": {
+        "body": "Luke's location for any in-your-area question is Lubbock, Texas (inferred from the Tilth meeting context).",
+        "valid_from": "2026-06-08T00:00:00+00:00",
+        "valid_to": "2026-06-10T15:14:00+00:00"
+      },
+      "current": {
+        "body": "Luke lives in Apple Valley, Minnesota (Minneapolis-St. Paul metro). Lubbock is where the Tilth meeting happens, NOT his location. Any in-your-area question is the Minneapolis metro.",
+        "valid_from": "2026-06-10T15:14:00+00:00",
+        "valid_to": null
+      },
+      "query": "where does Luke live for an in-your-area question",
+      "as_of": "2026-06-09T12:00:00+00:00"
+    },
+    {
+      "id": "sup-rule-002",
+      "fact_type": "decision_ruling",
+      "grounded_in": "channel-rule revision 2026-06-14 (Telegram-only superseded by session-active-channel)",
+      "stale": {
+        "body": "Always reply on Telegram (DM chat_id 642727620); Telegram is the single default channel for every reply to Luke.",
+        "valid_from": "2026-05-01T00:00:00+00:00",
+        "valid_to": "2026-06-14T00:00:00+00:00"
+      },
+      "current": {
+        "body": "Reply on the SESSION'S ACTIVE channel - the one the user actually messaged from. Discord replies via discord reply tool; Telegram via telegram reply tool. Telegram-only is superseded.",
+        "valid_from": "2026-06-14T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "which channel do I reply to Luke on",
+      "as_of": "2026-05-20T00:00:00+00:00"
+    },
+    {
+      "id": "sup-halt-003",
+      "fact_type": "decision_ruling",
+      "grounded_in": "Telegram-outage handling revision 2026-05-28 (pause-everything superseded by reach-out-of-band + keep-working)",
+      "stale": {
+        "body": "On a Telegram outage, pause all work until the channel is restored and the owner ratifies resuming.",
+        "valid_from": "2026-04-01T00:00:00+00:00",
+        "valid_to": "2026-05-28T00:00:00+00:00"
+      },
+      "current": {
+        "body": "On a Telegram outage, reach Luke out-of-band via the direct-send curl AND keep working the confident path; pause ONLY genuinely-low-confidence items. Do NOT freeze.",
+        "valid_from": "2026-05-28T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "what do I do when Telegram is unreachable",
+      "as_of": "2026-05-10T00:00:00+00:00"
+    },
+    {
+      "id": "sup-ver-004",
+      "fact_type": "version_state_fact",
+      "grounded_in": "version-numbers-at-release-time policy (pre-allocated version state superseded by derive-at-release)",
+      "stale": {
+        "body": "The next loam release is pre-allocated as v0.7.0; roadmaps and plan-docs carry that version number.",
+        "valid_from": "2026-05-15T00:00:00+00:00",
+        "valid_to": "2026-06-01T00:00:00+00:00"
+      },
+      "current": {
+        "body": "Version numbers are NOT pre-allocated. They derive at release time from (current_published, work_class). Slugs are scope-descriptive; no plan-doc pre-assigns a version.",
+        "valid_from": "2026-06-01T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "how is the next loam version number assigned",
+      "as_of": "2026-05-20T00:00:00+00:00"
+    },
+    {
+      "id": "sup-cfg-005",
+      "fact_type": "config_fact",
+      "grounded_in": "discord-configure DISCORD_STATE_DIR fix (hardcoded-default-path superseded by env-var-respecting)",
+      "stale": {
+        "body": "The discord configure skill writes token/access.json to the default discord state directory.",
+        "valid_from": "2026-05-20T00:00:00+00:00",
+        "valid_to": "2026-06-11T00:00:00+00:00"
+      },
+      "current": {
+        "body": "The discord configure skill writes to $DISCORD_STATE_DIR, not the default dir. On a multi-bot machine each session has a per-bot DISCORD_STATE_DIR; check the env var before writing access.json.",
+        "valid_from": "2026-06-11T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "where does the discord configure skill write access.json",
+      "as_of": "2026-05-25T00:00:00+00:00"
+    },
+    {
+      "id": "sup-amend-006",
+      "fact_type": "decision_ruling",
+      "grounded_in": "no-amend-in-dispatches rule (commit --amend superseded by new-corrective-commit)",
+      "stale": {
+        "body": "When an agent misses a file in a commit, fix it by amending the commit with git commit --amend.",
+        "valid_from": "2026-04-15T00:00:00+00:00",
+        "valid_to": "2026-05-10T00:00:00+00:00"
+      },
+      "current": {
+        "body": "Agents create NEW corrective commits if they miss a file, never git commit --amend; amending collapses the audit trail.",
+        "valid_from": "2026-05-10T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "how does an agent fix a commit that missed a file",
+      "as_of": "2026-04-20T00:00:00+00:00"
+    },
+    {
+      "id": "sup-model-007",
+      "fact_type": "config_fact",
+      "grounded_in": "no-anthropic-api-key rule (SDK+API-key superseded by subscription claude -p)",
+      "stale": {
+        "body": "loam LLM calls go through the anthropic SDK with an Anthropic API key.",
+        "valid_from": "2026-03-01T00:00:00+00:00",
+        "valid_to": "2026-04-01T00:00:00+00:00"
+      },
+      "current": {
+        "body": "Every loam LLM call goes through claude -p via claude_print_client.py; never the anthropic SDK + API key. Default Sonnet. There is NO Anthropic API key.",
+        "valid_from": "2026-04-01T00:00:00+00:00",
+        "valid_to": null
+      },
+      "query": "how does loam make an LLM call",
+      "as_of": "2026-03-15T00:00:00+00:00"
+    },
+    {
+      "id": "sup-tz-008",
+      "fact_type": "personal_fact",
+      "grounded_in": "owner-timezone consistency note (a corrected location-derived timezone fact)",
+      "stale": {
+        "body": "Luke's timezone is US Pacific (inferred before location was confirmed).",
+        "valid_from": "2026-06-08T00:00:00+00:00",
+        "valid_to": "2026-06-10T15:14:00+00:00"
+      },
+      "current": {
+        "body": "Luke's timezone is US Central (Apple Valley, MN). His hooks report US Central; this is consistent with his location, no change needed.",
+        "valid_from": "2026-06-10T15:14:00+00:00",
+        "valid_to": null
+      },
+      "query": "what timezone is Luke in",
+      "as_of": "2026-06-09T00:00:00+00:00"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "frozen_by": "framework/primary-persona/eval/PRE_REGISTRATION.md",
+    "purpose": "Gate B (RCT) held-out evaluation set. The tie-breaker has NO learned parameters (hub-corrected IDF over typed edges), so the train/test split exists for the ancestry-firewall discipline + test-arm-only reporting, NEVER to tune. near_tie flags items where the BM25 floor leaves a near-tie the tie-breaker could re-order.",
+    "verdict": "EARNED iff paired BCa bootstrap CI lower-bound > 0 AND permutation p < 0.05 AND lift concentrated on near_tie subset. NOT-EARNED (predicted) otherwise -> default-OFF, recorded null, does not ship.",
+    "split_seed": 1729,
+    "timestamps_frozen_pre_build": true,
+    "note": "Items reference real same-thread structure: typed edges (supersedes/answers/continues) connect records; relevant = same-thread ground-truth set. The live harness arm derives the full set from the frozen store via session-UUID co-membership; this JSON pins the held-out evaluation items + their near-tie flags + typed-edge structure so the verdict is computed against a FROZEN admissible set, not one chosen after seeing a result."
+  },
+  "typed_edges_only": ["supersedes", "answers", "continues"],
+  "excludes": ["co_occurrence", "statistical_association"],
+  "hub_corrected": true,
+  "tie_breaker_only": true,
+  "default_off": true,
+  "train": [
+    {"id": "rct-tr-001", "q": "background agent dispatch for long research", "relevant": ["doc-bg-a", "doc-bg-b"], "near_tie": true, "edges": [["doc-bg-a", "answers", "doc-bg-b"]]},
+    {"id": "rct-tr-002", "q": "supersession marker convention", "relevant": ["doc-sup-1", "doc-sup-2"], "near_tie": true, "edges": [["doc-sup-2", "supersedes", "doc-sup-1"]]},
+    {"id": "rct-tr-003", "q": "channel reply routing rule", "relevant": ["doc-chan-old", "doc-chan-new"], "near_tie": false, "edges": [["doc-chan-new", "supersedes", "doc-chan-old"]]},
+    {"id": "rct-tr-004", "q": "plan before code gate", "relevant": ["doc-pbc"], "near_tie": false, "edges": []},
+    {"id": "rct-tr-005", "q": "amendment cycle apply then seal", "relevant": ["doc-amend-1", "doc-amend-2"], "near_tie": true, "edges": [["doc-amend-2", "continues", "doc-amend-1"]]},
+    {"id": "rct-tr-006", "q": "information trust ordering tiers", "relevant": ["doc-trust"], "near_tie": false, "edges": []}
+  ],
+  "test": [
+    {"id": "rct-te-001", "q": "scope versus confidence tightness", "relevant": ["doc-f4-a", "doc-f4-b"], "near_tie": true, "edges": [["doc-f4-b", "continues", "doc-f4-a"]]},
+    {"id": "rct-te-002", "q": "ruthless feedback name the disagreement", "relevant": ["doc-rf"], "near_tie": false, "edges": []},
+    {"id": "rct-te-003", "q": "version numbers at release time", "relevant": ["doc-ver-old", "doc-ver-new"], "near_tie": true, "edges": [["doc-ver-new", "supersedes", "doc-ver-old"]]},
+    {"id": "rct-te-004", "q": "principle conflict multi-signal resolution", "relevant": ["doc-m5-a", "doc-m5-b"], "near_tie": true, "edges": [["doc-m5-b", "answers", "doc-m5-a"]]},
+    {"id": "rct-te-005", "q": "swarming recursive decomposition stopping", "relevant": ["doc-swarm"], "near_tie": false, "edges": []},
+    {"id": "rct-te-006", "q": "outcome altitude AC real entry-point", "relevant": ["doc-oa-1", "doc-oa-2"], "near_tie": true, "edges": [["doc-oa-2", "continues", "doc-oa-1"]]},
+    {"id": "rct-te-007", "q": "no anthropic api key subscription path", "relevant": ["doc-key"], "near_tie": false, "edges": []},
+    {"id": "rct-te-008", "q": "telegram outage self heal keep working", "relevant": ["doc-out-old", "doc-out-new"], "near_tie": true, "edges": [["doc-out-new", "supersedes", "doc-out-old"]]}
+  ]
+}

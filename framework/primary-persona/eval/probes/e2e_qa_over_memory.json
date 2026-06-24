@@ -1,0 +1,236 @@
+{
+  "_meta": {
+    "frozen_by": "framework/primary-persona/eval/PRE_REGISTRATION.md",
+    "purpose": "Gate C (E2E) QA-over-memory items. contradiction items: correct answer depends on the supersession filter surfacing the CURRENT record not the STALE one. control items: answer does not depend on supersession (no-regression arm).",
+    "gain_on_contradiction_bar": "strictly > 0",
+    "gain_on_control_bar": ">= 0 (no regression)",
+    "normalizer": "trim + lowercase + collapse internal whitespace",
+    "timestamps_frozen_pre_build": true
+  },
+  "items": [
+    {
+      "id": "qa-loc-001",
+      "arm": "contradiction",
+      "prompt": "What city does Luke live in?",
+      "canonical_answer": "apple valley",
+      "stale_record": {
+        "body": "Luke's location is Lubbock, Texas.",
+        "valid_from": "2026-06-08T00:00:00+00:00",
+        "valid_to": "2026-06-10T15:14:00+00:00"
+      },
+      "current_record": {
+        "body": "Luke lives in Apple Valley, Minnesota. Lubbock is the Tilth meeting, not his location.",
+        "valid_from": "2026-06-10T15:14:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-chan-002",
+      "arm": "contradiction",
+      "prompt": "Which channel does the assistant reply to Luke on?",
+      "canonical_answer": "the session's active channel",
+      "stale_record": {
+        "body": "Always reply on Telegram; it is the single default channel.",
+        "valid_from": "2026-05-01T00:00:00+00:00",
+        "valid_to": "2026-06-14T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "Reply on the session's active channel - the one the user messaged from.",
+        "valid_from": "2026-06-14T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-outage-003",
+      "arm": "contradiction",
+      "prompt": "What should the assistant do on a Telegram outage?",
+      "canonical_answer": "reach out-of-band and keep working the confident path",
+      "stale_record": {
+        "body": "On a Telegram outage, pause all work until restored.",
+        "valid_from": "2026-04-01T00:00:00+00:00",
+        "valid_to": "2026-05-28T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "On a Telegram outage, reach Luke out-of-band and keep working the confident path; pause only low-confidence items.",
+        "valid_from": "2026-05-28T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ver-004",
+      "arm": "contradiction",
+      "prompt": "How is the next loam version number assigned?",
+      "canonical_answer": "derived at release time",
+      "stale_record": {
+        "body": "The next loam release is pre-allocated as v0.7.0.",
+        "valid_from": "2026-05-15T00:00:00+00:00",
+        "valid_to": "2026-06-01T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "Version numbers are derived at release time, never pre-allocated.",
+        "valid_from": "2026-06-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-cfg-005",
+      "arm": "contradiction",
+      "prompt": "Where does the discord configure skill write access.json?",
+      "canonical_answer": "discord_state_dir",
+      "stale_record": {
+        "body": "The discord configure skill writes to the default discord state directory.",
+        "valid_from": "2026-05-20T00:00:00+00:00",
+        "valid_to": "2026-06-11T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "The discord configure skill writes to $DISCORD_STATE_DIR, not the default dir.",
+        "valid_from": "2026-06-11T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-amend-006",
+      "arm": "contradiction",
+      "prompt": "How does an agent fix a commit that missed a file?",
+      "canonical_answer": "a new corrective commit",
+      "stale_record": {
+        "body": "When an agent misses a file, amend the commit with git commit --amend.",
+        "valid_from": "2026-04-15T00:00:00+00:00",
+        "valid_to": "2026-05-10T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "Agents create a new corrective commit if they miss a file, never git commit --amend.",
+        "valid_from": "2026-05-10T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-model-007",
+      "arm": "contradiction",
+      "prompt": "How does loam make an LLM call?",
+      "canonical_answer": "claude -p subscription path",
+      "stale_record": {
+        "body": "loam LLM calls go through the anthropic SDK with an API key.",
+        "valid_from": "2026-03-01T00:00:00+00:00",
+        "valid_to": "2026-04-01T00:00:00+00:00"
+      },
+      "current_record": {
+        "body": "Every loam LLM call goes through claude -p; never the anthropic SDK and API key.",
+        "valid_from": "2026-04-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-tz-008",
+      "arm": "contradiction",
+      "prompt": "What timezone is Luke in?",
+      "canonical_answer": "us central",
+      "stale_record": {
+        "body": "Luke's timezone is US Pacific.",
+        "valid_from": "2026-06-08T00:00:00+00:00",
+        "valid_to": "2026-06-10T15:14:00+00:00"
+      },
+      "current_record": {
+        "body": "Luke's timezone is US Central (Apple Valley, MN).",
+        "valid_from": "2026-06-10T15:14:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-101",
+      "arm": "control",
+      "prompt": "What is loam?",
+      "canonical_answer": "a general-purpose harness for claude-attached workflows",
+      "stale_record": null,
+      "current_record": {
+        "body": "loam is a general-purpose harness for Claude-attached workflows.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-102",
+      "arm": "control",
+      "prompt": "What does ODD stand for in loam?",
+      "canonical_answer": "outcome-driven development",
+      "stale_record": null,
+      "current_record": {
+        "body": "ODD is outcome-driven development: work is defined by its observable outcome, not a sequence of steps.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-103",
+      "arm": "control",
+      "prompt": "What is the default model tier for routine loam tasks?",
+      "canonical_answer": "sonnet",
+      "stale_record": null,
+      "current_record": {
+        "body": "Sonnet is the default model for routine loam tasks; Opus only for complex architectural decisions.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-104",
+      "arm": "control",
+      "prompt": "What does the plan-before-code rule require?",
+      "canonical_answer": "a plan written before code",
+      "stale_record": null,
+      "current_record": {
+        "body": "Plan-before-code: every build writes a plan to disk before any code is authored.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-105",
+      "arm": "control",
+      "prompt": "What is Lens 0, loam's prime lens?",
+      "canonical_answer": "per-user-tuned translation",
+      "stale_record": null,
+      "current_record": {
+        "body": "Lens 0 is the prime lens: per-user-tuned translation. AI becomes useful only when tuned to that specific person.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-106",
+      "arm": "control",
+      "prompt": "Where do ephemeral output files belong?",
+      "canonical_answer": "the workspace .scratch directory",
+      "stale_record": null,
+      "current_record": {
+        "body": "Ephemeral output files belong in the workspace's .scratch/ directory (gitignored, survives session boundaries).",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-107",
+      "arm": "control",
+      "prompt": "What is the in-thread work budget rule?",
+      "canonical_answer": "heavy generative work is dispatched to a background agent",
+      "stale_record": null,
+      "current_record": {
+        "body": "The primary session does not grind heavy generative or mutating work in-thread; it is dispatched to a background agent.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    },
+    {
+      "id": "qa-ctrl-108",
+      "arm": "control",
+      "prompt": "What estimation timebase does loam use for agent work?",
+      "canonical_answer": "ai-time not human-developer-time",
+      "stale_record": null,
+      "current_record": {
+        "body": "Estimate in AI-time, never human-developer-time; AI-driven background-agent work is 10-50x faster.",
+        "valid_from": "2026-01-01T00:00:00+00:00",
+        "valid_to": null
+      }
+    }
+  ]
+}

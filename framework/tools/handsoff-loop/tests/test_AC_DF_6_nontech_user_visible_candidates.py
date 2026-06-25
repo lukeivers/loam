@@ -85,6 +85,11 @@ def _grounding():
 
 
 def _candidate(form_factor, tool_plan, slug):
+    # Carries an operable launch workflow (AC.DF.7) so the AC.DF.6
+    # operable candidates are not dropped by the AC.DF.7 launch filter —
+    # a real web/email candidate has a browser/email launch. The CLI /
+    # daemon fixtures here are dropped by the AC.DF.6 is_nontech_operable
+    # check first, so their (operable) launch here is moot.
     return {
         "form_factor": form_factor,
         "tool_plan": tool_plan,
@@ -96,6 +101,10 @@ def _candidate(form_factor, tool_plan, slug):
                      {"id": 2, "status": "ok"}],
             "review_queue": [{"id": 7, "why": "ambiguous"}],
         },
+        "launch_mechanism": "web app opened by URL",
+        "user_workflow": ["Open your web browser",
+                          "Go to the address we give you",
+                          "Review the result on screen"],
     }
 
 

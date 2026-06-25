@@ -61,6 +61,9 @@ def _grounding():
 def _candidate(form_factor, slug):
     # The lightweight candidate review surface (no gate_files — the
     # buildable gate is generated for the chosen direction later).
+    # Carries an operable launch workflow (AC.DF.7) so the default
+    # non-tech path does not drop these candidates on the launch filter —
+    # a real non-tech candidate states how the user starts + uses it.
     return {
         "form_factor": form_factor,
         "tool_plan": f"A {form_factor} that does the work.",
@@ -72,6 +75,10 @@ def _candidate(form_factor, slug):
                      {"id": 2, "status": "ok"}],
             "review_queue": [{"id": 7, "why": "ambiguous"}],
         },
+        "launch_mechanism": "web app opened by URL",
+        "user_workflow": ["Open your web browser",
+                          "Go to the address we give you",
+                          "Review the result on screen"],
     }
 
 

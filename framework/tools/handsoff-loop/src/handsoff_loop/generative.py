@@ -146,6 +146,19 @@ class CandidateDesign:
         this rendering. The rubric is purely STRUCTURAL (section count /
         table / summary / review surface) — domain-blind, no vertical
         branch (AC.GEN.2).
+      * ``launch_mechanism`` — a short label naming HOW the user starts
+        the tool (e.g. "web app opened by URL", "double-click app",
+        "scheduled email report"). For a non-technical user this MUST be
+        a launcher they can personally operate — a browser URL/link, a
+        double-click packaged app, or email/file delivery — never a
+        terminal/script/dev-env launch (AC.DF.7).
+      * ``user_workflow`` — the ORDERED, literal end-to-end steps the
+        target user personally takes to LAUNCH and USE the tool (e.g.
+        "Open your web browser", "Go to <address>", "Drag your two files
+        onto the page", "Click Run", "Review the flagged rows").
+        This is what makes "visible output" sufficient: a design whose
+        output is a GUI but whose only way in is "run the script" leaks a
+        developer task back to the user (AC.DF.7).
 
     ``sample_output`` is a structured dict (the rendering substrate);
     a caller may lay it out as plain text or HTML — the rendering
@@ -157,6 +170,8 @@ class CandidateDesign:
     data_shape: str
     gate_plain: str
     sample_output: dict
+    launch_mechanism: str = ""
+    user_workflow: tuple[str, ...] = ()
 
     def as_evidence(self) -> dict:
         return {
@@ -165,17 +180,42 @@ class CandidateDesign:
             "data_shape": self.data_shape,
             "gate_plain": self.gate_plain,
             "sample_output_sections": sorted(self.sample_output.keys()),
+            "launch_mechanism": self.launch_mechanism,
+            "user_workflow": list(self.user_workflow),
         }
 
     def as_direction_brief(self) -> str:
         """A plain-language statement of THIS candidate's direction the
         buildable-design generation conditions on (so the chosen
-        direction's form factor + output shape survive into the full
-        design)."""
+        direction's form factor + output shape + LAUNCH mechanism survive
+        into the full design).
+
+        The launch mechanism + user workflow are carried so the buildable
+        design HONORS the form-factor the user settled on — a candidate
+        committed to "web app opened by URL" conditions the build toward a
+        browser-openable app, NOT a bare desktop script the user would have
+        to start from a terminal (AC.DF.7 build-target linkage)."""
+        workflow_block = ""
+        if self.user_workflow:
+            steps = "\n".join(f"  {i + 1}. {s}"
+                              for i, s in enumerate(self.user_workflow))
+            workflow_block = (
+                "\nThe user's literal end-to-end workflow (the tool MUST be "
+                "launchable + usable by exactly these steps):\n" + steps)
+        launch_block = ""
+        if self.launch_mechanism:
+            launch_block = (
+                f"\nLaunch mechanism the build MUST target: "
+                f"{self.launch_mechanism}. Build the tool so the target "
+                "user can start it this way — do NOT deliver a form-factor "
+                "the user cannot launch (e.g. a desktop script started from "
+                "a terminal when the design commits to a web app opened by "
+                "URL).")
         return (f"Design direction: {self.form_factor}\n"
                 f"Tool plan: {self.tool_plan}\n"
                 f"Data shape: {self.data_shape}\n"
-                f"Done when: {self.gate_plain}")
+                f"Done when: {self.gate_plain}"
+                + launch_block + workflow_block)
 
 
 _GENERATE_PROMPT = """\
@@ -592,6 +632,102 @@ def is_nontech_operable(form_factor: str, tool_plan: str = "") -> tuple[bool, st
         "non-tech user (AC.DF.6)")
 
 
+# --- launch-workflow operability (AC.DF.7) ---------------------------
+#
+# AC.DF.6 guarantees the candidate's OUTPUT is visible (a wizard/app, not
+# a CLI).  AC.DF.7 goes one layer deeper: a design can be visible (a GUI)
+# yet still UN-LAUNCHABLE by the target user — the rehearsal-2 failure
+# built a Tkinter wizard whose only way in was `python the_gui.py`
+# in a terminal.  Visible output is necessary but NOT sufficient: the
+# whole path to STARTING and USING the tool must be operable by the
+# target user, or the design has leaked a developer task back to them
+# (owner ruling 2026-06-24-design-must-carry-user-operable-launch-workflow).
+#
+# So every candidate carries (a) a launch_mechanism label and (b) the
+# literal end-to-end user_workflow.  For a non-technical user the
+# launch_mechanism MUST be one they can operate — a browser URL/link, a
+# double-click packaged app, or email/file delivery — and the workflow
+# must NOT contain a terminal/script/dev-env step.  The held-out
+# is_launch_user_operable classifier enforces this domain-blind +
+# prompt-blind, exactly like is_nontech_operable: it reads only the
+# launch surface vocabulary, never the generation prompt, never a
+# business domain (AC.GEN.2).
+
+# Launch-surface vocabulary that DISQUALIFIES a non-tech launch — a
+# terminal, a script run, a dev-env install (the rehearsal-2 failure:
+# `python the_gui.py` in a terminal).  Whole-phrase matched so a
+# benign "open the app" is not tripped.  Domain-blind: these name
+# developer launch tasks, no business domain (AC.GEN.2).
+_LAUNCH_DISQUALIFYING_TERMS = (
+    "terminal", "command line", "command-line", "commandline",
+    "command prompt", "shell", "run the script", "run a script",
+    "run this script", "run the command", "run a command",
+    "python ", "python3", "pip install", "npm install", "npm run",
+    "node ", "./", "$ ", "execute the", "run the program from",
+    "install python", "install node", "virtualenv", "venv",
+    "dev environment", "development environment", "command in",
+)
+
+# Launch surfaces a non-tech user CAN operate — a browser URL/link, a
+# double-click packaged app (an icon), or email/file delivery.  A launch
+# that names one of these (and no disqualifying step) is operable.
+_LAUNCH_OPERABLE_TERMS = (
+    "browser", "url", "link", "open the page", "open the website",
+    "go to ", "double-click", "double click", "click the icon",
+    "app icon", "desktop icon", "tap the", "open the app",
+    "email", "emailed", "sent to you", "arrives in your inbox",
+    "in your inbox", "delivered to you", "open the file we send",
+    "web app", "web page", "website", "bookmark",
+)
+
+
+def is_launch_user_operable(
+    launch_mechanism: str, user_workflow=(),
+) -> tuple[bool, str]:
+    """Held-out structural check: can the TARGET (non-technical) user
+    personally LAUNCH and USE this candidate end-to-end? (AC.DF.7).
+
+    Returns ``(ok, reason)``.  Domain-blind, prompt-blind: it reads only
+    the candidate's launch-surface vocabulary (the launch_mechanism label
+    + the literal user_workflow steps), never the generation prompt and
+    never a business domain.  A candidate is DISQUALIFIED for a non-tech
+    user when its launch / workflow requires developer machinery to START
+    it — opening a terminal, running a script (``python foo.py``),
+    installing a dev environment — even if its OUTPUT is a GUI.  It is
+    operable when the launch is a browser URL/link, a double-click app, or
+    email/file delivery AND no workflow step requires a technical task.
+
+    This is the falsifiable AC.DF.7 check the generator never saw — the
+    layer beneath AC.DF.6 (visible output is necessary, an operable launch
+    is the rest)."""
+    steps = list(user_workflow or ())
+    blob = (str(launch_mechanism) + "\n" + "\n".join(str(s) for s in steps)).lower()
+    if not str(launch_mechanism).strip() and not steps:
+        # No launch path stated at all — the design has not told the user
+        # how to start it; it cannot be vouched operable.
+        return False, (
+            "no launch mechanism or user workflow stated; the user is not "
+            "told how to START the tool (AC.DF.7)")
+    hit = next((t for t in _LAUNCH_DISQUALIFYING_TERMS if t in blob), None)
+    if hit is not None:
+        return False, (
+            f"the launch / workflow requires a developer task ({hit.strip()!r}) "
+            "to START the tool; a non-technical user cannot do that — even a "
+            "visible GUI is un-launchable this way (AC.DF.7)")
+    has_operable = any(t in blob for t in _LAUNCH_OPERABLE_TERMS)
+    if not has_operable:
+        # No disqualifying step, but no recognised operable launcher
+        # either — the launch path is not vouched as one a non-tech user
+        # can start (a bare "open the tool" with no URL/icon/delivery).
+        return False, (
+            "no operable launcher named (a browser URL/link, a double-click "
+            "app, or email/file delivery); the launch path is not one a "
+            "non-technical user is shown how to start (AC.DF.7)")
+    return True, (
+        "launch is a non-tech-operable surface (browser URL / double-click "
+        "app / delivery) with no developer-task step")
+
+
 # Per-candidate (ONE design) prompt. Each candidate is its own bounded
 # dispatch — N dispatches, not one N-object response (the §11 sanctioned
 # alternative).  A single-candidate JSON is ~half the size of the
@@ -638,7 +774,16 @@ Return ONLY a JSON object (no prose, no code fence) with EXACTLY:
     cares about), and at least one REVIEW section (a key named with
     "review"/"queue"/"flag" listing the items a human should look at,
     even if that list is short). This is what the prospect sees to
-    judge the design — make it polished and concrete, not a stub."""
+    judge the design — make it polished and concrete, not a stub.
+  - "launch_mechanism": a short label (<= 8 words) naming HOW the person
+    STARTS the tool (e.g. "web app opened by URL", "double-click app",
+    "scheduled email report").
+  - "user_workflow": an ARRAY of short plain-language strings — the
+    LITERAL, ordered steps the person personally takes to LAUNCH and
+    USE the tool, start to finish (e.g. ["Open your web browser", "Go to
+    the address we give you", "Drag your two files onto the page",
+    "Click Run", "Review the flagged rows"]). These are the real
+    steps a non-technical person would follow at their desk."""
 
 
 # The rotating direction seeds — generic design DIRECTIONS, NOT vertical
@@ -703,6 +848,17 @@ script they run in a terminal, a daemon or background service they have to
 manage, a folder they must set up for files to be dropped into, or
 anything that assumes they can operate developer machinery — those are
 forbidden for this person.
+
+CRITICAL — HOW THEY START IT: the person must be able to personally LAUNCH
+the tool with NO technical task. The launch_mechanism MUST be one of: (a) a
+WEB APP they open in their browser by typing/clicking a URL or link, (b) a
+DOUBLE-CLICK packaged app (an icon they click), or (c) EMAIL/FILE DELIVERY
+where the finished result simply arrives. The user_workflow steps MUST
+start with one of those launches. NEVER write a step that requires opening
+a terminal, running a script (for example "python something.py"),
+installing Python or a development environment, or any command-line task —
+a design whose only way in is "run the script" is FORBIDDEN even if its
+output is a nice screen.
 """
 
 _TECHNICAL_PROMPT_CONSTRAINT = ""
@@ -746,12 +902,20 @@ def _candidate_from_payload(raw: dict) -> CandidateDesign:
     if not isinstance(sample_output, dict) or not sample_output:
         raise GenerationUnavailable(
             "candidate is missing a populated sample_output rendering")
+    launch_mechanism = str(raw.get("launch_mechanism") or "").strip()
+    raw_workflow = raw.get("user_workflow") or []
+    if isinstance(raw_workflow, str):
+        raw_workflow = [raw_workflow]
+    user_workflow = tuple(
+        str(s).strip() for s in raw_workflow if str(s).strip())
     return CandidateDesign(
         form_factor=form_factor,
         tool_plan=tool_plan,
         data_shape=str(raw.get("data_shape") or "").strip(),
         gate_plain=gate_plain,
         sample_output={str(k): v for k, v in sample_output.items()},
+        launch_mechanism=launch_mechanism,
+        user_workflow=user_workflow,
     )
 
 
@@ -766,7 +930,8 @@ def generate_candidate_designs(
     llm_json_fn=None,
     timeout: int = CANDIDATES_TIMEOUT_S,
 ) -> list[CandidateDesign]:
-    """Generate N materially-distinct candidate designs (AC.DF.1, AC.DF.6).
+    """Generate N materially-distinct candidate designs (AC.DF.1, AC.DF.6,
+    AC.DF.7).
 
     N bounded dispatches — one per candidate (the §11-sanctioned "N
     dispatches" alternative; D-build.1).  Each call asks for ONE design
@@ -797,6 +962,17 @@ def generate_candidate_designs(
     background-watch surface — so a non-tech user is NEVER surfaced a
     candidate they cannot operate, even if the model ignores the prompt
     constraint.
+
+    Each candidate ALSO carries a ``launch_mechanism`` + a literal
+    ``user_workflow`` (AC.DF.7): the concrete steps the target user takes
+    to LAUNCH and USE the tool.  For a non-tech user a second held-out
+    classifier (``is_launch_user_operable``) drops any candidate whose
+    launch requires a terminal / a script run / a dev-env install — so a
+    visible GUI whose only way in is "run the script" is rejected (the
+    rehearsal-2 failure).  The chosen candidate's launch mechanism +
+    workflow are carried into the buildable-design generation (via
+    ``as_direction_brief``) so the build TARGETS the form-factor the
+    design committed to.
 
     Each per-candidate dispatch carries a finite parse-retry bound
     (CANDIDATES_PARSE_ATTEMPTS) for the occasional malformed-JSON
@@ -868,6 +1044,16 @@ def generate_candidate_designs(
         if enforce_nontech:
             ok, _why = is_nontech_operable(cand.form_factor, cand.tool_plan)
             if not ok:
+                continue
+            # AC.DF.7 — for a non-technical user, ALSO drop any candidate
+            # whose LAUNCH path requires developer machinery to start
+            # (a terminal, a script run, a dev-env install) even though
+            # its output is visible. Visible output is necessary but not
+            # sufficient; the user must be able to personally launch +
+            # use it end-to-end. Held-out, domain-blind, prompt-blind.
+            ok_launch, _why_launch = is_launch_user_operable(
+                cand.launch_mechanism, cand.user_workflow)
+            if not ok_launch:
                 continue
         # Skip a candidate that collided with an earlier direction — the
         # distinctness bar is enforced as candidates accrue (SAL-DF-3).

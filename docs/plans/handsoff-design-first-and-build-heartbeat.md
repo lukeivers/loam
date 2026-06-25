@@ -295,6 +295,46 @@ acceptance criteria, not just product features.
   candidates) is a surfaced follow-up — the demo case is non-tech and is fully
   covered by the default; AC.DF.6 closes on the non-tech guarantee.*
 
+- **AC.DF.7 — every candidate design carries a user-operable end-to-end
+  LAUNCH workflow; a non-tech user is never offered a candidate whose launch
+  requires a terminal, a script run, or a dev-env.** Each surfaced candidate
+  carries (a) a `launch_mechanism` (how the user starts the tool) and (b) a
+  literal, ordered `user_workflow` (the concrete steps the target user
+  personally takes to LAUNCH and USE the tool). For a non-technical user (the
+  default), the launch mechanism is one the user can personally operate — a web
+  app opened in a browser by URL/link, a double-click packaged app, or
+  email/file delivery — and NO surfaced candidate's launch requires opening a
+  terminal, running a script (`python foo.py`), installing a dev environment, or
+  any other developer task, EVEN IF the candidate's output is a visible GUI.
+  When the user settles a candidate, the chosen candidate's launch mechanism +
+  workflow are carried into the buildable-design generation, so the build is
+  DIRECTED to target the form-factor the design committed to (a "web app opened
+  by URL" design conditions the build toward a browser-openable app, not a bare
+  desktop script). *Outcome, not method:* asserts the surfaced candidate set for
+  a non-tech user carries a user-operable launch workflow on every candidate
+  (verified by a held-out classifier the generator never saw) and excludes
+  terminal/script/dev-env launches; does not prescribe how the launch is framed
+  or how the constraint is applied (a prompt constraint, a held-out classifier,
+  or both satisfy it). *Satisfiable other ways:* a generation prompt that demands
+  an operable launcher + concrete steps, OR a held-out classifier that drops a
+  terminal-launched candidate, OR both — all pass. *This is the owner ruling
+  (`2026-06-24-design-must-carry-user-operable-launch-workflow`) made into a
+  falsifiable AC: rehearsal-2 built a Tkinter GUI whose only way in was
+  `python the_gui.py` in a terminal — AC.DF.6 had made the OUTPUT visible (a
+  wizard, not a CLI), but the LAUNCH path was still the exact technical task the
+  non-tech user cannot do; AC.DF.7 fails any candidate whose launch is a
+  developer task even when its output is a GUI. This is AC.DF.6 one layer deeper:
+  visible output is necessary but not sufficient — the whole path to STARTING and
+  USING the tool must be operable by the target user.* **Mark: the DESIGN-side
+  guarantee (candidates carry user-operable launch workflows; un-launchable
+  non-tech designs rejected) + a build-target DIRECTIVE (the chosen launch
+  mechanism flows into the buildable-design generation) close AC.DF.7. Making the
+  build STAGE actually produce a served, browser-openable web app (vs honoring
+  the directive in the generated design) — the verification harness that runs
+  the gate against a served app rather than a shell-invoked script — is a
+  substantial build-stage change SURFACED AS A SCOPED FOLLOW-UP (see SAL-DF-4),
+  not built in this cycle.**
+
 ### Slice HB — AC.HB.* (build-time progress heartbeat)
 
 - **AC.HB.1 — the build leg surfaces periodic progress to the user's active
@@ -338,6 +378,7 @@ acceptance criteria, not just product features.
 
 **Slice DF seal closes on:** AC.DF.1–.5.
 **Slice DF amendment (non-tech candidate framing) seal closes on:** AC.DF.6.
+**Slice DF amendment (user-operable launch workflow) seal closes on:** AC.DF.7.
 **Slice HB seal closes on:** AC.HB.1–.5.
 
 ---
@@ -495,6 +536,35 @@ acceptance criteria, not just product features.
 
 ---
 
+- **SAL-DF-4 — AC.DF.7 closes the DESIGN guarantee + a build-target directive;
+  making the build STAGE actually produce a served browser-openable web app is a
+  larger build-stage change, scoped as a follow-up — do not read AC.DF.7 as
+  shipping a web-app build harness.** *Disagreement:* it would be easy to read
+  "the build must target the design's launch form-factor" as "the build now emits
+  a runnable web app." It does not — and faking that would reintroduce a hollow
+  claim. *Evidence:* the buildable design flows to the freeze through
+  `generate_design` conditioned on the chosen candidate's direction brief
+  (`build_from_intent.py` L405-410, `as_direction_brief()`), and the gate is
+  verified by a `check_command` shell-invoking a `python3` verification script
+  against `gate_files` (`build_from_intent.py` L446-463). That harness assumes a
+  shell-runnable artifact; verifying a SERVED, browser-openable web app (starting
+  a server, driving a browser, asserting the page) is a different verification
+  contract the current freeze/check loop does not have. *Alternative (built this
+  cycle):* AC.DF.7 delivers (1) the design-side guarantee — every non-tech
+  candidate carries a user-operable `launch_mechanism` + literal `user_workflow`,
+  and a held-out `is_launch_user_operable` classifier drops a terminal/script/
+  dev-env launch even when the output is a GUI; and (2) the build-target
+  directive — the chosen candidate's launch mechanism + workflow are threaded
+  into the buildable-design generation via `as_direction_brief()`, so the
+  generated design is DIRECTED toward the committed form-factor (a real linkage,
+  not advisory: the direction brief is the seam the chosen direction already
+  flows through). *Surfaced follow-up:* the build-stage form-factor harness —
+  teaching the freeze/converge/verify loop to BUILD + VERIFY a served
+  browser-openable web app (a served-app check contract distinct from the
+  shell-script check) — is a substantial, independently-scoped change (a task,
+  per §9). The risk if conflated: sealing a "web app" that the build still
+  emits as a desktop script, the exact rehearsal-2 failure one layer up.
+
 ## §11. Primitive check (REQUIRED — new mechanisms introduced)
 
 | New mechanism | Native primitive considered | Chosen |
@@ -576,6 +646,56 @@ acceptance criteria, not just product features.
   `65c1f27d`; code / apply / seal: `3050e0e5` / `6ba1a60f` / `f4b7e079`. Manifest
   `docs/plans/handsoff-df6-nontech-visible-candidates.manifest.yaml`. LOCAL seal
   only — not pushed.
+- Slice DF amendment (AC.DF.7 — user-operable launch workflow) — baseline
+  `a0c25db1`; code / apply / seal: `<APPLY_CODE_SHA>` / `<APPLY_SHA>` /
+  `<SEAL_SHA>`. Manifest
+  `docs/plans/handsoff-df7-user-operable-launch-workflow.manifest.yaml`. LOCAL
+  seal only — not pushed.
+
+### Method-decision register (Slice DF amendment AC.DF.7, narrated at build)
+
+- **D-build.6 — user-operable launch-workflow guarantee + held-out classifier
+  (per AC.DF.7 / the owner ruling):** the `CandidateDesign` schema gains two
+  additive fields — `launch_mechanism` (a short label naming HOW the user starts
+  the tool) + `user_workflow` (an ordered tuple of literal launch-and-use steps).
+  Both default empty (so every direct `CandidateDesign(...)` construction in the
+  sealed DF.2/.3 tests stays valid — no positional break). The per-candidate
+  prompt asks for both fields; the non-tech prompt constraint demands an operable
+  launcher (browser URL / double-click app / email-or-file delivery) with
+  concrete steps and forbids a terminal/script/dev-env launch. A second held-out
+  structural classifier `is_launch_user_operable(launch_mechanism, user_workflow)`
+  — domain-blind, prompt-blind, keying ONLY on launch-surface vocabulary — runs
+  in the SAME accrue-time drop as `is_nontech_operable` (for a non-tech user
+  only), so a candidate whose launch is a developer task is dropped even when its
+  OUTPUT is a GUI (the rehearsal-2 failure). The two-layer design (prompt
+  constraint + held-out classifier) mirrors AC.DF.6 exactly.
+- **D-build.7 — build-target linkage via `as_direction_brief()` (per AC.DF.7 /
+  SAL-DF-4):** the chosen candidate's `launch_mechanism` + `user_workflow` are
+  appended to `as_direction_brief()`, which already conditions the
+  buildable-design generation for the chosen direction (`build_from_intent.py`
+  L405-410) — so the launch form-factor flows into the generated design as a
+  build directive (the real seam, not advisory). The deeper build-STAGE change
+  (a served-web-app build + verification harness vs the shell-script check) is
+  SURFACED AS A SCOPED FOLLOW-UP (SAL-DF-4 / §9), NOT built this cycle — per the
+  dispatch's explicit halt on substantial build-stage form-factor work.
+
+### Verification (Tier-0, Slice DF amendment AC.DF.7)
+
+- AC.DF.7 test authored at AC altitude
+  (`tests/test_AC_DF_7_user_operable_launch_workflow.py`), one file per AC.
+  AC.DF.7 marked outcome-altitude (the live test).
+- Offline: the AC.DF.7 file passes (the deterministic classifier checks + the
+  production-path drop of a terminal-launched GUI + the refuse-when-only-
+  unlaunchable check + the build-direction-carries-launch check + the
+  technical-user-not-filtered check; the live OA test env-gated/skipped offline).
+- Full offline handsoff-loop suite: all DF green (AC.DF.1–.7) + the sealed
+  AC.REQ/GEN/PRG/CVG/HB spine green; AC.GEN.2 zero-domain sweep CLEAN (the new
+  launch vocabulary names launch surfaces only, no business domain — the
+  rehearsal-2 example was scrubbed of `reconcile` from source, kept only in the
+  AC.DF.7 test + plan-doc).
+- The two new fields are ADDITIVE with empty defaults — the
+  `choose_design_fn=None` non-interactive S6 path is byte-preserved (AC.DF.4);
+  the sealed DF.2/.3 direct `CandidateDesign` constructions need no change.
 
 ### Method-decision register (Slice DF, narrated at build)
 

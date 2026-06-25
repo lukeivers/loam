@@ -1,0 +1,106 @@
+# handsoff-loop Slice DF amendment — user-operable end-to-end launch workflow
+
+2026-06-24. An owner-directed amendment to the sealed Slice DF (design-first
+front stage) per docs/plans/handsoff-design-first-and-build-heartbeat.md §5
+(AC.DF.7). Empirically motivated: a live rehearsal (rehearsal-2) built a
+Tkinter GUI whose only way in was `python the_gui.py` in a terminal. The
+sealed AC.DF.6 had made the design's OUTPUT visible (a wizard, not a CLI) —
+but the LAUNCH path was still the exact technical task the target
+non-technical user (a small-firm owner) cannot do. Visible output is
+necessary but NOT sufficient: the whole path to STARTING and USING the tool
+must be operable by the target user.
+
+MOTIVE (prime directive, Lens 0). The user owns WHAT they want; loam owns
+HOW; but the HOW must TERMINATE in something the user can actually INITIATE
+and operate — no leaked developer tasks. A design whose only way in is "run
+the script" has handed a developer task back to the user even if its output
+is a nice screen. Rehearsal-2 surfaced this defect cheaply, before the room —
+which is the rehearsal's purpose. This is AC.DF.6 one layer deeper.
+
+Single-component fence on the workspace-bootstrap anchor (the handsoff-loop
+family's seal anchor — source under framework/tools/handsoff-loop/, inside
+the workspace-bootstrap seal-test's admitted framework/tools/ prefix; same
+pattern as the Slice DF / Slice HB / AC.DF.6 seals).
+
+Change (generative.py):
+
+  - NEW: CandidateDesign gains two ADDITIVE fields — launch_mechanism (a
+    short label naming HOW the user STARTS the tool: "web app opened by URL",
+    "double-click app", "scheduled email report") + user_workflow (an
+    ordered tuple of the LITERAL steps the target user personally takes to
+    launch and use the tool). Both default empty, so every direct
+    CandidateDesign(...) construction in the sealed DF tests stays valid (no
+    positional break). as_evidence() surfaces both.
+  - NEW: the per-candidate prompt asks for launch_mechanism + user_workflow;
+    the non-tech prompt constraint demands an operable launcher (a browser
+    URL/link, a double-click packaged app, or email/file delivery) with
+    concrete steps and FORBIDS a terminal/script/dev-env launch — even when
+    the output is a GUI.
+  - NEW: is_launch_user_operable(launch_mechanism, user_workflow) — a
+    held-out STRUCTURAL classifier (domain-blind, prompt-blind) that reads
+    ONLY the launch-surface vocabulary (the label + the literal workflow
+    steps) and DISQUALIFIES a launch requiring developer machinery to START
+    the tool (a terminal, a script run like `python foo.py`, a dev-env
+    install), and requires a recognised operable launcher (browser URL /
+    double-click app / delivery). For a non-tech user the candidate loop
+    applies this filter in the SAME accrue-time drop as is_nontech_operable,
+    so the user is NEVER surfaced a candidate they cannot launch even if its
+    OUTPUT is a GUI and even if the model ignores the prompt. The classifier
+    never sees the generation prompt — it is the falsifiable AC.DF.7 check.
+  - NEW: as_direction_brief() carries the chosen candidate's launch_mechanism
+    + user_workflow into the buildable-design generation (the seam the chosen
+    direction already flows through, build_from_intent.py L405-410), so the
+    build is DIRECTED to target the committed launch form-factor (a "web app
+    opened by URL" design conditions the build toward a browser-openable app,
+    not a bare desktop script). A real linkage, not advisory.
+  - UNCHANGED: the single-design generate_design path; the AC.GEN.2
+    domain-blindness (the new launch vocabulary keys on interaction/launch
+    surfaces, NOT any business domain — the rehearsal-2 example was scrubbed
+    of "reconcile" from source, kept only in the AC.DF.7 test + the plan-doc);
+    the choose_design_fn=None non-interactive S6 path (the additive
+    empty-default fields keep it byte-preserved); the AC.DF.6
+    is_nontech_operable classifier (AC.DF.7 layers ON it, does not replace
+    it).
+
+AC surface:
+
+  - AC.DF.7 — every candidate design carries a user-operable end-to-end
+    LAUNCH workflow; a non-tech user is never offered a candidate whose
+    launch requires a terminal, a script run, or a dev-env, EVEN IF its
+    output is a GUI. Verified by a held-out structural classifier the
+    generator never saw + an outcome-altitude live test (env-gated) that runs
+    a real generation over the rehearsal-2 ask and asserts every surfaced
+    candidate carries a non-empty literal user_workflow that passes the
+    held-out is_launch_user_operable classifier.
+
+Test-fixture updates (same seal prefix): the AC.DF.1 + AC.DF.6 test
+fixtures' candidates now carry an operable launch workflow (a real non-tech
+candidate has one), so the tightened AC.DF.7 launch filter does not drop them
+— the fixtures' form_factor values (which the AC.DF.1 distinctness assertions
+key on) are untouched; only an operable launch_mechanism + user_workflow are
+added. This is the correct interaction: AC.DF.7 tightens the non-tech bar, and
+a fixture standing in for a real surfaced candidate must now state how the
+user launches it.
+
+Method-level choices are the builder's call per ODD §1.1: the two-layer
+enforcement (prompt constraint at generation + held-out classifier at filter)
+mirrors AC.DF.6 and gives the non-tech user a clean candidate set even if one
+layer slips.
+
+Build-stage scope (SAL-DF-4): the DESIGN-side guarantee + the build-target
+directive (the chosen launch mechanism flows into the buildable-design
+generation) close AC.DF.7. Making the build STAGE actually BUILD + VERIFY a
+served, browser-openable web app — a served-app check contract distinct from
+the current shell-script gate — is a substantial, independently-scoped
+build-stage change SURFACED AS A FOLLOW-UP (§9 / a task), NOT built this
+cycle, per the dispatch's explicit halt on substantial build-stage form-factor
+work.
+
+Out of scope: the build-stage served-web-app build + verification harness
+(surfaced follow-up, SAL-DF-4); inferring the user's tech level upstream in
+intake (the default non-tech covers the demo + the owner ruling); a clickable
+mockup; changing the build / freeze / verify spine; pushing to origin
+(owner-gated — LOCAL seal only).
+
+BASELINE a0c25db1 — canonical main tip. workspace-bootstrap's SEAL_COMMIT
+sidecar advances to this amendment's seal SHA at seal time. LOCAL seal only.

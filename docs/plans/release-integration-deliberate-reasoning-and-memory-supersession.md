@@ -117,8 +117,9 @@ hands-off work (C) ship together under one MINOR narrative.
 ### D. Release-internal housekeeping (no runtime capability)
 
 - **dev-sdlc pbret-register** (feat `161816a4`, apply `fea022da`, sealed
-  at `dfda5bbf`): registers two v1.6.0 retirement-record docs as
-  ProgramBench-sweep keeps (D-K9/D-K11 class) + a retirement-sweep test.
+  at `dfda5bbf`): registers two v1.6.0 retirement-record docs as justified
+  retirement-sweep keeps (D-K9/D-K11 class) + a retirement-sweep test (the
+  sealed dev-tooling retirement under `docs/plans/sealed/`).
   This is bookkeeping for an ALREADY-SHIPPED v1.6.0 retirement — it closes
   a test-registry gap, ships zero new user-visible behavior.
 - **dev-sdlc seal-fence BASELINE correctives** (`708a66ec`, `052e23ff`,
@@ -457,15 +458,18 @@ authorized publish. The publish itself is owner-gated (ASK-FIRST).
 
 ## §13 — §status (gate verdict matrix — PENDING build/prep)
 
-All PENDING until owner ratifies + the prep cycle runs the smoke + bumps.
+Owner ratified prep+smoke 2026-06-25 (Discord 1519492799681134714). Prep +
+HARD smoke executed 2026-06-24 in the isolated worktree
+`/Users/lukeivers/loam-release-v1.7.0-wt` (branch `release/v1.7.0`, off ratified
+`a0c25db1`). All ACs GREEN. **PUBLISH remains separately owner-gated.**
 
-| AC | Verdict | Evidence (to be filled at prep close) |
+| AC | Verdict | Evidence |
 |---|---|---|
 | AC.REL.1 | GREEN | this doc exists with §1 + §4 + §13; resolved via `--plan-doc` |
-| AC.REL.2 | PENDING | `docs/ACTIVE_MINOR` → 1.7.0; in-scope pyprojects → 1.7.0; lockstep test GREEN; `loam --version` → 1.7.0 |
-| AC.REL.3 | PENDING | HARD smoke writeup GREEN aggregate verdict + gate-7 evidence |
-| AC.REL.4 | PENDING | deliberate-reasoning / primary-persona / handsoff-loop / workspace-bootstrap / dev-sdlc suites GREEN from cold install |
-| AC.REL.5 | PENDING | STATE.md `**v1.7.0 ... SHIPPED LOCAL**` entry |
-| AC.REL.6 | PENDING | release-roadmap §2 `| v1.7.0 |` row; seal token `7a6a1671` reachable |
-| AC.REL.7 | PENDING | `v1-7-0-...migration.yaml` declares `version: v1.7.0` + `operation: no-op` |
-| AC.REL.S | PENDING | cold-install `loam --version` → 1.7.0 + deliberate-reasoning entry-point + supersession filter/as_of, no pre-arranged state |
+| AC.REL.2 | GREEN | `docs/ACTIVE_MINOR` → 1.7.0; 31 in-scope pyprojects → 1.7.0 (tomllib sweep: ALL 31 == 1.7.0); lockstep test `test_AC_PCVR_pyproject_version_lockstep` → 5 passed at 1.7.0; meta `loam --version` literal → 1.7.0; prep commit `28372988` |
+| AC.REL.3 | GREEN | HARD smoke `docs/experiments/release-integration-deliberate-reasoning-and-memory-supersession-hard-smoke.md` carries the `GREEN` aggregate-verdict token + gate-7 `loam --version`/`loam --help` evidence (smoke §7); cold clone `24d4ef6e` |
+| AC.REL.4 | GREEN | from cold install: deliberate-reasoning 78p (env scrubbed) / primary-persona 1244p,1skip,1 known-pre-existing-environmental (`test_AC_MSC_3`, Tier-0 passes in canonical) / handsoff-loop 126p,9skip / workspace-bootstrap 697p,15skip / dev-sdlc 396p,7skip (incl. pbret retirement-sweep + lockstep) — smoke §6 |
+| AC.REL.5 | GREEN | `docs/STATE.md` carries the `**v1.7.0 MINOR SHIPPED LOCAL**` change-log entry naming deliberate-reasoning + memory-supersession + Tilth DF/HB/DF6 + release-window tip `7a6a1671` |
+| AC.REL.6 | GREEN | `docs/release-roadmap.md` §2 `| v1.7.0 |` row carries seal token `7a6a1671` (Tier-0: ancestor of release HEAD `24d4ef6e`); §3 Active-version updated |
+| AC.REL.7 | GREEN | `docs/state-migrations/v1-7-0-deliberate-reasoning-and-memory-supersession.migration.yaml` declares `version: v1.7.0` + `operation: no-op` |
+| AC.REL.S | GREEN | cold-install `loam --version` → `loam 1.7.0`; deliberate-reasoning `process_turn` escalates+loops (escalated=True, final='391', no pre-arranged state); supersession OA filter + `as_of` → 7 passed — smoke §5 |

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-safety-layer"
-version = "1.6.0"
+version = "1.7.0"
 description = "Safety layer for loam — three kill switches, always-ask list, dangerous-op gate."
 requires-python = ">=3.11"
 dependencies = [

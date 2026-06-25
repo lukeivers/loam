@@ -1,0 +1,48 @@
+# User-state migration — v1.7.0 (deliberate-reasoning + memory-supersession)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.7.0 bundles the
+# post-v1.6.0 backlog: the NEW deliberate-reasoning component (default-OFF),
+# memory-supersession + salience-eval extending the sealed primary-persona,
+# the Tilth-side hands-off-loop slices (DF / HB / DF6), and release-internal
+# housekeeping.
+
+version: v1.7.0
+slug: v1-7-0-deliberate-reasoning-and-memory-supersession
+slice: "v1.7.0 MINOR (deliberate-reasoning NEW component default-OFF — slices 1+3; memory-supersession + salience-eval on primary-persona; Tilth hands-off-loop slices DF/HB/DF6; release-internal housekeeping)"
+date: 2026-06-25
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.7.0 adds a new default-OFF reasoning component, extends memory recall with
+  validity-interval supersession, adds workspace-bootstrap hands-off-loop
+  slices, and lands release-internal bookkeeping — none of which re-schemas or
+  removes pre-existing stored .loam/ user state.
+  (1) deliberate-reasoning is a NEW framework component under
+  framework/deliberate-reasoning/ shipping DEFAULT-OFF — at the default gate it
+  persists no user state; its escalate decision + re-entrant loop run only when
+  explicitly enabled, and even then write no new user .loam/ artifact and
+  re-schema nothing in existing user state. (2) memory-supersession is a
+  filter-on-recall + as_of-history capability composed on the existing
+  primary-persona memory seals — supersession marks are created lazily / derived
+  at read time, so no existing user .loam/ record is rewritten, moved, or
+  re-schemad on upgrade; the prior interval simply closes at the new record's
+  creation, and un-mark is reversible. (3) The Tilth hands-off-loop slices
+  (DF / HB / DF6) land in framework/tools/handsoff-loop/ (measurement-class,
+  0.0.0) under the workspace-bootstrap fence — build-time methodology surfaces,
+  no user .loam/ state touched. (4) Release-internal housekeeping (pbret-register,
+  seal-fence baseline correctives, §14 register backfills) is doc/test-registry
+  bookkeeping with no user-state effect. A user upgrading from v1.6.0 to v1.7.0
+  needs no state migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code revert; no data move. deliberate-reasoning persists no state at
+# default-OFF; supersession marks are derived at read time and un-mark is
+# reversible (history preserved via as_of).
+reversible: true
+removes_user_state: false
+idempotent: true

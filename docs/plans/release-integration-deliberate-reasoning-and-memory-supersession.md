@@ -1,8 +1,6 @@
 # Release integration — deliberate-reasoning + memory-supersession (next minor over v1.6.0)
 
-**Status:** PLAN — owner-ratification pending. PLAN ONLY; no tag, no push,
-no `loam release` invocation. Publish is a gated public action requiring
-explicit owner authorization (`feedback_no_public_action_during_build`).
+**Status:** RATIFIED FOR PREP+SMOKE — owner (Luke) cleared single **v1.7.0 MINOR** 2026-06-25 (Discord msg 1519492799681134714: "Ratify"). The prep + HARD-smoke cycle is authorized off this commit. **PUBLISH (tag + push + `loam release`) REMAINS a gated public action requiring a SEPARATE explicit owner word AFTER the smoke is GREEN** (`feedback_no_public_action_during_build`).
 **Working tree:** `/Users/lukeivers/loam` (branch `main`; the unpublished
 work is already a clean linear fast-forward stack on the published v1.6.0
 baseline — no isolated release worktree needed).

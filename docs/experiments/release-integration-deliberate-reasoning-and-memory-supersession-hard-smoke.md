@@ -234,6 +234,29 @@ v1.6.0-documented known set. The three findings are all classified, none
 blocking. The public tag + push + merge to `main` proceed ONLY under the
 SEPARATELY-gated owner authorization (this smoke does NOT publish).
 
-## §12 — §status — the seven release gates (via `loam release v1.7.0 --dry-run`)
+## §12 — §status — the release gates (via `loam release v1.7.0 --dry-run`)
 
-(filled in §13 below from the captured dry-run run.)
+`loam release v1.7.0 --plan-doc <plan> --dry-run` run from the worktree
+(cold-install `loam 1.7.0` binary). Captured verdicts:
+
+| Gate | Verdict | Evidence |
+|---|---|---|
+| 1 hard-smoke | **GREEN** | GREEN token at the smoke writeup path |
+| 2 acs-verified | **GREEN** | all 8 ACs GREEN in plan §status |
+| 3 state-shipped | **GREEN** | v1.7.0 marked SHIPPED in `docs/STATE.md` |
+| 4 clean-tree | **GREEN** | working tree clean |
+| 5 branch-main | **RED (expected isolation artefact)** | current branch is `release/v1.7.0`, expected `main`. **This is the designed consequence of staging in an isolated worktree off the ratified commit** (the concurrent session owns the main tree). It resolves ONLY at the owner-gated publish, when `release/v1.7.0` is merged → `main` and the real (non-dry-run) `loam release` runs from `main`. NOT a release defect — staging on `main` was deliberately avoided to protect the concurrent build. |
+| 6 seal-reachable | **GREEN** | seal `7a6a1671` reachable from HEAD |
+| 7 system-binary-operational | **GREEN (operator-verified)** | `loam --version` → `loam 1.7.0`; `loam --help` exit 0; all 15 documented subcommands present (§7) |
+| migration-declared | **GREEN** | `v1-7-0-...migration.yaml` declares `version: v1.7.0` + `operation: no-op` |
+| substrate-audit | **GREEN** | no shipping-status claim diverges from the derived STATE-OF-LOAM record |
+| boundary-respected | **GREEN** | no framework-code write lands user-state outside the two declared homes |
+
+**8 GREEN + 1 RED.** The single RED (`branch-main`) is the staging-isolation
+artefact and resolves at publish time (merge `release/v1.7.0` → `main`). Every
+substantive gate (hard-smoke, ACs, state-shipped, clean-tree, seal-reachable,
+system-binary, migration, substrate-audit, boundary) is GREEN.
+
+**Publish readiness:** READY TO PUBLISH pending the owner's explicit word. The
+publish is a SEPARATELY-gated public action (tag + push + merge to `main`) and
+is NOT performed by this smoke.

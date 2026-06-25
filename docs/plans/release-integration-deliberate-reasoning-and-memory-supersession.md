@@ -117,8 +117,9 @@ hands-off work (C) ship together under one MINOR narrative.
 ### D. Release-internal housekeeping (no runtime capability)
 
 - **dev-sdlc pbret-register** (feat `161816a4`, apply `fea022da`, sealed
-  at `dfda5bbf`): registers two v1.6.0 retirement-record docs as
-  ProgramBench-sweep keeps (D-K9/D-K11 class) + a retirement-sweep test.
+  at `dfda5bbf`): registers two v1.6.0 retirement-record docs as justified
+  retirement-sweep keeps (D-K9/D-K11 class) + a retirement-sweep test (the
+  sealed dev-tooling retirement under `docs/plans/sealed/`).
   This is bookkeeping for an ALREADY-SHIPPED v1.6.0 retirement — it closes
   a test-registry gap, ships zero new user-visible behavior.
 - **dev-sdlc seal-fence BASELINE correctives** (`708a66ec`, `052e23ff`,

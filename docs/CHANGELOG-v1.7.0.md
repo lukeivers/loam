@@ -98,8 +98,9 @@ component fence:
 ## Release-internal housekeeping (no runtime capability)
 
 - **dev-sdlc pbret-register:** registers two v1.6.0 retirement-record docs as
-  ProgramBench-sweep keeps + a retirement-sweep test. Bookkeeping for an
-  already-shipped v1.6.0 retirement; zero new user-visible behaviour.
+  justified retirement-sweep keeps + adds a retirement-sweep test. Bookkeeping
+  for an already-shipped v1.6.0 dev-tooling retirement (the sealed
+  retirement-plan under `docs/plans/sealed/`); zero new user-visible behaviour.
 - **dev-sdlc seal-fence BASELINE correctives** — advance interleaved-corrective
   baselines so the slice-1 seal fence is clean. Mechanical, audit-only.
 - **§14 register backfills** — per-decision SHA backfills into method-decision

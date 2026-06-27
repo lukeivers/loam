@@ -1,0 +1,133 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deploy-safety-floor-fail-policy-primitive
+  title: "Deploy-safety FLOOR — per-gate fail-policy primitive (Sub-cycle B: generalized fail-CLOSED gate-policy field in safety-layer; default fail-open, opt-in fail-closed; AC.DSF.5 / G15 keystone)"
+
+# BASELINE: 14d5f90d — the feat(safety-layer) source-edit commit (pre-apply
+# tip). For an EXISTING sealed-component EXTEND the baseline pins to the feat
+# commit itself (the source edits are baked into the baseline; baseline..HEAD
+# carries no unadmitted diff), mirroring the prior safety-layer amendment
+# `wd-discipline-framework-source-guard` (baseline e8a25a7a = its feat commit).
+# Prior seal sidecar: 039d4a31. Pre-build sync check: canonical HEAD was 5
+# commits AHEAD of origin/main (1fcad58) from Sub-cycle A's local seals + §12
+# backfill (not yet pushed); built on local HEAD per
+# feedback_build_forward_on_publish_pending.
+#
+# AC in scope (plan §5 — Sub-cycle B ONLY; A and C are NOT this cycle):
+#   AC.DSF.5 — fail-CLOSED for the floor gate class (G15, keystone). A
+#              per-gate fail-policy field on gate registration: default
+#              FAIL_OPEN (preserves every existing sealed advisory guard's
+#              D-SECHK.FAIL-OPEN behavior, zero regression); a floor
+#              destructive gate opts into FAIL_CLOSED so its hook, on a
+#              catchable internal fault against a destructive candidate,
+#              DENIES rather than falls open, while a non-floor advisory
+#              guard under the same fault STILL fails open. The deny envelope
+#              the primitive emits is honored as a tool-call block under every
+#              permission mode Claude Code exposes, including bypass-all —
+#              empirically keystone-verified at build time (artifact-probed,
+#              not self-reported), closing the question Sub-cycle A's AC.DSF.7
+#              explicitly deferred to this sub-cycle.
+#
+# Scope boundary (plan Decision C, F2-surfaced): this sub-cycle delivers the
+# generalized primitive in safety-layer + wires the four advisory guards to
+# DECLARE FAIL_OPEN through it (behavior-preserving). The deploy-safety-floor
+# gate (Sub-cycle A) already fails CLOSED ad-hoc and is NOT touched here (it
+# is out of this cycle's fence); having it ADOPT the shared primitive is a
+# named, owner-gated follow-up — no functionality is lost by deferring it.
+baseline: "14d5f90dda635cc437aa2bb6fbadff61fabe9156"
+
+plan: docs/plans/deploy-safety-floor-gate-primitives.md
+plan_doc_ref: docs/plans/deploy-safety-floor-gate-primitives.md
+
+components:
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The manifest + plan-doc
+# (and the §13 SHA-register backfill) ride the docs/plans/ prefix; the status
+# artefact is workspace-local (pos3 .scratch), not a canonical path. No other
+# universal files this cycle (STATE/roadmap backfill is dispatcher-side per
+# Sub-cycle A's §12 precedent).
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: framework/safety-layer/seals/SEAL_COMMIT.deploy-safety-floor-fail-policy-primitive
+  body: |
+    # Deploy-safety FLOOR — per-gate fail-policy primitive (Sub-cycle B) — apply ladder
+
+    Per `docs/plans/deploy-safety-floor-gate-primitives.md` §6 Sub-cycle B —
+    generalizes the fail-CLOSED gate-policy convention into a reusable,
+    per-gate FIELD in the safety-layer (the home of `D-SECHK.FAIL-OPEN`),
+    closing G15 for the floor without inverting the advisory convention
+    everywhere (plan Decision C).
+
+    Scope (plan §6 Sub-cycle B): EXTEND the sealed `framework/safety-layer/`.
+
+      - AC.DSF.5 — per-gate fail-policy primitive. New stdlib-only sibling
+        module `hooks/_fail_policy.py`: `FailPolicy{FAIL_OPEN, FAIL_CLOSED}`,
+        `DEFAULT_FAIL_POLICY = FAIL_OPEN`, `resolve_fault` (pure) +
+        `apply_fault_policy` (resolve-and-enact). The four advisory guards
+        (`dangerous_flag_guard`, `secret_pattern_guard`, `config_write_guard`,
+        `wd_discipline_guard`) DECLARE `FAIL_POLICY = FailPolicy.FAIL_OPEN` and
+        route their top-level fault handler through the primitive —
+        behavior-preserving (FAIL_OPEN emits nothing, exit 0, identical log
+        label), so no existing sealed advisory guard regresses. Only floor
+        destructive gates opt into FAIL_CLOSED; the convention is NOT
+        blanket-flipped.
+
+    Keystone (plan §6 entry precondition; §8 halt) — EMPIRICALLY VERIFIED at
+    build time, artifact-probed (not self-reported): a PreToolUse
+    `permissionDecision: deny` IS honored as a tool-call block under Claude
+    Code bypass-all modes — both `--permission-mode bypassPermissions` AND
+    `--dangerously-skip-permissions`, in an isolated temp project with an
+    MCP-isolated `claude -p`. The sentinel command did NOT execute under either
+    mode. POSITIVE => the floor's fail-CLOSED destructive guarantee is
+    reachable framework-side; the build proceeded. This closes the exact
+    question Sub-cycle A's `test_real_entrypoint_bypass_mode_still_returns_deny`
+    docstring deferred to Sub-cycle B.
+
+    Tests (AC.DSF.5), all at the real entry-point:
+      - `test_AC_DSF_5_fail_policy_primitive` — policy resolution (default
+        FAIL_OPEN; FAIL_CLOSED+candidate => deny; FAIL_CLOSED+non-candidate =>
+        allow, read parity), the PreToolUse deny contract, and
+        `apply_fault_policy` enactment (emits deny only when closed+candidate).
+      - `test_AC_DSF_5_advisory_guards_fail_open` — (b) regression: each
+        advisory guard DECLARES FAIL_OPEN and still fails open at the real
+        subprocess entry-point under non-JSON / malformed input.
+      - `test_AC_DSF_5_outcome_altitude` ★ — outcome-altitude: the primitive
+        writes the honored PreToolUse deny envelope on a FAIL_CLOSED fault with
+        no pre-arranged state; cross-checks a REAL floor PreToolUse hook
+        (`deploy_safety_floor_guard`) denying on fault under an envelope
+        `permission_mode` of `bypassPermissions` (skip-if-absent, so the
+        safety-layer suite stays self-contained).
+
+    Lens 1 (compose, don't re-derive): the primitive mirrors the proven
+    stdlib-only sibling-module pattern (`_secret_patterns.py`) so a bare-script
+    hook imports it without pulling the `loam.safety_layer` package (and its
+    heavier deps) at hook runtime — preserving the advisory guards'
+    robustness-by-stdlib invariant.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the AC (§5), Decision C (per-gate field, default fail-open), the fence
+    (§2/§6 — safety-layer extend), and the halt triggers (§8), not the
+    implementation.
+
+    F2 / scope boundary (surfaced to dispatcher): the deploy-safety-floor gate
+    already fails CLOSED ad-hoc (Sub-cycle A) and is NOT touched here; adopting
+    this shared primitive there is a named follow-up. The harness-level hook
+    process-KILL timeout is a Claude Code platform behavior, not catchable
+    in-process — the primitive covers the catchable in-process faults (raise /
+    malformed input / a gate's own internal-budget timeout routed through it).
+
+    Predecessor: 1edf16ee — the canonical tip at source-edit (HEAD~1 of the
+    feat commit).
+
+ac_count: 1
+smoke_outcome: "fail-policy primitive emits the bypass-honored PreToolUse deny on a FAIL_CLOSED fault; the four advisory guards declare FAIL_OPEN and still fail open at the real entry-point; suite green (195)"

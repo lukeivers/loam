@@ -1,0 +1,149 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deploy-safety-floor-gate-primitives
+  title: "Deploy-safety FLOOR — framework-native gate primitives (Sub-cycle A: config abstraction + destructive-action classifier max(declared,resolved) + attestation scaffold + refuse-all-destructive default + PreToolUse floor gate)"
+
+# BASELINE: the plan-doc commit f27bbd66 — the commit immediately preceding
+# this cycle's source-edit commit (the house HEAD~1 advance pattern). This
+# NEW component's first seal fences against it. Verified resolvable in this
+# repo's history at build-dispatch time (canonical HEAD was 1fcad58, not
+# behind origin/main; the plan-doc commit advanced HEAD to this baseline).
+#
+# AC families locked per docs/plans/deploy-safety-floor-gate-primitives.md §5
+# (Sub-cycle A scope only — Sub-cycles B (fail-closed primitive) and C
+# (secure-build baseline) are OUT of this cycle):
+#   AC.DSF.1  — config abstraction is inert, typed policy; invalid tier /
+#               missing is_production rejected at load (fail-closed load).
+#   AC.DSF.2  — classifier keys off the resolved target; gate =
+#               max(declared, resolved) — a destructive command resolving to a
+#               declared-prod identity is prod-gated even from a non-prod env.
+#   AC.DSF.3  — rename-safety: gate height derives from structured fields, not
+#               the env name; a renamed-but-is_production env keeps full gate.
+#   AC.DSF.4  — write-time prod-string block: a prod-shaped connection string
+#               into a non-prod/local config file is blocked; value never
+#               echoed.
+#   AC.DSF.6  — attestation gate + refuse-all-destructive default: an
+#               is_production / tier real-infra env with no/stale attestation
+#               refuses every destructive verb in plain words.
+#   AC.DSF.7 ★ — outcome-altitude: the REAL PreToolUse hook entry-point over
+#               raw stdin (no pre-arranged state) denies an unattested-prod
+#               destruction naming target + sub-action in non-technical words,
+#               and still denies (fail-closed) when its evaluation raises.
+#   AC.COV.1  — the new floor guard is catalogued in
+#               failure-mode-guard-matrix.yaml (default_on: YES, class: floor,
+#               resolvable guard_ref); `loam guards` reports it covered + names
+#               no floor gap introduced by this cycle. (The AC's "default-on:
+#               true / floor: true" maps to the catalogue's actual schema enum
+#               values default_on: YES / class: floor — vocabulary, not a
+#               partial ship; per feedback_loose_AC_text_fix_AC_not_implementation.)
+#
+# AC.DSF.5 (the GENERALIZED per-gate fail-policy primitive in safety-layer) is
+# Sub-cycle B and NOT in this fence. This cycle's hook fails CLOSED internally
+# on the destructive path (sufficient for AC.DSF.7); the reusable fail-policy
+# field on safety-layer's gate registration is B's deliverable.
+#
+# Scope boundary (plan §3 HALT-2, accepted): the live provider PROBES that
+# populate an attestation record (deletion-protection / Object-Lock /
+# prevent_destroy / OIDC reads) are deploy-tier and OUT of scope. This cycle
+# ships the framework-side attestation SCAFFOLD + the refuse-all-destructive
+# DEFAULT POSTURE only.
+baseline: "f27bbd667be8a06aeed77e3b6bce6a384cc1075f"
+
+plan: docs/plans/deploy-safety-floor-gate-primitives.md
+plan_doc_ref: docs/plans/deploy-safety-floor-gate-primitives.md
+
+components:
+  - name: deploy-safety-floor
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/deploy-safety-floor/tests/test_no_sealed_amendments.py
+    sidecar: framework/deploy-safety-floor/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. The protection-matrix
+# catalogue row + its generated companion are admitted here (plan §6:
+# catalogue rows folded into the sub-cycle's fence as a universal admission,
+# NOT a second sealed-component entry — the protection-matrix component's own
+# sidecar/fence is untouched; its catalogue suite runs at the guard-sweep and
+# validates the new row live).
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/design/protection-matrix.md
+    - framework/protection-matrix/data/failure-mode-guard-matrix.yaml
+
+narrative:
+  target: framework/deploy-safety-floor/seals/SEAL_COMMIT.deploy-safety-floor-gate-primitives
+  body: |
+    # Deploy-safety FLOOR — framework-native gate primitives (Sub-cycle A) — apply ladder
+
+    Per `docs/plans/deploy-safety-floor-gate-primitives.md` — implements
+    Sub-cycle A of the always-on safety FLOOR for loam's productionizing
+    capability: the framework-native PreToolUse gate primitives every higher
+    (opt-in) deploy tier composes on top of, and that no marketplace toggle
+    casually turns off.
+
+    Scope (plan §6 Sub-cycle A): NEW component
+    `framework/deploy-safety-floor/`.
+
+      - AC.DSF.1 — per-environment config abstraction: an inert, owner-editable
+        `deploy.yaml` / `.loam/environments.yaml` (is_production / tier /
+        reversible / gate / security_profile / immutable id) that parses into a
+        typed model; an invalid tier or a missing is_production is rejected at
+        load (fail-CLOSED load). Policy in YAML; enforcement in the hook.
+      - AC.DSF.2 — destructive-action classifier keyed off the RESOLVED target;
+        gate strength = max(declared protection, resolved-target
+        production-ness). A destructive command resolving to a declared-prod
+        identity is prod-gated even when the active env is declared non-prod
+        (closes G2's config-resolvable cases).
+      - AC.DSF.3 — rename-safety preserved: gate height derives from structured
+        fields (is_production / tier), never the environment name.
+      - AC.DSF.4 — write-time prod-string block: a prod-shaped connection
+        string (matching a declared-prod identity) written into a
+        non-prod / local config file is blocked at write time; the secret value
+        is never echoed into the reply, brief, or log.
+      - AC.DSF.6 — attestation-record contract + refuse-all-destructive default
+        (framework-side half of F-0/G1): an is_production / tier real-infra env
+        with no fresh attestation record refuses every destructive verb and
+        says, in plain words, it is not yet protected. The live provider PROBES
+        that populate the record are deploy-tier (OUT of scope per plan §3
+        HALT-2); the DEFAULT POSTURE + refusal are in scope and enforced here.
+      - AC.DSF.7 ★ (outcome-altitude) — the REAL floor PreToolUse hook
+        entry-point over raw stdin with NO pre-arranged state: a fabricated
+        destructive command in an is_production context with no attestation
+        returns a deny naming the target + sub-action in non-technical words,
+        and the same entry-point still returns deny (fail-CLOSED) when its
+        evaluation raises (corrupt attestations file). The floor's destructive
+        path fails CLOSED, inverting the advisory D-SECHK.FAIL-OPEN convention
+        for that path only.
+      - AC.COV.1 — the new floor guard FM.DESTRUCTIVE-PROD-UNGATED is catalogued
+        in `framework/protection-matrix/data/failure-mode-guard-matrix.yaml`
+        (default_on: YES, class: floor, resolvable guard_ref) and the generated
+        companion `docs/design/protection-matrix.md` is regenerated; `loam
+        guards` reports it covered (`[ok]`), no divergence, no new floor gap.
+
+    Lens 1 (compose, don't re-derive): the classifier maps onto safety-layer's
+    `FrameworkFloorCategory` (destroy_user_data_beyond_workspace /
+    modify_production_systems_serving_real_users) rather than minting its own
+    action-class enum. The gate is a deterministic `command` PreToolUse hook —
+    the floor must not be probabilistic; never an LLM-judge gate.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the ACs (§5), the named decisions (A–E + HALT-2 split), the fence (§2/§6),
+    and the halt triggers (§8), not the implementation.
+
+    NEW-component first-seal fence on `framework/deploy-safety-floor/`. The
+    sidecar is created at this seal (no prior seal to advance). The
+    protection-matrix catalogue row + companion ride as universal-admitted
+    partners (plan §6), not a second sealed-component entry.
+
+    Predecessor: f27bbd66 — the plan-doc commit (main tip @ source-edit).
+
+ac_count: 7
+smoke_outcome: "real PreToolUse entry-point denies a fabricated DROP DATABASE on a declared-prod host from a non-prod active env, and fail-closes on a corrupt attestations file"

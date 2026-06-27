@@ -7,7 +7,7 @@ loam's *protection pillar* (doctrine §"The two sides of leg 2 — translation i
 
 This page is generated from the machine-checkable catalogue and reflects the live coverage verdict as of the date below. The **gaps** — floor-class failure modes guarded today only by persona discipline — are the actionable output, not a defect to hide.
 
-*Coverage checked: 2026-06-02. 10 floor-class gap(s) open.*
+*Coverage checked: 2026-06-27. 10 floor-class gap(s) open.*
 
 ## The matrix
 
@@ -33,6 +33,7 @@ This page is generated from the machine-checkable catalogue and reflects the liv
 | **FM.COMMS-PATH-DEAD** — Goes silent when the user-visible channel dies | the self-recovery watchdog's dead-channel detection + out-of-band self-heal — proactively probes whether the user-visible channel is live and, on a negative probe, delivers an out-of-band notice via the durable fallback surface so a down channel does not become silence; no user distress signal required to fire it | hook | floor | NO-PROGRAMMATIC | **YES** |
 | **FM.SILENT-EGRESS** — Sends your data off your machine without asking | the egress-consent gate — a fail-closed, nothing-leaves-by-default release gate that assembles every off-machine send into a reviewable bundle, shows the user exactly what would leave in plain language, takes per-item approve/redact/decline, binds the approval to the content identity, and refuses to release on any uncertainty through a single audited choke point. BUILT + SEALED (framework/egress-consent/, EgressReleaseGate.release, sealed at 2304dea); wiring it into every off-machine send path as the default choke point is owner-gated instance-config, so it is not default-on for every send yet — until that wiring is default-on the floor is held by the sealed gate where it is invoked plus persona discipline elsewhere | release-gate | floor | NO-PROGRAMMATIC | **YES** |
 | **FM.DROPPED-OPEN-LOOPS** — Forgets its own open loops | the persona self-scheduled-recheck mechanism (task #79) — first instance LIVE in the operator environment (launchd self-recheck jobs that wake an agent, re-run the analysis, and message the owner on a material change); the loam-canonical reusable "self-recheck" SKILL + pending-rechecks register (a durable register of the persona's own outstanding obligations, default-on, built on a Claude-native scheduling primitive per Lens 1) is SCOPED, not yet built — until that capability is built + sealed in the canonical tree the floor is held only by persona discipline | none | floor | NONE | **YES** |
+| **FM.DESTRUCTIVE-PROD-UNGATED** — Destroys a live system that was never confirmed safe | the deploy-safety FLOOR PreToolUse gate — a framework-native gate that reads the per-environment config + attestation contract and refuses, by default, a destructive verb against a production-class target with no fresh attestation; gate strength = max(declared, resolved-target) so a command resolving to a declared-prod identity is prod-gated even from a non-prod active env; rename-safe (gate height derives from structured fields, never the env name); fails CLOSED on the destructive path (its own evaluation error denies, never falls open) | hook | floor | YES | — |
 
 ## The gaps (floor-class, no default-on guard)
 

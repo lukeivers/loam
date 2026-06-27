@@ -1,0 +1,17 @@
+{
+  "_comment": "STAGED deploy-safety FLOOR hook wiring — NOT a live-harness edit. This fragment is the authoritative, PORTABLE shape of the `hooks` block that registers the deploy-safety-floor PreToolUse gate (framework-native FLOOR per docs/plans/deploy-safety-floor-gate-primitives.md, Sub-cycle A). It composes into a workspace's .claude/settings.json automatically on the next successful pos-sync via the sealed workspace-sync settings-fragment auto-composer (additively, idempotently, preserving non-loam entries, with ${LOAM_REPO} resolved to the absolute repo root). The gate reads the per-environment config (.loam/environments.yaml or deploy.yaml) + the attestation contract (.loam/attestations.yaml) and refuses, by default, a destructive action against a production-class target with no fresh attestation, and a production connection string written into a non-production config file. FAIL-POLICY: this is a FLOOR gate — its destructive-candidate evaluation fails CLOSED (deny on its own error), inverting the advisory D-SECHK.FAIL-OPEN convention for the destructive-floor path only (AC.DSF.7). Disable-friction (plan Decision E): on by default; non-trivially-disable-able (LOAM_SAFETY_HOOKS=off / LOAM_DEPLOY_SAFETY_FLOOR=off, logged); TRUE non-disable is the Claude Code managed-settings / admin-policy path. The matcher scopes the hook to the mutating tools (Bash + Write/Edit/MultiEdit); read tools never invoke it.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/framework/deploy-safety-floor/hooks/deploy_safety_floor_guard.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

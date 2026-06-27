@@ -450,3 +450,47 @@ rows:
       coverage it does not have). A floor-class GAP: until the self-recheck capability is
       built + default-on in the canonical tree, the keep-your-own-open-loops
       floor is held only by persona discipline.
+
+  - id: FM.DESTRUCTIVE-PROD-UNGATED
+    name: "Destroys a live system that was never confirmed safe"
+    description: >-
+      Runs a destructive action (drop/delete a database, empty a bucket, tear
+      down infrastructure) against a production-resolved target — because the
+      environment label said non-production, or because the live system has no
+      fresh proof its safety protections are armed — and so destroys real data
+      on a system serving real users (doctrine: "breaking the surrounding work
+      or the original goal"; Lens 0 protection floor — dropping prod).
+    source: >-
+      docs/plans/deploy-safety-floor-gate-primitives.md (AC.DSF.2/.3/.6/.7);
+      docs/design/loam-doctrine.md §two-sides-of-leg-2 (Lens 0 protection
+      floor); devops-pipeline-2026-06-27 red-team G1 (attestation) / G2
+      (resolved-target) / G15 (fail-policy)
+    guard: >-
+      the deploy-safety FLOOR PreToolUse gate — a framework-native gate that
+      reads the per-environment config + attestation contract and refuses, by
+      default, a destructive verb against a production-class target with no
+      fresh attestation; gate strength = max(declared, resolved-target) so a
+      command resolving to a declared-prod identity is prod-gated even from a
+      non-prod active env; rename-safe (gate height derives from structured
+      fields, never the env name); fails CLOSED on the destructive path (its
+      own evaluation error denies, never falls open)
+    guard_kind: hook
+    guard_ref: "framework/deploy-safety-floor/hooks/deploy_safety_floor_guard.py:main"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      The component's AC.DSF.* suite, incl. the outcome-altitude AC.DSF.7 that
+      drives the REAL PreToolUse entry-point over raw stdin (no pre-arranged
+      state): a fabricated destructive command in an is_production context with
+      no attestation record returns a deny naming the target + sub-action in
+      plain words, and a raised evaluation (corrupt attestations file) still
+      returns deny (fail-closed). Registered default-on for every workspace via
+      framework/deploy-safety-floor/hooks/settings.fragment.json, composed into
+      .claude/settings.json by the sealed workspace-sync auto-composer (same
+      framework-native wiring as frame-kernel / corpus-load). Scope boundary:
+      the live provider PROBES that populate the attestation record (the
+      deletion-protection / Object-Lock / prevent_destroy reads) are deploy-tier
+      and out of this floor's scope — the framework-side DEFAULT POSTURE (no
+      fresh record => refuse) is what this guard enforces and what the suite
+      verifies.

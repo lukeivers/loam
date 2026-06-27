@@ -479,6 +479,30 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 ---
 
+### Candidate 7 — `deploy-safety-floor` — The deploy/build safety FLOOR is framework-native and always-on — ✅ BUILT (SEALED LOCAL)
+
+> **SHIPPED-LOCAL 2026-06-27 — built from the devops-pipeline research, recorded here as the canonical roadmap surface; no longer a forward candidate.** Three serialized sub-cycles sealed local (owner gates the release; no push, no publish): **Sub-cycle A** — `framework/deploy-safety-floor/`, seal `cf1ed11e` (destructive-action gate keyed off the RESOLVED target's production-ness, `max(declared, resolved)`, closes G2; rename-safety preserved; attestation-record contract + refuse-all-destructive default for an unattested `is_production` env; AC.DSF.1-4,6,7). **Sub-cycle B** — `framework/safety-layer/` per-gate fail-policy primitive, seal `828de228` (floor destructive gates fail CLOSED, advisory guards keep failing open; AC.DSF.5/G15; keystone empirically POSITIVE — a PreToolUse `deny` holds under `bypassPermissions` + `--dangerously-skip-permissions`). **Sub-cycle C** — `framework/secure-build-baseline/` + an additive `secret_pattern_guard` extend, seal `3225eeee` (secrets-never-committed at the commit boundary + dependency-audit gate + artifact-cleanliness, for the artifact loam PRODUCES; AC.SBB.1-4, AC.COV.1). Plan: `docs/plans/deploy-safety-floor-gate-primitives.md`. This is the Floors tier (`docs/design/loam-plugin-product-architecture.md` §6) instantiated for the deploy/build surface; the opt-in deploy TIERS that compose on it, and the provider-side guarantees named in the plan's HALT-2, remain forward work (out of the floor).
+
+**Slug:** `deploy-safety-floor`. **Class:** MINOR (framework-native floor; two NEW components + an additive extend). **Governing decision:** `…/devops-pipeline-2026-06-27/03-architecture-decision-plugins-vs-native.md` §"The recommendation" item 2 (floor = framework-native; RECOMMENDATION, owner ratification pending). **Scheduling note:** built off-roadmap under the drop-and-complete authorization; version number assigned at publish-commence time (un-published; no number pre-baked, per `feedback_version_numbers_at_release_time`).
+
+#### Objective
+
+> **An always-on, non-trivially-disable-able floor under every consequence-bearing build/deploy action:** a destructive verb against a production-resolved target is gated regardless of the environment label; an unattested production environment refuses all destructive verbs by default; a build never commits a secret or ships a known-CVE artifact. The opt-in deploy tiers compose ON this floor; no user, agent, or marketplace toggle casually turns it off.
+
+#### Acceptance criteria (AC families `AC.DSF.*` + `AC.SBB.*` + `AC.COV.*`)
+
+- All GREEN at local seal: AC.DSF.1-7 (config / resolved-target classifier / rename-safety / write-time prod-string block / fail-CLOSED keystone / attestation default / outcome-altitude); AC.SBB.1-4 (secrets-at-boundary / dependency-audit / artifact-cleanliness / non-tunable floor); AC.COV.1 (every floor guard catalogued in `failure-mode-guard-matrix.yaml`, `loam guards` reports no new gap).
+
+#### Source items
+
+- Research artefacts `…/devops-pipeline-2026-06-27/{01-loam-feature-design,02-redteam-gate-gaps,03-architecture-decision-plugins-vs-native}.md`; Tilth directive `F-SECURE-BUILD-BASELINE` (`docs/FUTURE_IDEAS_DRAFT.md`, Discord tilth-dev 1520438623898439680, 2026-06-27).
+
+#### Dependencies
+
+- Composes on the sealed `framework/safety-layer/` (`action_class` / `dangerous_op` enums, fail-policy convention) + `framework/protection-matrix/` (`loam guards`). The opt-in deploy tiers + provider-side halves (HALT-2) are downstream forward work, not dependencies of the floor.
+
+---
+
 ## §5 Backlog reference
 
 The `maybe-someday` list. Items here are not committed to any version; they activate when their named trigger fires (or stay deferred indefinitely).

@@ -245,3 +245,56 @@ fail-policy primitive in `safety-layer`, AC.DSF.5) and Sub-cycle C
 `docs/STATE.md` change-log row, `docs/release-roadmap.md` / roadmap §8, the
 parent architecture-decision doc's method-decision register, and the
 `docs/design/loam-plugin-product-architecture.md` Floors-tier instance entry.
+
+---
+
+## §13. Build SHA register (Sub-cycle B — sealed local 2026-06-27)
+
+Built by `loam-builder` on canonical `main`, local seal only (owner gates
+the release; no push, no publish). Pre-build sync check: canonical HEAD was
+`1edf16ee`, **5 commits ahead** of `origin/main` (`1fcad58`) from Sub-cycle
+A's local seals + §12 backfill (not yet pushed); built on local HEAD per
+`feedback_build_forward_on_publish_pending`.
+
+**Keystone (mandatory first gate — plan §6 Sub-cycle B entry precondition,
+§8 halt) — EMPIRICALLY VERIFIED, artifact-probed (not self-reported):** a
+PreToolUse `permissionDecision: deny` IS honored as a tool-call block under
+Claude Code bypass-all modes — confirmed under BOTH `--permission-mode
+bypassPermissions` and `--dangerously-skip-permissions`, in an isolated temp
+project with an MCP-isolated `claude -p`; the sentinel `touch` did NOT execute
+under either mode (marker-file absent). **Keystone POSITIVE** ⇒ the floor's
+fail-CLOSED destructive guarantee is reachable framework-side; the build
+proceeded. This closes the exact question Sub-cycle A's AC.DSF.7
+`test_real_entrypoint_bypass_mode_still_returns_deny` deferred to Sub-cycle B.
+Evidence file (workspace-local):
+`workspace/.scratch/claude-output/deploy-safety-floor-subcycleB-keystone-2026-06-27.md`.
+
+| Commit | SHA | Note |
+|---|---|---|
+| BASELINE (feat, commit S) | `14d5f90dda635cc437aa2bb6fbadff61fabe9156` | `hooks/_fail_policy.py` primitive + the 4 advisory guards declaring `FAIL_OPEN` + 3 AC.DSF.5 test files; the EXISTING-component extend pins BASELINE to the feat commit (source baked into baseline) |
+| Apply | `29173794df3d9bc26b413c72d9de74c731fda1c7` | sidecar advance to baseline (empty-diff window) + manifest |
+| Seal | `828de228ccdc20ace40a1cc2ab12f50d3b2e0713` | deterministic seal; touched suite + guard-sweep floor green |
+| Corrective (admission) | `ffddd6e1` | admit safety-layer seal-bookkeeping (sidecar + narrative) via `extra_allowed_files` so post-seal `apply --dry-run` is clean (safety-layer's seal_test is the STRUCTURAL A15/A17/A18 test, no allowed_* diff bindings); post-seal dry-run exit 0 |
+
+**AC satisfied (Sub-cycle B):** AC.DSF.5 (fail-CLOSED gate-policy primitive,
+G15 keystone). **Tests:** `framework/safety-layer/tests/` 195 passed (the new
+`test_AC_DSF_5_fail_policy_primitive` + `test_AC_DSF_5_advisory_guards_fail_open`
++ `test_AC_DSF_5_outcome_altitude`, plus the pre-existing fail-open regression
+suites `test_AC_SECHK_4_fail_open` / `test_AC_WDGUARD_5_fail_open` still green —
+zero regression).
+
+**Scope boundary (plan Decision C, F2-surfaced):** this sub-cycle delivers the
+generalized per-gate fail-policy primitive in `safety-layer` (default
+`FAIL_OPEN`; floor gates opt into `FAIL_CLOSED`) and wires the four advisory
+guards to DECLARE `FAIL_OPEN` through it (behavior-preserving). The
+`deploy-safety-floor` gate (Sub-cycle A) already fails CLOSED ad-hoc and was
+NOT touched — having it ADOPT the shared primitive (replacing its in-gate
+`_floor_should_fail_closed`) is a **named, owner-gated follow-up**; no
+functionality is lost by deferring it. The harness-level hook process-KILL
+timeout is a Claude Code platform behavior, not catchable in-process — the
+primitive covers the catchable in-process faults (raise / malformed input / a
+gate's own internal-budget timeout routed through it).
+
+**Out of this cycle:** Sub-cycle C (secure-build baseline, AC.SBB.*). Pending
+dispatcher-side backfill: `docs/STATE.md` change-log row, roadmap §8, the
+parent architecture-decision doc's method-decision register.

@@ -47,6 +47,18 @@ components:
     sidecar: framework/safety-layer/tests/SEAL_COMMIT
     frozen_baseline: false
     extra_allowed_prefixes: []
+    # safety-layer's seal_test is the STRUCTURAL invariants test
+    # (A15/A17/A18) — it carries no allowed_prefixes/allowed_files diff
+    # bindings, so the post-seal dry-run (dry_run.analyse) admits only
+    # universal_paths + these extra_allowed_files. The seal advances the
+    # sidecar and writes the per-amendment narrative; both are this
+    # component's own seal-bookkeeping artifacts and are admitted here so
+    # post-seal `apply --dry-run` is clean. (The source edits themselves
+    # are baked into the BASELINE feat commit, so they are not in the
+    # baseline..HEAD diff window.)
+    extra_allowed_files:
+      - framework/safety-layer/tests/SEAL_COMMIT
+      - framework/safety-layer/seals/SEAL_COMMIT.deploy-safety-floor-fail-policy-primitive
 
 # Universal admissions — per amendment #22 ruling #3. The manifest + plan-doc
 # (and the §13 SHA-register backfill) ride the docs/plans/ prefix; the status

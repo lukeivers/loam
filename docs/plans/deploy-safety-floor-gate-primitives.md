@@ -207,3 +207,41 @@ No new loop / scheduler / orchestrator is introduced (the scheduled drift-probe 
 - Trust-tier model: `docs/design/loam-plugin-product-architecture.md` (Floors / Good-by-default / Capabilities).
 - Prime objective ladder: `docs/VALUE_PROPOSITION.md` AC.PO.1 / AC.PO.2.
 - Plan-doc + manifest shape: `plugins/dev-sdlc/docs/conventions/plan-docs.md`; exemplar `docs/plans/v0-1-6-production-safety-and-base-skills.md`.
+
+---
+
+## §12. Build SHA register (Sub-cycle A — sealed local 2026-06-27)
+
+Built by `loam-builder` on canonical `main`, local seal only (owner gates
+the release; no push, no publish). Pre-build sync check: canonical HEAD was
+`1fcad58`, equal to `origin/main` (not behind).
+
+| Commit | SHA | Note |
+|---|---|---|
+| BASELINE (plan-doc, commit P) | `f27bbd667be8a06aeed77e3b6bce6a384cc1075f` | plan-before-code commit; the HEAD~1 the NEW component's fence pins to |
+| Source (feat, commit S) | `c0eae5ae5b8c14677da49908077a6c4121d8dbf0` | `framework/deploy-safety-floor/` + protection-matrix row + regenerated companion + manifest |
+| Apply | `51761a81ddc972efb49cd3930f5be53a4d177648` | sidecar advance to baseline (empty-diff window) |
+| Seal | `cf1ed11ea2210e4b618f1303e6ce0b8998effbf2` | deterministic seal; guard-sweep floor + touched suite green; post-seal `apply --dry-run` clean |
+
+**ACs satisfied (Sub-cycle A):** AC.DSF.1, AC.DSF.2, AC.DSF.3, AC.DSF.4,
+AC.DSF.6, AC.DSF.7 (outcome-altitude), AC.COV.1. **Tests:**
+`framework/deploy-safety-floor/tests/` 24 passed;
+`framework/protection-matrix/tests/` 42 passed (the new
+`FM.DESTRUCTIVE-PROD-UNGATED` row catalogued + companion regenerated; `loam
+guards` reports it `[ok]`, no divergence, no new floor gap).
+
+**Field-contract re-verify (flag 14, information-trust):** the Claude Code
+PreToolUse `permissionDecision` field contract was re-verified live against
+`code.claude.com/docs/en/hooks` at build time — `hookSpecificOutput.{
+hookEventName, permissionDecision ∈ {allow,deny,ask,defer},
+permissionDecisionReason}`; input envelope `{tool_name, tool_input, cwd,
+permission_mode ∈ {default,plan,acceptEdits,auto,dontAsk,bypassPermissions}}`.
+No drift from the sealed `dangerous_flag_guard` shape; the HALT-on-drift
+condition did not fire.
+
+**Out of this cycle (per dispatch):** Sub-cycle B (the generalized per-gate
+fail-policy primitive in `safety-layer`, AC.DSF.5) and Sub-cycle C
+(secure-build baseline, AC.SBB.*). Pending dispatcher-side backfill:
+`docs/STATE.md` change-log row, `docs/release-roadmap.md` / roadmap §8, the
+parent architecture-decision doc's method-decision register, and the
+`docs/design/loam-plugin-product-architecture.md` Floors-tier instance entry.

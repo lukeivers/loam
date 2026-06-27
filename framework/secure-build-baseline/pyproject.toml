@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-secure-build-baseline"
+version = "0.1.0"
+description = "Always-on secure-build FLOOR for the artifact loam PRODUCES (Tilth F-SECURE-BUILD-BASELINE) — secrets-never-committed at the commit/push boundary (safety-layer extend) + dependency-hygiene audit gate (npm audit / pip-audit, composed) + artifact-cleanliness (floor .gitignore + pre-commit sweep). Non-tunable floor; only strictness (block vs surface) is tunable; the secret floor is not among the tunables."
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6"]
+
+[tool.setuptools]
+package-dir = {"loam.secure_build_baseline" = "src/loam/secure_build_baseline"}
+packages = ["loam.secure_build_baseline"]

@@ -254,7 +254,17 @@ rows:
       Writes a credential, token, or .env into version control — a
       universal, high-blast-radius betrayal.
     source: "CLAUDE.md §Universal-principles (NEVER commit secrets or .env); feedback corpus (no-secrets rule)"
-    guard: "the secret-pattern guard hook + the dangerous-flag guard hook"
+    guard: >-
+      the secret-pattern guard hook + the dangerous-flag guard hook —
+      now EXTENDED (AC.SBB.1, secure-build baseline) with a staged-diff scan
+      at the commit/push boundary: a `git commit` / `git push` triggers a
+      scan of the content the boundary would publish (the staged diff for
+      commit, the unpushed range for push) for the same credential shapes,
+      catching a secret embedded in a FILE — not just on the command line —
+      and firing for the artifact loam BUILDS (any repo under cwd), not only
+      loam's own. The staged-diff path is strictly additive (the inbound
+      paste path's fail-OPEN convention is preserved) and the secret floor
+      is non-tunable (AC.SBB.4 — its strictness cannot be downgraded).
     guard_kind: hook
     guard_ref: "framework/safety-layer/hooks/secret_pattern_guard.py"
     default_on: "YES"
@@ -263,7 +273,13 @@ rows:
     verification: >-
       secret_pattern_guard + dangerous_flag_guard ship in the safety-layer
       hook set — UNIVERSAL (not dev-mode-gated). Their presence in the
-      safety-layer is the registration ground truth.
+      safety-layer is the registration ground truth. The AC.SBB.1
+      staged-diff extension is verified by
+      framework/safety-layer/tests/test_AC_SBB_1_secret_at_commit_boundary.py
+      (real hook subprocess against a real temp git repo: a staged-file
+      secret is denied at `git commit`, an unpushed-commit secret is denied
+      at `git push`, the value is never echoed, a non-repo read fails OPEN)
+      plus the pre-existing fail-open regression suite (zero regression).
 
   - id: FM.DESTRUCTIVE-PRUNE
     name: "Deletes a load-bearing thing while pruning"
@@ -494,3 +510,88 @@ rows:
       and out of this floor's scope — the framework-side DEFAULT POSTURE (no
       fresh record => refuse) is what this guard enforces and what the suite
       verifies.
+
+  - id: FM.VULN-DEPENDENCY-SHIPPED
+    name: "Ships a build with a known-vulnerable dependency"
+    description: >-
+      Produces a build artifact that pulls in a dependency with a publicly
+      known security vulnerability — the build looks fine and runs, but
+      ships a hole someone else has already documented (doctrine:
+      "breaking the surrounding work"; Lens 0 protection floor — shipping a
+      known-CVE artifact).
+    source: >-
+      docs/plans/deploy-safety-floor-gate-primitives.md (AC.SBB.2);
+      docs/FUTURE_IDEAS_DRAFT.md F-SECURE-BUILD-BASELINE (Tilth directive);
+      docs/design/loam-doctrine.md §two-sides-of-leg-2 (Lens 0 protection
+      floor)
+    guard: >-
+      the secure-build baseline dependency-hygiene gate — on a build /
+      publish command in a supported ecosystem (Node/Next, Python) the floor
+      runs the ecosystem's OWN audit tool (`npm audit` / `pip-audit`; Lens 1
+      compose, never a re-implemented vuln DB) and, on a vulnerability at or
+      above a configured severity floor, blocks-or-surfaces per the
+      configured strictness; a clean audit passes silently; an audit tool
+      that is unavailable is SURFACED honestly (never reported as clean for
+      an audit that did not run). Strictness (block vs surface) is the only
+      tunable.
+    guard_kind: hook
+    guard_ref: "framework/secure-build-baseline/src/loam/secure_build_baseline/dependency_audit.py:run_ecosystem_audit"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      framework/secure-build-baseline/tests/test_AC_SBB_2_dependency_audit_gate.py
+      drives run_ecosystem_audit with injected ecosystem-audit JSON: a vuln
+      at/above the floor produces a finding (not clean), below-floor vulns
+      pass silently, the severity floor is configurable, an unavailable tool
+      is marked must-surface (NOT clean), and pip-audit-shaped JSON parses.
+      The gate is wired default-on for every workspace via
+      framework/secure-build-baseline/hooks/settings.fragment.json (the
+      secure_build_baseline_guard.py:main entry-point), composed into
+      .claude/settings.json by the sealed workspace-sync auto-composer (same
+      framework-native wiring as the deploy-safety floor). The live audit DB
+      itself is the ecosystem tool's, not loam's (compose, don't
+      re-implement).
+
+  - id: FM.ARTIFACT-LEAKS-RUNTIME-STATE
+    name: "Sweeps harness working state into the shipped artifact"
+    description: >-
+      A broad `git add -A` / `git commit -a` sweeps the harness's own
+      runtime working state — scratch files, per-workspace memory queues,
+      tracker SQLite DBs — or a secret / .env into the project being built,
+      so internal state and credentials leak into the shipped artifact
+      (doctrine: "breaking the surrounding work or the original goal"; Lens 0
+      protection floor — leaking internal state / secrets).
+    source: >-
+      docs/plans/deploy-safety-floor-gate-primitives.md (AC.SBB.3 / .4);
+      docs/FUTURE_IDEAS_DRAFT.md F-SECURE-BUILD-BASELINE (Tilth directive)
+    guard: >-
+      the secure-build baseline artifact-cleanliness guard — a generated
+      project carries the floor `.gitignore` (harness runtime state +
+      secrets), and a pre-commit sweep inspects a broad-stage command's
+      target repo for runtime-state / secret paths that are present and NOT
+      git-ignored (would enter the artifact under `git add -A`), then
+      blocks-or-surfaces per strictness. Sample/example secret files are
+      exempt. The secret-never-committed half is the non-tunable floor
+      (AC.SBB.4); artifact-cleanliness strictness (block vs surface) is the
+      tunable.
+    guard_kind: hook
+    guard_ref: "framework/secure-build-baseline/src/loam/secure_build_baseline/artifact_sweep.py:offending_paths"
+    default_on: "YES"
+    class: floor
+    proportionality_note: ""
+    verification: >-
+      framework/secure-build-baseline/tests/test_AC_SBB_3_artifact_cleanliness.py
+      exercises the floor `.gitignore` (covers .scratch/ + memory queues +
+      *.sqlite + .env + secret-file family) and the sweep against a REAL temp
+      git repo: unignored runtime state is flagged offending, the same paths
+      with the floor `.gitignore` in place are NOT offending, and an
+      end-to-end `git add -A` does not stage them. The outcome-altitude
+      test_AC_SBB_C_outcome_altitude.py drives the REAL PreToolUse hook
+      entry-point over raw stdin against a real on-disk repo (no pre-arranged
+      state): `git add -A` with an unignored `.env` returns a deny naming the
+      path in plain words; with the floor `.gitignore` present it returns no
+      deny; a non-repo directory fails soft. Registered default-on via
+      framework/secure-build-baseline/hooks/settings.fragment.json
+      (secure_build_baseline_guard.py:main), composed by the sealed
+      workspace-sync auto-composer.

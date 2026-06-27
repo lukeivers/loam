@@ -1,0 +1,17 @@
+{
+  "_comment": "STAGED secure-build baseline hook wiring — NOT a live-harness edit. This fragment is the authoritative, PORTABLE shape of the `hooks` block that registers the secure-build-baseline PreToolUse gate (framework-native FLOOR per docs/plans/deploy-safety-floor-gate-primitives.md, Sub-cycle C). It composes into a workspace's .claude/settings.json automatically on the next successful pos-sync via the sealed workspace-sync settings-fragment auto-composer (additively, idempotently, preserving non-loam entries, with ${LOAM_REPO} resolved to the absolute repo root). The gate enforces the build floor for the artifact loam PRODUCES: artifact-cleanliness (a broad `git add -A` / `commit -a` that would sweep harness runtime state or a secret into the artifact is blocked-or-surfaced per strictness, AC.SBB.3) and dependency-hygiene (a build/publish command in a supported ecosystem runs `npm audit` / `pip-audit` and gates on a configured severity floor; a clean audit passes silently; an unavailable audit tool is surfaced honestly, AC.SBB.2). The third guarantee, secrets-never-committed (AC.SBB.1), is enforced by the safety-layer secret_pattern_guard staged-diff extension and is a NON-tunable floor (AC.SBB.4). FAULT POLICY: fail-soft — a fault in the gate's own evaluation exits 0 without blocking (the floor must not turn its own bug into a wall in front of every build); the guarantees are on by default and only their strictness (block vs surface) is tunable, with the secret floor not among the tunables. Disable-friction (plan Decision E): on by default; non-trivially-disable-able (LOAM_SAFETY_HOOKS=off / LOAM_SECURE_BUILD=off, logged); TRUE non-disable is the Claude Code managed-settings / admin-policy path. The matcher scopes the hook to Bash (the build/commit boundary); read/write tools never invoke it.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${LOAM_REPO}/.venv/bin/python ${LOAM_REPO}/framework/secure-build-baseline/hooks/secure_build_baseline_guard.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

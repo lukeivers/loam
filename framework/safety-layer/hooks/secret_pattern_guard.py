@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Secret-pattern PreToolUse gate (AC.SECHK.1 + AC.SECHK.B2-MIGRATION-*).
+"""Secret-pattern PreToolUse gate (AC.SECHK.1 + AC.SECHK.B2-MIGRATION-*
++ AC.SBB.1).
 
-Two pattern families compose:
+Three pattern families compose:
 
 * **CONTENT patterns** (14-pattern ECC floor + workspace-additions).
   Match against:
@@ -27,6 +28,20 @@ Two pattern families compose:
   ``plugins/dev-sdlc/hooks/bash_guard.py`` per D-SECHK.OVERLAP
   partial-absorb). Match against Bash commands that stage / commit /
   stash secret-class files (``.env``, ``*.pem``, ``id_rsa``, etc.).
+* **STAGED-DIFF patterns** (AC.SBB.1 — secure-build baseline, Sub-cycle
+  C). A ``git commit`` / ``git push`` boundary command triggers a scan of
+  the *staged diff* (commit) or the *unpushed commit range* (push) of the
+  repository the command runs in (``cwd``) for the same CONTENT credential
+  shapes. This catches a secret embedded in a file's CONTENT — not just a
+  literal in the command string — at the commit/push boundary, and fires
+  for the artifact loam BUILDS (any repo under ``cwd``), not only loam's
+  own repository. The scanned content is read via ``git`` against ``cwd``;
+  no secret value is ever echoed (the deny reason carries only a redacted
+  token shape). This path is **strictly additive**: it adds a new branch
+  on the Bash path and changes none of the existing CONTENT / FILE logic
+  or the guard's fail-OPEN fault policy (the staged-diff read fails SOFT —
+  any ``git`` error yields no match, so the inbound-paste path's
+  ``D-SECHK.FAIL-OPEN`` behavior is preserved unchanged).
 
 Fires regardless of workspace mode (UNIVERSAL). Per
 ``feedback_no_amend_in_agent_dispatches`` / D-SECHK.FAIL-OPEN:
@@ -49,6 +64,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -214,6 +231,104 @@ def _reason_file(matched_paths: list[str]) -> str:
     )
 
 
+# ---- STAGED-DIFF boundary scan (AC.SBB.1, secure-build baseline).
+# A commit / push boundary command triggers a scan of the repo's staged
+# diff (commit) or unpushed range (push) for CONTENT credential shapes.
+# The git invocation is read-only and target-scoped to the command's
+# ``cwd`` repository, so it covers the artifact loam BUILDS, not only
+# loam's own repo. Every git error is swallowed (returns no diff text) so
+# the guard's fail-OPEN fault policy is preserved (a broken git read never
+# blocks; it simply yields no match).
+
+# A commit boundary: ``git commit`` (allowing global flags between ``git``
+# and the ``commit`` subcommand). A push boundary: ``git push``. The match
+# is anchored on the subcommand token so ``git log --grep=commit`` /
+# ``git show`` do not trip it.
+_GIT_COMMIT_RE = re.compile(r"\bgit\b(?:\s+-{1,2}\S+)*\s+commit\b")
+_GIT_PUSH_RE = re.compile(r"\bgit\b(?:\s+-{1,2}\S+)*\s+push\b")
+
+
+def _is_commit_boundary(command: str) -> bool:
+    return bool(_GIT_COMMIT_RE.search(command))
+
+
+def _is_push_boundary(command: str) -> bool:
+    return bool(_GIT_PUSH_RE.search(command))
+
+
+def _git_text(cwd: Path, args: list[str]) -> str:
+    """Run a read-only ``git`` command in *cwd*; return stdout or "".
+
+    Fail-SOFT: any non-zero exit, missing git, or OS error yields the
+    empty string (no match) so the staged-diff scan can never block on a
+    git read failure — preserving the guard's ``D-SECHK.FAIL-OPEN``
+    fault policy (AC.SBB.1 additive constraint)."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(cwd), *args],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout or ""
+
+
+def _boundary_diff_text(workspace_root: Path, command: str) -> str:
+    """Collect the content a commit/push boundary would publish.
+
+    Commit boundary -> the staged diff (``git diff --cached``). Push
+    boundary -> the unpushed commit range against the tracked upstream
+    (``git log -p @{upstream}..HEAD``), falling back to the full local
+    history when no upstream is configured (a first push). Returns "" on
+    any git failure (fail-soft)."""
+    parts: list[str] = []
+    if _is_commit_boundary(command):
+        parts.append(_git_text(workspace_root, ["diff", "--cached", "--no-color"]))
+    if _is_push_boundary(command):
+        rng = _git_text(
+            workspace_root,
+            ["log", "-p", "--no-color", "@{upstream}..HEAD"],
+        )
+        if not rng.strip():
+            # No upstream configured (first push) — scan local history so
+            # an initial push of an embedded secret is still caught.
+            rng = _git_text(workspace_root, ["log", "-p", "--no-color"])
+        parts.append(rng)
+    return "\n".join(p for p in parts if p)
+
+
+def _reason_staged_diff(pattern_name: str, matched_text: str) -> str:
+    redacted = (
+        matched_text[:6] + "..." + matched_text[-4:]
+        if len(matched_text) > 16
+        else matched_text[:4] + "..."
+    )
+    return (
+        f"AC.SBB.1 (secret-at-commit, secure-build baseline, UNIVERSAL) — "
+        f"refused: the content this commit/push would publish matches "
+        f"credential pattern `{pattern_name}` (token redacted: "
+        f"`{redacted}`). A secret embedded in a file (not just on the "
+        f"command line) was found in the staged diff / unpushed commits of "
+        f"the repository this command targets — the secure-build baseline "
+        f"blocks it at the commit/push boundary so the credential never "
+        f"enters version control (this fires for any project loam builds, "
+        f"not only loam's own repo). Repair directions: (a) remove the "
+        f"credential from the file and re-stage; (b) source it from an env "
+        f"var / secret store at runtime; (c) if it is a sample, move it to "
+        f"a `.env.example` / `.env.sample` documentation file. "
+        f"`secret-never-committed` is a NON-tunable floor of the "
+        f"secure-build baseline (AC.SBB.4) — its strictness is not "
+        f"configurable down to surface-only. Set "
+        f"`LOAM_SAFETY_HOOKS_SECRET=off` for the session to bypass this "
+        f"hook (the toggle is logged to "
+        f"`<workspace>/.loam/safety-hooks.log`)."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Hook entry. Reads PreToolUse envelope from stdin; emits
     allow/deny; always exits 0 (fail-soft per A2/A3 convention)."""
@@ -273,6 +388,35 @@ def main(argv: list[str] | None = None) -> int:
                             "class": "secret-file",
                             "tool": tool_name,
                             "matched": ", ".join(paths),
+                        },
+                    )
+                    return 0
+
+        # ---- STAGED-DIFF patterns (AC.SBB.1) — Bash commit/push boundary.
+        # Additive: scans the content a commit/push would PUBLISH (staged
+        # diff / unpushed range) for the same CONTENT credential shapes.
+        # Fail-soft git read => no match => existing fail-OPEN preserved.
+        if tool_name == "Bash":
+            cmd = tool_input.get("command")
+            if isinstance(cmd, str) and (
+                _is_commit_boundary(cmd) or _is_push_boundary(cmd)
+            ):
+                diff_text = _boundary_diff_text(workspace_root, cmd)
+                matched, pattern_name, matched_text = _check_content_patterns(
+                    workspace_root, diff_text
+                )
+                if matched:
+                    reason = _reason_staged_diff(pattern_name, matched_text)
+                    _emit_deny(reason, pattern_name=pattern_name)
+                    _append_log(
+                        workspace_root,
+                        {
+                            "ts": _now_iso(),
+                            "hook": "secret_pattern_guard",
+                            "decision": "deny",
+                            "class": "secret-at-commit",
+                            "tool": tool_name,
+                            "pattern": pattern_name,
                         },
                     )
                     return 0

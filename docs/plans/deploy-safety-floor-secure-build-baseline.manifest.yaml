@@ -1,0 +1,180 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deploy-safety-floor-secure-build-baseline
+  title: "Deploy-safety FLOOR — secure-build baseline (Sub-cycle C: secrets-never-committed at the commit/push boundary [safety-layer EXTEND, additive] + dependency-hygiene audit gate [npm audit / pip-audit, composed] + artifact-cleanliness [floor .gitignore + pre-commit sweep] + non-tunable build floor; AC.SBB.1-4 + AC.COV.1)"
+
+# BASELINE: 5d66451f — the canonical tip at build-dispatch time, the commit
+# immediately preceding this cycle's source-edit commit (the house HEAD~1
+# advance pattern). This NEW component's first seal fences against it; the
+# safety-layer EXTEND (AC.SBB.1) is declared as a manifest partner so the
+# whole-repo diff window admits its surface, and its STRUCTURAL seal_test
+# (A15/A17/A18) carries no allowed_* diff bindings — the safety-layer source
+# edits live in the baseline..HEAD window and are admitted via this
+# component's extra_allowed_prefixes (framework/safety-layer/).
+#
+# Pre-build sync check: canonical HEAD was 5d66451f, 10 commits AHEAD of
+# origin/main (1fcad58) from Sub-cycles A + B local seals + §12/§13
+# backfill (not yet pushed); built on local HEAD per
+# feedback_build_forward_on_publish_pending.
+#
+# AC families locked per docs/plans/deploy-safety-floor-gate-primitives.md §5
+# (Sub-cycle C scope ONLY — A (config/classifier/attestation) and B
+# (fail-policy primitive) are DONE and OUT of this cycle):
+#   AC.SBB.1  — secrets-never-committed at the commit/push boundary. The
+#               safety-layer secret_pattern_guard is EXTENDED additively with
+#               a staged-diff scan: a git commit/push boundary command scans
+#               the content the boundary would publish (staged diff / unpushed
+#               range) for credential shapes; fires for the artifact loam
+#               BUILDS (any repo under cwd), not only loam's own; no secret
+#               value echoed. Strictly additive — the inbound-paste fail-OPEN
+#               (D-SECHK.FAIL-OPEN) path is unchanged (plan §8 HALT honored).
+#   AC.SBB.2  — dependency-hygiene audit gate. On a build of a supported
+#               ecosystem (Node/Next + Python first) the floor runs the
+#               ecosystem's OWN audit (npm audit / pip-audit; Lens 1 compose,
+#               not a re-implemented vuln DB) and, on a vuln at/above a
+#               configured severity floor, blocks-or-surfaces per strictness;
+#               a clean audit passes silently; an unavailable tool is
+#               SURFACED honestly (never faked clean — Lens 0).
+#   AC.SBB.3  — artifact-cleanliness. A generated project carries the floor
+#               .gitignore (harness runtime state: .scratch/ + memory queues
+#               + tracker *.sqlite; plus secrets/.env) AND a pre-commit sweep
+#               keeps those paths out even under git add -A.
+#   AC.SBB.4  — the baseline is a NON-tunable floor. The three guarantees are
+#               on for every build by default; only their strictness (block
+#               vs surface) is tunable; "a secret is never committed" is NOT
+#               among the tunables.
+#   AC.COV.1  — every new guard catalogued in failure-mode-guard-matrix.yaml
+#               (default_on YES, class floor, resolvable guard_ref): the
+#               enriched FM.SECRET-LEAK (AC.SBB.1 staged-diff extension), the
+#               new FM.VULN-DEPENDENCY-SHIPPED (AC.SBB.2) and
+#               FM.ARTIFACT-LEAKS-RUNTIME-STATE (AC.SBB.3); companion
+#               docs/design/protection-matrix.md regenerated; `loam guards`
+#               reports all three [ok], zero divergence, no NEW floor gap.
+#
+# Outcome-altitude: test_AC_SBB_C_outcome_altitude.py drives the REAL
+# secure_build_baseline PreToolUse hook entry-point over raw stdin against a
+# real on-disk git repo with no pre-arranged state (git add -A with an
+# unignored .env -> deny naming the path in plain words; floor .gitignore
+# present -> no deny; non-repo -> fail soft). AC.SBB.1's safety-layer
+# extension is likewise driven at the real hook subprocess against a real
+# temp git repo.
+baseline: "5d66451fbefc5aca9ea1503c8a0a9169a6bd0efb"
+
+plan: docs/plans/deploy-safety-floor-gate-primitives.md
+plan_doc_ref: docs/plans/deploy-safety-floor-gate-primitives.md
+
+components:
+  - name: secure-build-baseline
+    new_component: true            # first-seal; no pre-existing sidecar to advance
+    seal_test: framework/secure-build-baseline/tests/test_no_sealed_amendments.py
+    sidecar: framework/secure-build-baseline/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+  - name: safety-layer
+    seal_test: framework/safety-layer/tests/test_no_sealed_amendments.py
+    sidecar: framework/safety-layer/tests/SEAL_COMMIT
+    frozen_baseline: false
+    # safety-layer's seal_test is the STRUCTURAL invariants test
+    # (A15/A17/A18) — no allowed_* diff bindings. Its baseline..HEAD window
+    # (source edit + sidecar advance + this cycle's secret_pattern_guard
+    # extension) is admitted via the secure-build-baseline component's
+    # whole-repo fence (which lists framework/safety-layer/ as an allowed
+    # prefix) AND here so the per-component dry-run report is clean. The
+    # additive extension preserves D-SECHK.FAIL-OPEN (plan §8).
+    extra_allowed_prefixes:
+      - framework/safety-layer/
+
+# Universal admissions — per amendment #22 ruling #3. The manifest + plan-doc
+# ride docs/plans/; the protection-matrix catalogue row(s) + regenerated
+# companion ride as universal-admitted partners (plan §6: catalogue rows
+# folded into the sub-cycle's fence as a universal admission, NOT a second
+# sealed-component entry). docs/STATE.md + the FUTURE_IDEAS graduation are
+# dispatcher-side backfill (Sub-cycle A/B precedent) but admitted here so a
+# clean seal is possible if they land in-cycle.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+    - docs/design/protection-matrix.md
+    - framework/protection-matrix/data/failure-mode-guard-matrix.yaml
+
+narrative:
+  target: framework/secure-build-baseline/seals/SEAL_COMMIT.deploy-safety-floor-secure-build-baseline
+  body: |
+    # Deploy-safety FLOOR — secure-build baseline (Sub-cycle C) — apply ladder
+
+    Per `docs/plans/deploy-safety-floor-gate-primitives.md` §6 Sub-cycle C —
+    the always-on secure-build FLOOR for the artifact loam PRODUCES (Tilth
+    `F-SECURE-BUILD-BASELINE`). A distinct surface from securing loam itself:
+    the three guarantees are on for every build by default.
+
+    Scope (plan §6 Sub-cycle C): NEW component
+    `framework/secure-build-baseline/` + an additive EXTEND of the sealed
+    `framework/safety-layer/` secret_pattern_guard.
+
+      - AC.SBB.1 — secrets-never-committed at the commit/push boundary. The
+        safety-layer `secret_pattern_guard` is EXTENDED (strictly additively)
+        with a staged-diff scan: a `git commit` / `git push` boundary command
+        triggers a scan of the content the boundary would publish (the staged
+        diff for commit, the unpushed range for push) for the same CONTENT
+        credential shapes — catching a secret embedded in a FILE, not just on
+        the command line, and firing for any repo loam BUILDS (read via `git`
+        against the command's cwd), not only loam's own. No secret value is
+        echoed (redacted token shape only). The new branch and helpers change
+        none of the existing CONTENT/FILE logic and none of the guard's
+        fail-OPEN fault policy: a `git` read failure yields no match, so the
+        inbound-paste path's `D-SECHK.FAIL-OPEN` behavior is unchanged (plan
+        §8 HALT honored — verified by the fail-open regression suites).
+      - AC.SBB.2 — dependency-hygiene audit gate. On a build/publish command
+        in a supported ecosystem (Node/Next, Python) the floor runs the
+        ecosystem's OWN audit (`npm audit` / `pip-audit`) through an
+        injectable runner and gates on a configured severity floor:
+        block-or-surface per strictness on a vuln at/above floor, a clean
+        audit passes silently, and an UNAVAILABLE audit tool is surfaced
+        honestly (never reported clean for an audit that did not run — Lens 0).
+        Composes on the ecosystem's vuln DB; loam re-implements none (Lens 1).
+      - AC.SBB.3 — artifact-cleanliness. `gitignore_template` is the single
+        source of truth for the floor `.gitignore` (harness runtime state —
+        `.scratch/`, per-workspace memory queues, tracker `*.sqlite` — plus
+        secrets / `.env`). `artifact_sweep` is the runtime enforcement: on a
+        broad-stage command (`git add -A` / `.` / `commit -a`) it inspects the
+        target repo for runtime-state / secret paths that are present and NOT
+        git-ignored (would enter the artifact) and blocks-or-surfaces.
+      - AC.SBB.4 — the baseline is a NON-tunable floor. The three guarantees
+        are on for every build by default; the ONLY tunable is each
+        guarantee's strictness (block vs surface, via
+        `<workspace>/.loam/secure-build.yaml`); `secret-commit` is NOT among
+        the tunables — `resolve_strictness` ignores any config attempt to
+        downgrade it and the floor stays at BLOCK.
+      - AC.COV.1 — catalogue coverage. FM.SECRET-LEAK is enriched with the
+        AC.SBB.1 staged-diff extension; FM.VULN-DEPENDENCY-SHIPPED (AC.SBB.2)
+        and FM.ARTIFACT-LEAKS-RUNTIME-STATE (AC.SBB.3) are added — all
+        `default_on: YES`, `class: floor`, with guard_refs that resolve
+        against the real tree. The companion `docs/design/protection-matrix.md`
+        is regenerated; `loam guards` reports all three `[ok]`, zero
+        divergence, and NO new floor gap (gap count unchanged).
+
+    Lens 1 (compose, don't re-derive): the dependency audit shells out to the
+    ecosystem's own tool; the secret-at-commit guard reuses the safety-layer's
+    sealed CONTENT-pattern set (`all_content_patterns`) rather than minting a
+    second pattern catalogue.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the ACs (§5), the named decisions (B home / Decision E disable-friction),
+    the fence (§2/§6), and the halt triggers (§8), not the implementation.
+
+    NEW-component first-seal fence on `framework/secure-build-baseline/`; the
+    safety-layer extend rides as a declared manifest partner; the
+    protection-matrix catalogue rows + companion ride as universal-admitted
+    partners (plan §6).
+
+    Predecessor: 5d66451f — the canonical tip at source-edit (HEAD~1 of the
+    feat commit), carrying Sub-cycles A (cf1ed11) + B (828de228) local seals.
+
+ac_count: 5
+smoke_outcome: "real PreToolUse hooks deny a staged-file secret at git commit + a broad git add -A that would sweep an unignored .env; clean repos pass; loam guards all [ok], no new floor gap"

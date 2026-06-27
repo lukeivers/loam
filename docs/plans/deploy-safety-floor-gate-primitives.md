@@ -298,3 +298,67 @@ gate's own internal-budget timeout routed through it).
 **Out of this cycle:** Sub-cycle C (secure-build baseline, AC.SBB.*). Pending
 dispatcher-side backfill: `docs/STATE.md` change-log row, roadmap §8, the
 parent architecture-decision doc's method-decision register.
+
+---
+
+## §14. Build SHA register (Sub-cycle C — sealed local 2026-06-27)
+
+Built by `loam-builder` on canonical `main`, local seal only (owner gates
+the release; no push, no publish). Pre-build sync check: canonical HEAD was
+`5d66451f`, **10 commits ahead** of `origin/main` (`1fcad58`) from Sub-cycles
+A + B local seals + §12/§13 backfill (not yet pushed); built on local HEAD
+per `feedback_build_forward_on_publish_pending`.
+
+This is the FINAL sub-cycle of the floor: the framework-side secure-build
+baseline (Tilth `F-SECURE-BUILD-BASELINE`) for the artifact loam PRODUCES.
+Fence: NEW component `framework/secure-build-baseline/` + an **additive**
+EXTEND of the sealed `framework/safety-layer/` `secret_pattern_guard`
+(AC.SBB.1) + protection-matrix catalogue rows (universal-admitted, AC.COV.1).
+
+| Commit | SHA | Note |
+|---|---|---|
+| BASELINE (plan tip, Sub-cycle B §13 register) | `5d66451fbefc5aca9ea1503c8a0a9169a6bd0efb` | the HEAD~1 the NEW component's fence pins to |
+| Source (feat, commit S) | `bd11429c65a7af96baa0013e061b6214ccbcca21` | new component + additive safety-layer extend + new safety-layer test + 2 new + 1 enriched protection-matrix row + regenerated companion |
+| Apply | `149e8e4251baa3c1b1f5ec98fbd47a71088d53da` | schema-v3 merged manifest+apply; sidecar advance (secure-build-baseline + safety-layer) to baseline; safety-layer BASELINE literal correctly skipped (structural test) |
+| Seal | `3225eeee961926b3f90450f93b77e25cc7970648` | deterministic seal; touched suites (safety-layer 202 + secure-build-baseline 31) + guard-sweep floor green; post-seal `apply --dry-run` clean |
+
+**ACs satisfied (Sub-cycle C):** AC.SBB.1, AC.SBB.2, AC.SBB.3, AC.SBB.4,
+AC.COV.1; plus the outcome-altitude
+`test_AC_SBB_C_outcome_altitude` (real PreToolUse hook entry-point over raw
+stdin, no pre-arranged state). **Tests:**
+`framework/secure-build-baseline/tests/` 31 passed;
+`framework/safety-layer/tests/` 202 passed (the +7 `test_AC_SBB_1_*` staged-
+diff tests, plus the pre-existing `test_AC_SECHK_4_fail_open` /
+`test_AC_WDGUARD_5_fail_open` fail-open regression suites still green — the
+extension is strictly additive, plan §8 HALT honored);
+`framework/protection-matrix/tests/` 42 passed (the enriched FM.SECRET-LEAK +
+new FM.VULN-DEPENDENCY-SHIPPED + FM.ARTIFACT-LEAKS-RUNTIME-STATE rows
+catalogued + companion regenerated; `loam guards` reports all three `[ok]`,
+DIVERGENCES none, gap count unchanged at 10 — no new floor gap).
+
+**Field-contract re-verify (flag 14, information-trust):** the Claude Code
+PreToolUse `permissionDecision` field contract was re-verified live against
+`code.claude.com/docs/en/hooks` at build time —
+`hookSpecificOutput.{ hookEventName, permissionDecision ∈
+{allow,deny,ask,defer}, permissionDecisionReason }`. No drift from the
+sealed `secret_pattern_guard` / `deploy_safety_floor_guard` shape; the
+HALT-on-drift condition did not fire.
+
+**Scope boundary (F2-surfaced):** AC.SBB.1's enforcement lives in
+`safety-layer` (plan §2 placement) and was extended ADDITIVELY — a new
+commit/push-boundary branch reusing the sealed CONTENT-pattern set; none of
+the existing CONTENT/FILE logic or the `D-SECHK.FAIL-OPEN` fault policy
+changed (a `git` read failure yields no match, so the inbound-paste path's
+fail-open behavior is preserved). The `secret-commit` floor's NON-tunability
+(AC.SBB.4) is declared in the secure-build-baseline `strictness` module (the
+config surface) even though the enforcing guard is in safety-layer. The
+dependency-audit composes on the ecosystem's OWN tool via an injectable
+runner; when the tool is unavailable the gate SURFACES rather than faking a
+clean result (Lens 0 honesty — no oversold guarantee).
+
+**Pending dispatcher-side backfill:** `docs/STATE.md` change-log row, roadmap
+§8, the parent architecture-decision doc's method-decision register, and the
+`docs/FUTURE_IDEAS_DRAFT.md` F-SECURE-BUILD-BASELINE graduation mark (LEFT
+unmarked this cycle — the file already carries a dispatcher-owned uncommitted
+edit, so marking it in-cycle would commingle with that change; deferred to
+the dispatcher to keep the dispatcher-owned file exactly as found).

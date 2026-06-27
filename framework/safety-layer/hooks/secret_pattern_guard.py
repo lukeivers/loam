@@ -65,6 +65,11 @@ from _secret_patterns import (  # noqa: E402
     all_content_patterns,
     is_secret_file_commit,
 )
+from _fail_policy import FailPolicy, apply_fault_policy  # noqa: E402
+
+# Declared per-gate fail-policy (AC.DSF.5): ADVISORY guard — fails OPEN on
+# its own internal fault (D-SECHK.FAIL-OPEN, unchanged).
+FAIL_POLICY = FailPolicy.FAIL_OPEN
 
 
 SAFETY_HOOKS_LOG_RELATIVE = (".loam", "safety-hooks.log")
@@ -294,14 +299,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         return 0
-    except Exception as exc:  # noqa: BLE001 — fail-OPEN per D-SECHK.FAIL-OPEN
+    except Exception as exc:  # noqa: BLE001 — declared fail-policy (D-SECHK.FAIL-OPEN)
+        decision = apply_fault_policy(FAIL_POLICY)
         if workspace_root is not None:
             _append_log(
                 workspace_root,
                 {
                     "ts": _now_iso(),
                     "hook": "secret_pattern_guard",
-                    "decision": "fail-open",
+                    "decision": decision.label,
                     "exception": f"{type(exc).__name__}: {exc!s}",
                 },
             )

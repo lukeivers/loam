@@ -82,6 +82,20 @@ from pathlib import Path
 from typing import Any
 
 
+# Ensure the sibling fail-policy helper resolves when the hook runs as a
+# standalone script. Stdlib-only sibling import — does NOT pull the
+# loam.safety_layer package.
+_HOOKS_DIR = Path(__file__).resolve().parent
+if str(_HOOKS_DIR) not in sys.path:
+    sys.path.insert(0, str(_HOOKS_DIR))
+
+from _fail_policy import FailPolicy, apply_fault_policy  # noqa: E402
+
+# Declared per-gate fail-policy (AC.DSF.5): ADVISORY guard — fails OPEN on
+# its own internal fault (D-SECHK.FAIL-OPEN, unchanged).
+FAIL_POLICY = FailPolicy.FAIL_OPEN
+
+
 SAFETY_HOOKS_LOG_RELATIVE = (".loam", "safety-hooks.log")
 ENV_TOGGLE_ALL = "LOAM_SAFETY_HOOKS"
 ENV_TOGGLE_THIS = "LOAM_WD_GUARD"
@@ -405,13 +419,14 @@ def main(argv: list[str] | None = None) -> int:
             },
         )
         return 0
-    except Exception as exc:  # noqa: BLE001 — fail-OPEN per D-SECHK.FAIL-OPEN
+    except Exception as exc:  # noqa: BLE001 — declared fail-policy (D-SECHK.FAIL-OPEN)
+        decision = apply_fault_policy(FAIL_POLICY)
         _append_log(
             workspace_root,
             {
                 "ts": _now_iso(),
                 "hook": "wd_discipline_guard",
-                "decision": "fail-open",
+                "decision": decision.label,
                 "exception": f"{type(exc).__name__}: {exc!s}",
             },
         )

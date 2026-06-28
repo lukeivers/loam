@@ -198,7 +198,14 @@ which has no recency blend). Until that sync, this is dormant in pos3.
 
 | Item | SHA |
 |---|---|
-| source (feat) | TBD |
-| apply | TBD |
-| seal | TBD |
-| §14 backfill | TBD |
+| plan-doc | `25610cbf` |
+| source (feat + AC.VOL.* tests) | `779d306f` |
+| manifest | `f6bfb490` |
+| apply | `f9fb305c` |
+| seal | `fe7e2de2` |
+| §14 backfill | (this commit) |
+
+Baseline (seal-diff window open): `a7c9f1b2`. Seal-diff window
+`a7c9f1b2..f9fb305c` (SEAL_COMMIT sidecar = the apply commit, house
+pattern). Local seal only — NOT pushed, NOT published, NOT synced to
+pos3 (live activation is the dispatcher's owner-gated call — see §8).

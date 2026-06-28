@@ -373,6 +373,8 @@ def _episode_pointer(ep: dict[str, object]) -> str:
         summary = first.rstrip()
     if not summary:
         name = str(ep.get("name", "") or "").strip()
+        # (annotation, below, is keyed on body content; a name-only
+        # episode degrades to no pointer before reaching it).
         # Strip the internal ``turn/`` prefix; an opaque turn-id is not
         # a user-facing pointer, so a name-only episode degrades to no
         # pointer (dropped by _render_injection) rather than leaking it.
@@ -381,6 +383,23 @@ def _episode_pointer(ep: dict[str, object]) -> str:
         summary = name
     if not summary:
         return ""
+    # AC.VOL.4 / D1 — a SOFT-volatile episode survives recall (born open)
+    # but its surfaced pointer is annotated so the session re-verifies the
+    # claim before serving it as current rather than trusting stale recall.
+    # The classifier is single-sourced in file_memory (lazy import — the
+    # module convention keeps keep_pace importable without the full
+    # persona surface). HARD-volatile never reaches here (filtered from
+    # the current view upstream); DURABLE gets no annotation.
+    content = str(ep.get("content", "") or "").strip()
+    if content:
+        from ..file_memory import (  # noqa: WPS433
+            VOLATILITY_SOFT,
+            VOLATILE_SOFT_ANNOTATION,
+            classify_volatility,
+        )
+
+        if classify_volatility(content) == VOLATILITY_SOFT:
+            return f"From an earlier turn: {VOLATILE_SOFT_ANNOTATION} {summary}"
     return f"From an earlier turn: {summary}"
 
 

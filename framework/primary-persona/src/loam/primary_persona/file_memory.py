@@ -77,7 +77,7 @@ import os
 import re
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -282,6 +282,130 @@ def _salience_from_body(body: str) -> float:
         return compute_salience(u, a)
     except Exception:  # noqa: BLE001 — never-drop floor
         return SALIENCE_FULL
+
+
+# --- AC.VOL.1 — write-side volatility classifier -----------------------
+#
+# A captured fact is classified into one of three volatility classes so
+# the read side can dispose of it without ever serving a stale
+# operational-status claim as current (Lens-0 protection: no
+# confidently-wrong recall). Deterministic, stdlib-only (``re``), keyed
+# on the tells the feedback memory names:
+#
+#   * VOLATILITY_HARD  — an unambiguous operational-status claim
+#     (is-broken / up-down / current-version / latest-SHA /
+#     pending-count / who's-allowed). Born with a CLOSED interval
+#     (``volatile_until``) so the default current view FILTERS it out
+#     (hard-exclude, D1). The durable DECISION behind it is a SEPARATE
+#     record and is never touched (D2).
+#   * VOLATILITY_SOFT  — a borderline freshness claim (``right now`` /
+#     ``as of today`` / ``at the moment`` with no hard tell), OR a hard
+#     tell that co-occurs with a durable-decision signal (the D2 safe
+#     bias — ambiguity never hard-excludes). Born OPEN; surfaced with a
+#     re-verify annotation (D1).
+#   * VOLATILITY_DURABLE — everything else (the default). Born OPEN; no
+#     annotation. Fail-safe: any classifier error returns DURABLE so a
+#     misfire only ever leaves a record visible (never silently drops or
+#     excludes one — the protection floor's safe direction).
+VOLATILITY_DURABLE = "durable"
+VOLATILITY_HARD = "volatile-hard"
+VOLATILITY_SOFT = "volatile-soft"
+
+#: How long after ``reference_time`` a HARD-volatile record's validity
+#: interval stays open. Short enough that ANY cross-session recall (a
+#: separate read, after the writing instant) falls outside it and is
+#: filtered by the default current view; long enough that an ``as_of``
+#: query at the writing instant still reaches the record (filtering ≠
+#: deletion — AC.SUP.2 preserved for the volatility close).
+VOLATILE_WINDOW = timedelta(minutes=5)
+
+#: Read-side annotation prefix for a SOFT-volatile surfaced pointer
+#: (AC.VOL.4 / D1). The substance is exposed; only the re-verify
+#: caution is added.
+VOLATILE_SOFT_ANNOTATION = "[VOLATILE — re-verify before serving]"
+
+# A durable-decision signal. Its presence VETOES a hard classification
+# down to SOFT (D2): a ruling phrased with an operational tell stays
+# visible-but-annotated, never hard-excluded.
+_DURABLE_SIGNAL_RE = re.compile(
+    r"\b(?:"
+    r"decided|decision|rul(?:ed|ing)|agreed|"
+    r"we\s+will|we\s+chose|going\s+forward|"
+    r"the\s+(?:rule|policy|standard|convention)\s+is|"
+    r"by\s+convention|from\s+now\s+on|henceforth"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# The unambiguous HARD operational-status tells (D1). Each maps to one
+# of the named classes; any match (absent a durable veto) is hard.
+_HARD_VOLATILE_RES: tuple[re.Pattern[str], ...] = (
+    # is-broken / up-down — present-state service/host status.
+    re.compile(
+        r"\b(?:is|are|was|were|currently|now)\s+"
+        r"(?:broken|down|failing|offline|unavailable|unreachable|"
+        r"not\s+working|working\s+again|back\s+(?:up|online)|"
+        r"up\s+again|restored|fixed\s+now)\b",
+        re.IGNORECASE,
+    ),
+    # current-version.
+    re.compile(
+        r"\b(?:current\s+version|version\s+is|running\s+v(?:ersion)?\s*\d|"
+        r"now\s+on\s+v?\d|latest\s+version\s+is)\b",
+        re.IGNORECASE,
+    ),
+    # latest-SHA — a commit/HEAD claim with a hex sha.
+    re.compile(
+        r"\b(?:latest|current|head)\b[^\n]*\b[0-9a-f]{7,40}\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bHEAD\s+(?:is|at)\b", re.IGNORECASE),
+    # pending-count — N <units> pending/open/remaining.
+    re.compile(
+        r"\b\d+\s+(?:tasks?|items?|prs?|pull\s+requests?|tickets?|jobs?)\s+"
+        r"(?:pending|in\s+flight|open|remaining|queued|left)\b",
+        re.IGNORECASE,
+    ),
+    # who's-allowed — current access state.
+    re.compile(
+        r"\b(?:is|are)\s+(?:allowed|approved|paired|whitelisted|blocked|"
+        r"banned|on\s+the\s+allowlist)\b",
+        re.IGNORECASE,
+    ),
+)
+
+# Borderline freshness tells → SOFT (annotate, don't exclude). Present
+# tense "as of now" language with no hard operational claim.
+_SOFT_VOLATILE_RE = re.compile(
+    r"\b(?:right\s+now|as\s+of\s+(?:today|now|this\s+(?:session|morning))|"
+    r"at\s+the\s+moment|at\s+present|as\s+things\s+stand)\b",
+    re.IGNORECASE,
+)
+
+
+def classify_volatility(text: str) -> str:
+    """Classify ``text`` as DURABLE / HARD / SOFT volatile (AC.VOL.1).
+
+    Deterministic + stdlib-only. The D2 safe bias: a hard tell that
+    co-occurs with a durable-decision signal de-escalates to SOFT (a
+    ruling is never hard-excluded). Any error → DURABLE (the never-drop
+    protection floor — a misfire leaves the record visible).
+    """
+    try:
+        t = text or ""
+        hard = any(rx.search(t) for rx in _HARD_VOLATILE_RES)
+        durable_signal = bool(_DURABLE_SIGNAL_RE.search(t))
+        if hard and not durable_signal:
+            return VOLATILITY_HARD
+        if hard and durable_signal:
+            # D2 — ambiguous: a ruling phrased operationally. Keep it
+            # visible, annotated, never excluded.
+            return VOLATILITY_SOFT
+        if _SOFT_VOLATILE_RE.search(t):
+            return VOLATILITY_SOFT
+        return VOLATILITY_DURABLE
+    except Exception:  # noqa: BLE001 — protection floor: never drop
+        return VOLATILITY_DURABLE
 
 
 def memory_dir_for_workspace(workspace_root: Path | str) -> Path:
@@ -580,6 +704,22 @@ class FileMemoryStore:
         # four fields named in :data:`ENCODING_CONTEXT_FIELDS` —
         # adding a fifth field is a structural-test failure.
         context_block = _render_context_block(context)
+        # AC.VOL.1 / AC.VOL.2 — classify the turn's volatility AT INGEST
+        # and, for the HARD class, close its validity interval at birth
+        # (``volatile_until = reference_time + VOLATILE_WINDOW``) so the
+        # default current view filters it from any later-session recall
+        # (D1 hard-exclude) while an ``as_of`` query at the writing
+        # instant still reaches it (D3, AC.SUP.2 preserved). DURABLE and
+        # SOFT are born OPEN (no close). The ``volatility`` class field is
+        # emitted on every tier for transparency; only HARD adds the
+        # ``volatile_until`` close. Fail-safe: ``classify_volatility``
+        # returns DURABLE on any error, so a misfire never closes an
+        # interval it did not affirmatively recognize as hard-volatile.
+        volatility = classify_volatility(body)
+        volatile_block = f"volatility: {volatility}\n"
+        if volatility == VOLATILITY_HARD:
+            volatile_until = (ref_utc + VOLATILE_WINDOW).isoformat()
+            volatile_block += f"volatile_until: {volatile_until}\n"
         front = (
             "---\n"
             f"name: {name}\n"
@@ -588,6 +728,7 @@ class FileMemoryStore:
             f"reference_time: {ref_utc.isoformat()}\n"
             f"group_id: {group_id}\n"
             f"salience: {salience}\n"
+            f"{volatile_block}"
             f"{context_block}"
             "---\n"
         )
@@ -1462,6 +1603,11 @@ def _superseded_marker_target_missing(
 _SUPERSEDED_BY_KEY = "superseded-by"
 _SUPERSEDED_DATE_KEY = "superseded-date"
 
+#: The volatility close key (AC.VOL.2 / AC.VOL.3). Written at ingest by
+#: :meth:`FileMemoryStore.write_episode` for a HARD-volatile turn; read
+#: here as an ADDITIVE interval close alongside the supersession marker.
+_VOLATILE_UNTIL_KEY = "volatile_until"
+
 
 # --- AC.SUP.1 / AC.SUP.2 / AC.SUP.3 — validity-interval supersession ---
 #
@@ -1523,6 +1669,26 @@ def _supersession_interval(
         # superseded-ness, not on a parseable date).
         if valid_to is None:
             valid_to = _SUPERSEDED_SENTINEL_CLOSE
+    # AC.VOL.3 / D3 — a HARD-volatile record closes its interval via the
+    # ``volatile_until`` frontmatter key (written at ingest by
+    # ``write_episode``). This is an ADDITIVE close source on the same
+    # interval machinery — no new on-disk schema, no change to
+    # ``_interval_current`` / ``_filter_by_interval`` (closed is closed;
+    # the default view filters it, an ``as_of``-in-window query reaches
+    # it). PRECEDENCE: an explicit supersession marker is the writer-
+    # recorded invalidation instant and GOVERNS the interval — the
+    # volatility heuristic only supplies a close when NO supersession
+    # close exists (the unmarked-record gap the volatility classifier
+    # exists to cover). This keeps supersession-marked records byte-
+    # identical to pre-VOL behaviour (AC.SUP.2 as_of window unchanged),
+    # while a marked record is already filtered from the current view
+    # regardless, so hard-exclude still holds either way.
+    if valid_to is None:
+        volatile_until = _parse_reference_time(
+            str(front.get(_VOLATILE_UNTIL_KEY, ""))
+        )
+        if volatile_until is not None:
+            valid_to = volatile_until
     return (valid_from, valid_to)
 
 

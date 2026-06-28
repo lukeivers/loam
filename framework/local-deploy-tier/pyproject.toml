@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-local-deploy-tier"
+version = "0.1.0"
+description = "P1 of the dev->build->deploy spine — the LOCAL deploy tier. An opt-in capability that composes ON the sealed deploy-safety floor (idle at LOCAL) + the secure-build baseline: a LOCAL build produces a P0-shape Acceptance record judged by an independent check (AC.LOCAL.1); the LOCAL command set carries no irreversible/prod verb and a destructive-SQL guard warns-not-blocks against a disposable local target (AC.LOCAL.2); a backing-service parity gap with a downstream env is surfaced in plain language before any promotion (AC.LOCAL.3); a LOCAL secret lives in the OS keychain, never a repo-committed file (AC.LOCAL.4). Outcome-altitude entry-point: build_local() over a fresh on-disk workspace (AC.LOCAL.C)."
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6"]
+
+[tool.setuptools]
+package-dir = {"loam.local_deploy_tier" = "src/loam/local_deploy_tier"}
+packages = ["loam.local_deploy_tier"]

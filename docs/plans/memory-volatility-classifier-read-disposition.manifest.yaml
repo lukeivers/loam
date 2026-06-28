@@ -1,0 +1,42 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time). MINOR — a new memory
+  # capability (volatility dimension on the write + read paths);
+  # version derives at release time.
+  slug: memory-volatility-classifier-read-disposition
+  title: "memory-volatility-classifier-read-disposition (MINOR) — give file-backed memory a VOLATILITY dimension so a recent, stale operational-status claim (is-broken/up-down/current-version/latest-SHA/pending-count/who's-allowed) is not served as current in a later recall, while the durable decision behind it survives. Write-side classify_volatility (deterministic, stdlib; D2 safe bias de-escalates a hard tell co-occurring with a durable-decision signal to SOFT so a ruling is never hard-excluded; fail-safe -> durable). HARD is born with a CLOSED interval (volatile_until = reference_time + VOLATILE_WINDOW); durable/soft born open. Read-side disposition composes on the SEALED bitemporal interval machinery: _supersession_interval reads volatile_until as an ADDITIVE close (supersession marker takes precedence; volatility close applies only when unmarked, so AC.SUP.2 as_of windows stay byte-identical), and the sealed _filter_by_interval hard-excludes HARD from the default current view (the live keep_pace recall path, CONFIRMED: _episode_hits -> FileMemoryStore.search(as_of=None) -> _compose_score -> _filter_by_interval) while an as_of-in-window query still reaches it (filtering != deletion). SOFT survives recall but its keep_pace pointer is annotated [VOLATILE — re-verify before serving]. ★ outcome-altitude AC.VOL.5: the REAL write_episode + search path with NO pre-arranged state does NOT recall a volatile status as current later while the durable decision behind it IS recalled. Research item #4 (recency-blend exemption) DROPPED as INERT in canonical: _blend_recency / RECENCY_BLEND_WEIGHT have zero callers, the live _compose_score path has no recency term (plan §F2)."
+
+# BASELINE: the branch tip immediately preceding this cycle's plan +
+# source commits (a7c9f1b2 — the spine-plan commit). The plan commit
+# (docs/plans/) and the source commit (framework/primary-persona/) both
+# land within the allowed seal-diff surfaces. The builder CONFIRMS
+# against the actual predecessor tip at apply time (house pattern).
+baseline: "a7c9f1b2"
+
+plan: docs/plans/memory-volatility-classifier-read-disposition.md
+plan_doc_ref: docs/plans/sealed/memory-volatility-classifier-read-disposition.md
+
+components:
+  # ONE sealed fence: primary-persona. The classifier + write-side
+  # interval birth + the additive volatility close land in file_memory.py;
+  # the soft annotation lands in keep_pace/retrieval.py; the AC.VOL.* tests
+  # live under framework/primary-persona/tests/ (all in-fence).
+  - name: primary-persona
+    new_component: false
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions (amendment #22 ruling #3): the plan pair only.
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: docs/plans/sealed/memory-volatility-classifier-read-disposition.md
+
+# 5 ACs in one family: AC.VOL.{1..5}. AC.VOL.5 is outcome-altitude
+# (real write + retrieval entry-points, no pre-arranged state).
+ac_count: 5

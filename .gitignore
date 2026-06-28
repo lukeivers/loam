@@ -74,3 +74,7 @@ personas/
 # tooling, not a deployed application requiring exact reproducibility). Each
 # package's pyproject.toml is the source-of-truth for dependency declarations.
 **/uv.lock
+
+# Machine-local pyenv pin + disposable broken-venv snapshots (not tracked)
+.python-version
+.venv.broken-*/

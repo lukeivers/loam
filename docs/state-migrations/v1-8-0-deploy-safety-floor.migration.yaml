@@ -1,0 +1,51 @@
+# User-state migration — v1.8.0 (deploy-safety FLOOR)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.8.0 ships the
+# framework-native deploy-safety FLOOR in three sealed sub-cycles:
+# (A) gate primitives — a destructive-action gate keyed off the RESOLVED
+# target's production-ness + an attestation / refuse-all-destructive default;
+# (B) a per-gate fail-policy primitive (floor gates fail CLOSED, advisory
+# guards keep failing open); (C) a secure-build baseline (secrets-never-
+# committed at the commit boundary + a dependency-audit gate + artifact-
+# cleanliness) for the artifact loam PRODUCES.
+
+version: v1.8.0
+slug: v1-8-0-deploy-safety-floor
+slice: "v1.8.0 MINOR (deploy-safety FLOOR — gate primitives + per-gate fail-policy + secure-build baseline; two NEW components deploy-safety-floor + secure-build-baseline at 0.1.0 out-of-graph; safety-layer + protection-matrix extended in lockstep)"
+date: 2026-06-28
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.8.0 adds framework-native deploy-safety gates + a secure-build baseline —
+  none of which re-schemas, moves, or removes pre-existing stored .loam/ user
+  state. (1) deploy-safety-floor is a NEW framework component under
+  framework/deploy-safety-floor/ (0.1.0, out-of-install-graph) — its
+  PreToolUse gate READS an optional, user-authored per-environment
+  deploy.yaml + an attestation record; it persists no new user .loam/ artifact
+  and re-schemas nothing in existing user state. A user who authors no
+  deploy.yaml sees the conservative default posture (an unattested
+  is_production environment refuses destructive verbs), again writing no
+  user state. (2) The per-gate fail-policy primitive is an ADDITIVE extend of
+  the sealed safety-layer (a hooks/_fail_policy.py module + FAIL_OPEN/
+  FAIL_CLOSED declarations on existing guards) — behavior-preserving for the
+  advisory guards, no user-state effect. (3) secure-build-baseline is a NEW
+  framework component under framework/secure-build-baseline/ (0.1.0,
+  out-of-graph) operating on the artifact loam BUILDS at commit/push time —
+  it touches no existing user .loam/ state; the .gitignore template + pre-commit
+  sweep it installs target the BUILT artifact's tree, not the user's loam
+  workspace state. (4) protection-matrix catalogue rows are doc/registry
+  additions with no user-state effect. A user upgrading from v1.7.0 to v1.8.0
+  needs no state migration. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code revert; no data move. The deploy-safety gates and secure-build
+# baseline read config + scan staged diffs at runtime; they persist no
+# user-state to migrate or roll back.
+reversible: true
+removes_user_state: false
+idempotent: true

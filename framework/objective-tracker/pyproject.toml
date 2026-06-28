@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-objective-tracker"
-version = "1.7.0"
+version = "1.8.0"
 description = "Objective tracker primitive for loam — forest-of-trees with event-sourced persistence, sidecar scope binding, and ODD integration."
 requires-python = ">=3.11"
 dependencies = [

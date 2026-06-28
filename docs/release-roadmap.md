@@ -506,6 +506,10 @@ Per `docs/release-versioning-policy.md` §"When 1.0.0 ships." This is a quality-
 
 - Composes on the sealed `framework/safety-layer/` (`action_class` / `dangerous_op` enums, fail-policy convention) + `framework/protection-matrix/` (`loam guards`). The opt-in deploy tiers + provider-side halves (HALT-2) are downstream forward work, not dependencies of the floor.
 
+#### dev→build→deploy SPINE — the opt-in deploy tiers ON the floor (P0 contract + P1 LOCAL SEALED LOCAL; P2/P3/P-final forward)
+
+> The phased arc that turns the sealed floor into a full dev→build→deploy spine (`docs/plans/dev-build-deploy-spine.md`, Option C). **P0** the shared Acceptance+Gate contract is authored (`docs/design/dev-build-deploy-shared-contract.md`, docs-only). **P1 the LOCAL deploy tier is SEALED LOCAL 2026-06-28** — NEW component `framework/local-deploy-tier/` (0.1.0, out-of-graph) composing ON the sealed floor (idle at LOCAL) + secure-build baseline + the P0 contract, never editing them: a LOCAL build produces a P0-shape Acceptance judged by an independent check (AC.LOCAL.1); the LOCAL command set carries no irreversible verb so the floor idles + a destructive-SQL guard warns-not-blocks against a disposable local target (AC.LOCAL.2); a backing-service parity gap vs a downstream env is surfaced in plain language (AC.LOCAL.3); a LOCAL secret lives in the OS keychain, never a repo-committed file (AC.LOCAL.4); outcome-altitude `build_local()` over a fresh on-disk workspace (AC.LOCAL.C). Seal `7439fad6` (source `434880a5`, apply `e8425bfe`; baseline `2409dc48`). **Forward (out of this seal):** **P2** Vercel preview→prod (carries the first public blast radius + the most open owner rulings — the real risk per the plan §11), **P3** real-infra (gated behind provider-side guarantees that do not yet exist — correctly last), **P-final** dev-sdlc + hands-off-loop adopt the spine (highest blast radius, loose-scoped, re-planned at its own time). Versions derive at release time; no number pre-baked.
+
 ---
 
 ## §5 Backlog reference

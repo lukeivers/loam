@@ -494,6 +494,24 @@ A phase builder halts and surfaces when:
 
 ## §10 Bookkeeping
 
+### Phase seal register (backfilled at each phase's seal)
+
+| Phase | Status | Component | Seal | Source | Apply | Baseline | Manifest |
+|---|---|---|---|---|---|---|---|
+| P0 | authored (docs-only) | — | — | — | — | — | — |
+| P1 LOCAL | SEALED LOCAL 2026-06-28 | `framework/local-deploy-tier/` | `7439fad6` | `434880a5` | `e8425bfe` | `2409dc48` | `docs/plans/dev-build-deploy-spine-p1-local.manifest.yaml` |
+| P2 Vercel | forward | — | — | — | — | — | — |
+| P3 real-infra | forward | — | — | — | — | — | — |
+| P-final adoption | forward (loose-scoped) | — | — | — | — | — | — |
+
+P1 ACs sealed: AC.LOCAL.1 (P0-shape Acceptance, independent check) · AC.LOCAL.2
+(no irreversible verb / floor idle + destructive-SQL warn-not-block, fail-closed
+local predicate) · AC.LOCAL.3 (plain-language parity gap + honest-residual
+caveat) · AC.LOCAL.4 (OS-keychain secret, never repo-committed) · AC.LOCAL.C
+(outcome-altitude `build_local()` over a fresh on-disk workspace, real
+subprocess check). 28-test suite GREEN; sealed floor + secure-build baseline
+READ/NAMED only (fence diff clean). Local seal only — not pushed/published.
+
 - **`docs/STATE.md`** — change-log entry when each phase seals (P0 is docs-only:
   a note that the contract + spine plan landed).
 - **`docs/release-roadmap.md`** — the spine arc registered as forward work;

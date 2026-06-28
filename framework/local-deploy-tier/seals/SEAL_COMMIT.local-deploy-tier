@@ -1,0 +1,79 @@
+# dev->build->deploy spine — P1 the LOCAL deploy tier — apply ladder
+
+Per `docs/plans/dev-build-deploy-spine.md` §P1 + the P0 shared contract
+`docs/design/dev-build-deploy-shared-contract.md`. The first deploy tier
+on the sealed floor: LOCAL. Reversible, floor-idle, the foundation the
+higher tiers (P2 Vercel, P3 real-infra) earn the right to build on.
+
+NEW component `framework/local-deploy-tier/`, composing ON — never editing —
+the sealed `deploy-safety-floor`, `secure-build-baseline`, and the P0
+contract.
+
+  - AC.LOCAL.1 — a LOCAL build produces a P0-shape Acceptance record
+    (`acceptance.py`): id / statement / frozen / altitude / ladder + a
+    verdict derived SOLELY from running an INDEPENDENT check. The producer
+    cannot fabricate `met` — an Acceptance minted outside `produce_acceptance`
+    is refused; a failing check is an honest negative carrying its
+    plain-language reason, never retried-to-green. This is the LOCAL-tier
+    producer of the contract §2 record, so a build's "done" can ride into a
+    later deploy gate (the §4 bridge).
+  - AC.LOCAL.2 — the LOCAL command set (`command_set.py`) is exactly the
+    build/run/inspect loop (build / verify / run / migrate / seed / reset /
+    status / open); its intersection with the prod/destroy verb set
+    (promote / deploy-prod / provision / destroy / force-unlock / ...) is
+    EMPTY, so the sealed floor idles — there is nothing to gate. The
+    destructive-SQL guard WARNS (advises + proceeds) against a provably-local
+    target (the local DB is a free undo) and DEFERS an unknown/non-local
+    target to the sealed floor; `is_local_target` is fail-closed — a target
+    that is not a recognised local marker is treated as non-local, because a
+    false "local" on a managed-DB URL is the one mistake with prod blast
+    radius (local-target research §8.2/§8.4). There is no BLOCK level at the
+    LOCAL layer at all.
+  - AC.LOCAL.3 — the parity surface (`parity.py`) diffs the LOCAL env's
+    declared `backing_services` against a downstream env's on the engine +
+    pinned-version axes (aligned by logical service name) and renders each
+    divergence as an owner-facing sentence — never a raw config diff
+    (Lens 0). `latest`/unpinned never silently equals a pinned tag. The
+    honest-residual caveat (a local machine is never identical to the live
+    setup) is ALWAYS present, so a clean diff never over-claims parity
+    (F2 — research §8.1). Shown BEFORE any promotion is offered; this verb
+    offers none (D-SC.6 — the deploy boundary is a separate owner-asked
+    action).
+  - AC.LOCAL.4 — a LOCAL secret (`secrets.py`) lives in the OS keychain
+    (macOS `security` CLI by default; an injectable backend keeps the
+    contract platform-independent + testable) and NEVER in a file under the
+    repo working tree — so there is nothing for `git add` to capture. This
+    composes on the secure-build baseline's secrets-never-committed boundary
+    (Lens 1): defence at the source, not only at the commit gate. The store
+    never prints a resolved value (`describe()` yields a redacted handle).
+  - AC.LOCAL.C (outcome-altitude) — `build_local()` (`build.py`) is the real
+    entry-point: it reads the additive `role`/`backing_services` view from
+    the SAME deploy config the floor reads (the extra fields it ignores —
+    the additive superset, P0 §5.1), runs the project's declared check as a
+    REAL subprocess, mints the Acceptance from its real verdict, confirms the
+    floor-idle command set, and surfaces the parity gap — all over a fresh
+    on-disk workspace with no pre-arranged state and nothing stubbed.
+
+Lens 0 (expose substance, adapt vocabulary): every surface — the build
+status, the parity gap, the destructive-SQL advisory — is rendered in the
+owner's words, the substance (what runs, what it touches, what could break)
+never hidden. Lens 1 (compose, don't re-derive): the floor's idle posture,
+the secure-build secrets boundary, and the P0 Acceptance shape are composed
+on, not re-implemented. D-SC.3 respected: `tier` stays the floor's
+risk-class, the sealed `Tier` enum is NOT extended; the additive view reads
+only the LOCAL fields.
+
+Method-level choices are the builder's call per ODD §1.1; the plan fixed the
+ACs (§P1), the named decisions (the P0 contract D-SC.* set), the fence (a
+new opt-in capability component + the additive `role`/`backing_services`
+fields, sealed floor untouched), and the halt triggers (§9), not the
+implementation.
+
+NEW-component first-seal fence on `framework/local-deploy-tier/`; no other
+sealed component's fence widens (the floor + secure-build baseline are
+READ/NAMED only). The user-facing LOCAL runbook ships as the
+`skills/local-tier/SKILL.md` surface inside the component fence.
+
+Predecessor: 2409dc48 — the canonical tip at source-edit (HEAD~1 of the
+feat commit), carrying the sealed deploy-safety floor + secure-build
+baseline + the P0 contract spine plan.

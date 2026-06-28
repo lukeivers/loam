@@ -1,0 +1,121 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: deploy-safety-floor-fail-policy-adoption
+  title: "Deploy-safety FLOOR — adopt the shared fail-policy primitive (cleanup micro-cycle: the floor gate sources its fail-closed-on-fault behaviour from safety-layer's _fail_policy primitive; ad-hoc local duplicate removed; strictly behaviour-preserving)"
+
+# BASELINE: e0e9a258 — the plan-doc commit, the commit immediately preceding
+# this cycle's source-edit commit (the house HEAD~1 advance pattern). The
+# deploy-safety-floor seal-test BASELINE constant is advanced to the SAME SHA
+# so the diff window carries only this cycle's de-dup changes; leaving it at
+# Sub-cycle A's f27bbd66 would pull intervening safety-layer (Sub-cycle B)
+# edits into the window and fail the fence. Pre-build sync check: canonical
+# HEAD was da88994 = level with origin/main; built on HEAD.
+#
+# AC in scope (plan §5 — adoption micro-cycle ONLY):
+#   AC.DSF.8 — the deploy-safety-floor gate ADOPTS the shared per-gate
+#              fail-policy primitive (framework/safety-layer/hooks/_fail_policy.py,
+#              sealed Sub-cycle B 828de228) as its single source of
+#              fail-closed-on-fault behaviour. The gate declares
+#              FAIL_POLICY = FailPolicy.FAIL_CLOSED and routes its top-level
+#              fault handler through apply_fault_policy; the local ad-hoc
+#              enactment (_emit_deny) is REMOVED, both deny-emit sites route
+#              through the primitive (apply_fault_policy / emit_deny). The
+#              floor's destructive-candidate classifier
+#              (_floor_should_fail_closed) is RETAINED — it supplies the
+#              primitive's is_destructive_candidate input and is not a
+#              duplicate. STRICTLY behaviour-preserving: the emitted deny
+#              envelope is byte-identical, the audit labels (deny-fail-closed /
+#              fail-open-non-candidate) are unchanged, and the Sub-cycle A
+#              outcome-altitude test (AC.DSF.7) passes unchanged.
+#
+# This cycle adds NO new failure-mode coverage and NO new gate — a
+# de-duplication only, so no AC.COV catalogue change. The gate now READS
+# safety-layer's _fail_policy at hook runtime (the documented stdlib-only
+# sibling-import pattern) — a read, not an edit; no safety-layer source moves,
+# so safety-layer is a read-partner, not a sealed-component entry.
+baseline: "e0e9a258f12231fa22785d90d791d4729562e434"
+
+plan: docs/plans/deploy-safety-floor-fail-policy-adoption.md
+plan_doc_ref: docs/plans/deploy-safety-floor-fail-policy-adoption.md
+
+components:
+  - name: deploy-safety-floor
+    seal_test: framework/deploy-safety-floor/tests/test_no_sealed_amendments.py
+    sidecar: framework/deploy-safety-floor/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — the manifest + plan-doc ride the docs/plans/ prefix.
+# The seal narrative target + advanced sidecar live under the
+# framework/deploy-safety-floor/ prefix, which the seal test admits directly
+# (its allowed_prefixes), so no extra_allowed_files are needed this cycle.
+universal_paths:
+  prefixes:
+    - docs/plans/
+
+narrative:
+  target: framework/deploy-safety-floor/seals/SEAL_COMMIT.deploy-safety-floor-fail-policy-adoption
+  body: |
+    # Deploy-safety FLOOR — adopt the shared fail-policy primitive — apply ladder
+
+    Per `docs/plans/deploy-safety-floor-fail-policy-adoption.md` — the named,
+    owner-gated follow-up the Sub-cycle B manifest recorded: the
+    deploy-safety-floor gate ADOPTS the shared per-gate fail-policy primitive
+    (`framework/safety-layer/hooks/_fail_policy.py`, sealed Sub-cycle B
+    `828de228`) as its single source of fail-closed-on-fault behaviour,
+    removing the local ad-hoc duplicate. De-duplication only — no
+    functionality changes.
+
+    Scope (plan §5 — AC.DSF.8): EXTEND the sealed
+    `framework/deploy-safety-floor/`.
+
+      - AC.DSF.8 — `deploy_safety_floor_guard.py` declares
+        `FAIL_POLICY = FailPolicy.FAIL_CLOSED` and routes its top-level fault
+        handler through `apply_fault_policy(FAIL_POLICY,
+        is_destructive_candidate=_floor_should_fail_closed(...),
+        deny_reason=destructive_fail_closed_message(...))`, logging
+        `fault.label`. Both deny-emit sites (the fault path and the normal
+        policy-deny path) route through the primitive's `emit_deny`; the local
+        `_emit_deny` duplicate is removed. The floor-specific
+        destructive-candidate classifier `_floor_should_fail_closed` is
+        retained as the primitive's `is_destructive_candidate` provider.
+
+    Behaviour parity (the refactor's contract): the emitted PreToolUse deny
+    envelope is byte-identical to the local `_emit_deny` (the primitive's
+    `deny_payload` is the same dict, same `json.dumps(ensure_ascii=False)`,
+    same stdout write+flush); the audit labels `deny-fail-closed` /
+    `fail-open-non-candidate` are byte-identical (the primitive's
+    `FaultDecision.label`). The Sub-cycle A outcome-altitude test
+    (`test_AC_DSF_7_outcome_altitude.py`) passes UNCHANGED — unattested-prod
+    destruction still denies, a corrupt-attestations fault still fails closed,
+    a benign read still allows, bypass mode still returns deny.
+
+    Tests:
+      - `test_AC_DSF_8_fail_policy_adoption` — (structural) the gate declares
+        FAIL_CLOSED, the local `_emit_deny` is gone, and the gate binds the
+        primitive's `apply_fault_policy`/`emit_deny`; (behavioural parity at
+        the real subprocess entry-point) a corrupt-attestations fault on a
+        destructive-prod candidate still fail-closed denies, and the same
+        fault on a non-candidate read still fails OPEN (read-parity).
+      - `test_AC_DSF_7_outcome_altitude` — unchanged; the parity proof.
+
+    Lens 1 (compose, don't re-derive): the gate adopts the existing sealed
+    primitive rather than carrying a parallel ad-hoc fail-closed enactment —
+    one source of fail-policy truth across every framework gate.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the AC (§5), the named decisions (D1–D3: keep the candidate classifier,
+    remove `_emit_deny` entirely, hard import at module load), the fence
+    (§4 — deploy-safety-floor extend, reads safety-layer), and the halt
+    triggers (§3/§8), not the implementation.
+
+    BASELINE advanced to the plan-doc commit `e0e9a258` (house HEAD~1
+    pattern); the floor seal-test BASELINE constant advanced to match so the
+    fence window carries only this cycle's de-dup.
+
+    Predecessor: e0e9a258 — the plan-doc commit (main tip @ source-edit).
+
+ac_count: 1
+smoke_outcome: "floor entry-point routed through the shared primitive still fail-closed denies a prod DROP on a corrupt-attestations fault, fails open on a non-candidate read; deny envelope + labels byte-identical"

@@ -20,8 +20,12 @@ attestation contract and refuses, by default, a destructive action against a
 production-class target that has no fresh attestation — and refuses a
 production connection string written into a non-production config file.
 
-Fail-policy: this is a FLOOR gate, NOT an advisory guard. When its own
-evaluation of a destructive-candidate raises (e.g. a corrupt attestations
+Fail-policy: this is a FLOOR gate, NOT an advisory guard. It DECLARES
+``FAIL_POLICY = FailPolicy.FAIL_CLOSED`` and routes its on-fault decision
+through the shared per-gate fail-policy primitive
+(``framework/safety-layer/hooks/_fail_policy.py``, AC.DSF.5/AC.DSF.8) — the
+single source of fail-closed behaviour, no local ad-hoc enactment. When its
+own evaluation of a destructive-candidate raises (e.g. a corrupt attestations
 file), it fails CLOSED — it denies, because it could not prove the action
 safe (AC.DSF.7). This inverts the advisory ``D-SECHK.FAIL-OPEN`` convention
 for the destructive-floor path only; a non-candidate (a read, a
@@ -68,6 +72,30 @@ from loam.deploy_safety_floor.gate import (  # noqa: E402
     _is_local_config_file,
 )
 
+# Make the sibling safety-layer fail-policy primitive importable when the hook
+# runs as a bare script. The floor gate ADOPTS the shared per-gate fail-policy
+# field (AC.DSF.8) as its single source of fail-closed behaviour rather than a
+# local ad-hoc enactment. Stdlib-only sibling module — does NOT pull the
+# loam.safety_layer package at hook runtime. The safety-layer tree ships
+# alongside this component as one framework unit.
+_FAIL_POLICY_HOOKS = (
+    Path(__file__).resolve().parent.parent.parent / "safety-layer" / "hooks"
+)
+if str(_FAIL_POLICY_HOOKS) not in sys.path:
+    sys.path.insert(0, str(_FAIL_POLICY_HOOKS))
+
+from _fail_policy import (  # noqa: E402
+    FailPolicy,
+    apply_fault_policy,
+    emit_deny,
+)
+
+# Declared per-gate fail-policy (AC.DSF.8 / AC.DSF.5): this is a FLOOR gate —
+# it fails CLOSED on its own internal fault against a destructive candidate (a
+# non-candidate still fails open, in read-parity). Sourced from the shared
+# safety-layer primitive; there is no local fail-closed enactment.
+FAIL_POLICY = FailPolicy.FAIL_CLOSED
+
 
 SAFETY_HOOKS_LOG_RELATIVE = (".loam", "safety-hooks.log")
 ENV_TOGGLE_ALL = "LOAM_SAFETY_HOOKS"
@@ -97,18 +125,6 @@ def _is_toggled_off(env: dict[str, str]) -> bool:
     all_val = env.get(ENV_TOGGLE_ALL, "").strip().lower()
     this_val = env.get(ENV_TOGGLE_THIS, "").strip().lower()
     return all_val in TOGGLE_OFF_VALUES or this_val in TOGGLE_OFF_VALUES
-
-
-def _emit_deny(reason: str) -> None:
-    payload = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False))
-    sys.stdout.flush()
 
 
 def _write_content(tool_input: dict[str, Any]) -> str:
@@ -231,33 +247,27 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:  # noqa: BLE001 — malformed envelope, no target context
         return 0
 
-    # Floor evaluation, fail-CLOSED on a raised destructive-candidate.
+    # Floor evaluation, fail-CLOSED on a raised destructive-candidate — the
+    # decision is resolved and enacted by the shared fail-policy primitive
+    # (AC.DSF.8): a destructive candidate denies, a non-candidate fails open.
     try:
         decision = _evaluate(tool_name, tool_input, workspace_root)
     except Exception as exc:  # noqa: BLE001 — the floor's own check errored
-        if _floor_should_fail_closed(tool_name, tool_input):
-            _emit_deny(
-                destructive_fail_closed_message(
-                    target_phrase=PRODUCTION_TARGET_PHRASE
-                )
-            )
-            _append_log(
-                workspace_root,
-                {
-                    "ts": _now_iso(),
-                    "hook": "deploy_safety_floor_guard",
-                    "decision": "deny-fail-closed",
-                    "tool": tool_name,
-                    "exception": f"{type(exc).__name__}: {exc!s}",
-                },
-            )
-            return 0
+        fault = apply_fault_policy(
+            FAIL_POLICY,
+            is_destructive_candidate=_floor_should_fail_closed(
+                tool_name, tool_input
+            ),
+            deny_reason=destructive_fail_closed_message(
+                target_phrase=PRODUCTION_TARGET_PHRASE
+            ),
+        )
         _append_log(
             workspace_root,
             {
                 "ts": _now_iso(),
                 "hook": "deploy_safety_floor_guard",
-                "decision": "fail-open-non-candidate",
+                "decision": fault.label,
                 "tool": tool_name,
                 "exception": f"{type(exc).__name__}: {exc!s}",
             },
@@ -265,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if decision.denied:
-        _emit_deny(decision.reason)
+        emit_deny(decision.reason)
         _append_log(
             workspace_root,
             {

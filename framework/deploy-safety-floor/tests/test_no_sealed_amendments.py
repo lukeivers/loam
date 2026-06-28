@@ -21,11 +21,12 @@ SEAL_COMMIT reads the exact seal SHA post-seal; pre-seal it reads HEAD so a
 build on an unfinished seal still exercises the test.
 
 BASELINE: the plan-doc commit — the commit immediately preceding this
-cycle's source-edit commit (the house HEAD~1 advance pattern). This NEW
-component's first seal fences against it. The protection-matrix catalogue
-row + regenerated companion are admitted as universal-path partners (plan
-§6: catalogue rows folded into the sub-cycle's fence as a universal
-admission, not a second sealed-component entry).
+cycle's source-edit commit (the house HEAD~1 advance pattern). Advanced for
+the fail-policy-adoption micro-cycle (e0e9a258) so the diff window carries
+only this cycle's de-dup changes; leaving it at Sub-cycle A's f27bbd66 would
+pull intervening safety-layer edits into the window. The protection-matrix
+catalogue row + regenerated companion remain admitted as universal-path
+partners (they do not move in this de-dup cycle).
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BASELINE = "f27bbd667be8a06aeed77e3b6bce6a384cc1075f"
+BASELINE = "e0e9a258f12231fa22785d90d791d4729562e434"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

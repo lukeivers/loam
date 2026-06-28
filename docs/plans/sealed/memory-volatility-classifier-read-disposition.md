@@ -1,0 +1,10 @@
+# memory-volatility-classifier-read-disposition (MINOR) — give file-backed memory a VOLATILITY dimension so a recent, stale operational-status claim (is-broken/up-down/current-version/latest-SHA/pending-count/who's-allowed) is not served as current in a later recall, while the durable decision behind it survives. Write-side classify_volatility (deterministic, stdlib; D2 safe bias de-escalates a hard tell co-occurring with a durable-decision signal to SOFT so a ruling is never hard-excluded; fail-safe -> durable). HARD is born with a CLOSED interval (volatile_until = reference_time + VOLATILE_WINDOW); durable/soft born open. Read-side disposition composes on the SEALED bitemporal interval machinery: _supersession_interval reads volatile_until as an ADDITIVE close (supersession marker takes precedence; volatility close applies only when unmarked, so AC.SUP.2 as_of windows stay byte-identical), and the sealed _filter_by_interval hard-excludes HARD from the default current view (the live keep_pace recall path, CONFIRMED: _episode_hits -> FileMemoryStore.search(as_of=None) -> _compose_score -> _filter_by_interval) while an as_of-in-window query still reaches it (filtering != deletion). SOFT survives recall but its keep_pace pointer is annotated [VOLATILE — re-verify before serving]. ★ outcome-altitude AC.VOL.5: the REAL write_episode + search path with NO pre-arranged state does NOT recall a volatile status as current later while the durable decision behind it IS recalled. Research item #4 (recency-blend exemption) DROPPED as INERT in canonical: _blend_recency / RECENCY_BLEND_WEIGHT have zero callers, the live _compose_score path has no recency term (plan §F2).
+
+slug: memory-volatility-classifier-read-disposition
+components: primary-persona
+baseline: a7c9f1b2
+amendment-commit: f9fb305cea02297dbe88e14224a7d6ff3de5a869
+plan-doc: docs/plans/sealed/memory-volatility-classifier-read-disposition.md
+acs-satisfied: 5
+
+Narrative body collapsed per cost-audit 2026-05-04 Recommendations A + B (manifest narrative collapse + seal-narrative compression) — see the plan-doc above for full rationale, AC family, and smoke results.

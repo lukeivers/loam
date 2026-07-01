@@ -123,7 +123,9 @@ def test_AC_MSC_3_absent_surface_graceful_missing(tmp_path: Path) -> None:
     ), f"expected partial sentinel, got {fields['corpus_gate_state']}"
 
 
-def test_AC_MSC_3_canonical_claude_dev_md_carries_named_surface() -> None:
+def test_AC_MSC_3_canonical_claude_dev_md_carries_named_surface(
+    tmp_path: Path,
+) -> None:
     """The canonical D-MSC.3 mechanism edit landed.
 
     In a real loam DEV workspace the session-start corpus reaches the
@@ -140,7 +142,16 @@ def test_AC_MSC_3_canonical_claude_dev_md_carries_named_surface() -> None:
     session-start-discipline section (parsed with the SAME regex
     ``discover_baseline_corpus`` uses) names the surface; (2) the
     loam-mode dev-mode emitter surfaces that line into the
-    session-start payload."""
+    session-start payload.
+
+    Cold-clone correctness (AC.MSCCF.1): ``_read_dev_intent_inner``
+    checks ``personas_dir.is_dir()`` before iterating; if absent the
+    reader is never consulted and dev-mode cannot be forced via the
+    reader alone. This test creates a minimal on-disk personas
+    structure at ``tmp_path`` so the directory check passes, then
+    routes the emit call through ``tmp_path``. Passes in both the
+    dev-tree and a bare cold-clone (v1.9.1 PATCH fix).
+    """
     repo_root = Path(__file__).resolve().parents[3]
     claude_dev = repo_root / "CLAUDE.dev.md"
     assert claude_dev.is_file(), "CLAUDE.dev.md must exist"
@@ -180,15 +191,28 @@ def test_AC_MSC_3_canonical_claude_dev_md_carries_named_surface() -> None:
     # path-aware reader: the dev-intent probe reads a persona contract
     # (return YAML with dev_intent: yes to force dev mode); the
     # dev-extension read returns the canonical CLAUDE.dev.md.
+    #
+    # AC.MSCCF.1 fixture: create the minimal on-disk personas directory
+    # that _read_dev_intent_inner requires before it consults the reader.
+    # Without this, the is_dir() guard returns "absent" in a cold clone
+    # (workspace/personas/ is user state, not git-tracked). The reader
+    # still supplies all file *content* (dev_intent YAML for the
+    # contract path; CLAUDE.dev.md text for the dev-extension path).
+    personas_dir = tmp_path / "workspace" / "personas" / "loam"
+    personas_dir.mkdir(parents=True)
+    (personas_dir / "contract.yaml").write_text(
+        ""
+    )  # empty; reader supplies content
+
     from loam_mode.session_start import emit_session_start_context
 
     def _reader(path: Path) -> str:
         if path.name.endswith(".yaml") or "contract" in path.name:
             return "is_primary: true\ndev_intent: yes\n"
-        # The dev-extension file read.
+        # The dev-extension file read (CLAUDE.dev.md path).
         return text
 
-    payload = emit_session_start_context(repo_root, reader=_reader)
+    payload = emit_session_start_context(tmp_path, reader=_reader)
     assert "docs/FUTURE_IDEAS_DRAFT.md" in payload, (
         "the dev-mode session-start payload must surface the "
         f"named-thread durable surface; payload head={payload[:160]!r}"

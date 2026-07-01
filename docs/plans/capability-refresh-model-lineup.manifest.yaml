@@ -1,0 +1,71 @@
+schema_version: 1
+amendment:
+  number: 192  # Next sequential after principle-foundation-structural-enforcement-s-d
+               # (191 — highest on disk). Builder CONFIRMS the exact number at
+               # `loam amend apply` against the live counter
+               # (feedback_version_numbers_at_release_time — never pre-bake a
+               # number that drifts).
+  slug: capability-refresh-model-lineup
+  title: "Capability-refresh model-lineup extension — adds model-lineup tracking to the existing capability-refresh tool (AC.CLP-MDL.1-4). Two new sources in sources.yaml (anthropic-models-overview with model_parse:true; anthropic-pricing as a watch source). New models.py module: deterministic regex extraction of Claude API model IDs, per-source lineup stored at .refresh/model-lineup/<id>.json, delta computation (added/removed vs prior run), surfaced in last-run.json + stdout. model_parse boolean flag on Source datatype (optional, default false; all existing sources unaffected). cadence/routine-spec.md updated to name the model-data pull + delta step. Closes the gap where Sonnet 5 shipped and was never caught by the automated refresh — the exact real-world miss that motivated this extension (AC.CLP-MDL.2 ★, outcome-altitude)."
+
+# BASELINE: HEAD at plan authoring (2026-07-01). Builder confirms at apply time.
+baseline: "6a57ea488afc1cc428232c4b04c04cc2a7635b43"
+
+plan: docs/plans/capability-refresh-model-lineup.md
+
+components:
+  # The existing sealed capability-refresh component. The BASELINE in the
+  # component's test_no_sealed_amendments.py stays at 266aa93c (the original
+  # introduction BASELINE); the SEAL_COMMIT sidecar advances to this
+  # amendment's seal. All new paths fall inside the existing allowed_prefixes
+  # / allowed_files — no fence widening needed.
+  - name: capability-refresh
+    seal_test: framework/tools/capability-refresh/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/capability-refresh/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — plan-doc + sources.yaml (corpus-adjacent) + STATE.
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/capability-corpus/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/capability-refresh-model-lineup.md
+  body: |
+    # Capability-refresh model-lineup extension — apply ladder
+
+    Extension of the capability-refresh component
+    (sealed `c41f9473`, plan `docs/plans/claude-leverage-program-s1-currency.md`).
+    Closes the gap where a new Claude model ships and the automated refresh
+    never surfaces it (trigger: claude-sonnet-5 shipped; owner reported it
+    manually).
+
+    This amendment:
+      1. Adds `anthropic-models-overview` (model_parse:true, high-velocity)
+         and `anthropic-pricing` (watch, high-velocity) to sources.yaml.
+         URLs verified live at plan authoring (2026-07-01): both HTTP 200.
+      2. Ships new `models.py` module: deterministic regex extraction of
+         Claude API IDs from backtick-quoted Markdown text (no LLM call —
+         D-CUR.4 guard); lineup stored at .refresh/model-lineup/<id>.json;
+         compute_model_delta(old, new) → added/removed sets; surfaced in
+         last-run.json per-source record (model_delta field) + human-readable
+         stdout when non-empty.
+      3. `model_parse: bool = False` added to Source datatype; optional in
+         sources YAML; rejected on `kind: entry` (entry sources project into
+         corpus docs, not raw markdown pages). All existing sources unaffected.
+      4. cadence/routine-spec.md updated: the daily + weekly prompt blocks
+         name the model-data pull + delta step.
+
+    ★ AC.CLP-MDL.2 (outcome-altitude): fixture prior lineup
+    {claude-opus-4-8, claude-sonnet-4-6} → current adds claude-sonnet-5 →
+    last-run.json model_delta.added == ["claude-sonnet-5"]. The exact
+    real-world miss verified by test.
+
+    NO public-action steps; NO Anthropic API key (all fetches are plain
+    HTTP via urllib). BASELINE = 6a57ea48 (HEAD at plan authoring);
+    counter 192 confirmed at apply.

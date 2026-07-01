@@ -216,15 +216,16 @@ tree `/Users/lukeivers/loam` (no concurrent session owns it this cut, so
 no isolated worktree was needed — `branch-main` resolves GREEN). All ACs
 GREEN. **PUBLISH remains the owner's command to run.**
 
-_(Backfilled after the HARD smoke + dry-run — see the matrix below.)_
+Backfilled after the HARD smoke (`docs/experiments/v1-9-0-hard-smoke.md`,
+GREEN) + the `loam release v1.9.0 --dry-run` (9 GREEN / 0 RED). All ACs GREEN.
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.REL.1 | (pending smoke) | this doc |
-| AC.REL.2 | (pending smoke) | lockstep bump |
-| AC.REL.3 | (pending smoke) | HARD smoke writeup |
-| AC.REL.4 | (pending smoke) | touched suites |
-| AC.REL.5 | (pending smoke) | STATE.md |
-| AC.REL.6 | (pending smoke) | roadmap §2 |
-| AC.REL.7 | (pending smoke) | migration yaml |
-| AC.REL.S | (pending smoke) | outcome-altitude deltas |
+| AC.REL.1 | GREEN | this doc exists with §1 + §4 + §13 at slug `v1-9-0-release-integration-spine-p1-local`; resolved by the `v1-9-0-*` version-slug glob with NO `--plan-doc` flag (acs-verified + hard-smoke gates both GREEN) |
+| AC.REL.2 | GREEN | `docs/ACTIVE_MINOR` → 1.9.0; 31 in-scope pyprojects → 1.9.0 (Tier-0 sweep: ALL 31 == 1.9.0, none left at 1.8.0, 0 stray non-in-scope); meta `loam --version` literal → 1.9.0; lockstep test `test_AC_PCVR_pyproject_version_lockstep` → 5 passed at 1.9.0 (canonical + cold clone); new `local-deploy-tier` correctly at 0.1.0 out-of-scope |
+| AC.REL.3 | GREEN | HARD smoke `docs/experiments/v1-9-0-hard-smoke.md` carries the `GREEN` aggregate-verdict token + the gate `loam --version` (`loam 1.9.0`) / `loam --help` (exit 0) evidence + the spawn-isolated `claude -p` SMOKE OK |
+| AC.REL.4 | GREEN | from the cold tree: local-deploy-tier 28 passed, deploy-safety-floor 28 passed (incl. AC.DSF.8), capability-refresh 32 passed (incl. AC.CLP-MDL), primary-persona VOL+WVS-HOOK-EN families GREEN + full sweep 1287 passed/1 skipped/1 failed, dev-sdlc 396/7skip (incl. lockstep AC.PCVR at 1.9.0). The single `test_AC_MSC_3` failure is Tier-0-classified pre-existing-environmental (cold-clone dev-mode sensitivity; PASSES in the canonical tree; untouched by v1.9.0) — smoke §10 |
+| AC.REL.5 | GREEN | `docs/STATE.md` carries the `**v1.9.0 MINOR SHIPPED LOCAL**` change-log entry naming local-deploy-tier + memory-volatility + work-visibility-hook-fix + fail-policy-adoption + capability-refresh model-lineup + release-window tip `5e96f08f` |
+| AC.REL.6 | GREEN | `docs/release-roadmap.md` §2 `| v1.9.0 |` row carries final seal token `5e96f08f` (Tier-0: ancestor of release HEAD); §3 Active-version updated |
+| AC.REL.7 | GREEN | `docs/state-migrations/v1-9-0-spine-p1-local.migration.yaml` declares `version: v1.9.0` + `operation: no-op` (additive read-back-safe memory frontmatter; new opt-in component state created fresh; capability-corpus is a repo artifact) |
+| AC.REL.S | GREEN | cold-tree `loam --version` → `loam 1.9.0`; LOCAL deploy tier acceptance-record OA (AC.LOCAL.C) within 28 passed; HARD-volatile status claim FILTERED from current recall while history preserved (AC.VOL.5 OA) — smoke §5 |

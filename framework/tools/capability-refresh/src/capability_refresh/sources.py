@@ -45,6 +45,11 @@ import yaml
 CADENCE_CLASSES = ("high-velocity", "long-form", "on-merge")
 KINDS = ("entry", "watch")
 
+# model_parse is only valid on watch sources. Entry sources project into
+# corpus docs (four-section Markdown with a Source block); raw model-page
+# Markdown does not fit that schema (AC.CLP-MDL.1/D-MDL.1).
+_MODEL_PARSE_ALLOWED_KINDS = ("watch",)
+
 
 class SourceManifestError(ValueError):
     """The source manifest is malformed."""
@@ -57,6 +62,7 @@ class Source:
     url: str
     cadence: str
     entry: Optional[str] = None
+    model_parse: bool = False  # True -> extract model IDs + emit lineup delta (AC.CLP-MDL.1/2)
 
 
 def load_sources(manifest_path: Path) -> List[Source]:
@@ -76,6 +82,7 @@ def load_sources(manifest_path: Path) -> List[Source]:
         url = item.get("url")
         cadence = item.get("cadence")
         entry = item.get("entry")
+        model_parse = bool(item.get("model_parse", False))
         if not sid or not isinstance(sid, str):
             raise SourceManifestError(f"{manifest_path}: sources[{i}] missing 'id'")
         if sid in seen:
@@ -91,7 +98,13 @@ def load_sources(manifest_path: Path) -> List[Source]:
             raise SourceManifestError(f"{sid}: 'entry' kind requires an 'entry' path")
         if kind == "watch" and entry:
             raise SourceManifestError(f"{sid}: 'watch' kind must not name an 'entry'")
-        sources.append(Source(id=sid, kind=kind, url=url, cadence=cadence, entry=entry))
+        if model_parse and kind not in _MODEL_PARSE_ALLOWED_KINDS:
+            raise SourceManifestError(
+                f"{sid}: model_parse:true is only valid on "
+                f"{_MODEL_PARSE_ALLOWED_KINDS} sources (kind={kind!r})"
+            )
+        sources.append(Source(id=sid, kind=kind, url=url, cadence=cadence,
+                               entry=entry, model_parse=model_parse))
     return sources
 
 

@@ -50,6 +50,12 @@ cadence cannot depend on a live session.
      (or: PYTHONPATH=framework/tools/capability-refresh/src)
   2. capability-refresh --cadence-class high-velocity
      (equivalently: python3 -m capability_refresh --cadence-class high-velocity)
+     This run covers: Claude Code capability docs (hooks/subagents/changelog/
+     loop/schedule) AND the Anthropic model lineup + pricing pages. For the
+     model-lineup sources (anthropic-models-overview), the tool extracts
+     Claude API model IDs, computes a delta vs the prior run (added/removed
+     models), and surfaces it in the run output and last-run.json. Review
+     any "model-delta: +N added" lines — they signal a new model shipped.
   3. If the run changed files under docs/capability-corpus/, commit them:
      git add docs/capability-corpus/ && git commit -m "chore(corpus): scheduled capability refresh (high-velocity)"
   4. Do NOT edit anything by hand: the refresh tool's output is the whole
@@ -63,6 +69,10 @@ cadence cannot depend on a live session.
 - Same repository, permissions, and prompt with
   `--cadence-class long-form` and commit message
   `chore(corpus): scheduled capability refresh (long-form)`.
+- Note: the model-lineup sources (`anthropic-models-overview`,
+  `anthropic-pricing`) are bound to `high-velocity` (daily) and are
+  NOT included in the long-form run. Model lineup changes can arrive
+  without notice; daily cadence is the correct binding.
 
 `on-merge` sources (Class A-prime, e.g. `harness/scope-of-work.md`) are
 declared as data in `sources.yaml` but are NOT cron-bound — the locked

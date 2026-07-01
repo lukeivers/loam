@@ -98,6 +98,25 @@ def main(argv=None) -> int:
                 extras.append(f"pending-delta={rec['pending_delta']}")
             if rec.get("error"):
                 extras.append(f"error={rec['error']}")
+            # Model-lineup delta (AC.CLP-MDL.2): surface added/removed IDs.
+            md = rec.get("model_delta")
+            if md is not None:
+                if md.get("no_prior"):
+                    extras.append("model-lineup: initialized")
+                else:
+                    parts = []
+                    if md.get("added"):
+                        parts.append(
+                            f"+{len(md['added'])} added "
+                            f"({', '.join(md['added'])})"
+                        )
+                    if md.get("removed"):
+                        parts.append(
+                            f"-{len(md['removed'])} removed "
+                            f"({', '.join(md['removed'])})"
+                        )
+                    if parts:
+                        extras.append(f"model-delta: {'; '.join(parts)}")
             suffix = (" — " + ", ".join(extras)) if extras else ""
             print(f"  [{rec['status']}] {rec['id']}{suffix}")
         if "report_path" in report:

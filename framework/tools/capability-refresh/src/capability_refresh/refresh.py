@@ -131,10 +131,12 @@ def run_refresh(
             "url": source.url,
             "cadence": source.cadence,
             "entry": source.entry,
+            "model_parse": source.model_parse,
             "status": None,
             "auto_landed": [],
             "review": [],
             "pending_delta": None,
+            "model_delta": None,  # populated when model_parse is True (AC.CLP-MDL.2)
         }
         report["sources"].append(rec)
 
@@ -164,6 +166,25 @@ def run_refresh(
             continue
 
         norm = normalize(raw)
+
+        # Model-lineup tracking (AC.CLP-MDL.1/2). Runs on raw text (not norm)
+        # so backtick-quoted IDs are present regardless of HTML stripping.
+        if source.model_parse:
+            from capability_refresh.models import (
+                compute_model_delta,
+                extract_model_ids,
+                load_model_lineup,
+                save_model_lineup,
+            )
+            current_ids = extract_model_ids(raw)
+            prior_ids = load_model_lineup(corpus_root, source.id)
+            if prior_ids is None:
+                rec["model_delta"] = {"added": [], "removed": [], "no_prior": True}
+            else:
+                rec["model_delta"] = compute_model_delta(prior_ids, current_ids)
+            if not dry_run:
+                save_model_lineup(corpus_root, source.id, current_ids, ts)
+
         snap_path = resolve_state_path(corpus_root, ".refresh", "snapshots",
                                        f"{source.id}.txt")
         if not snap_path.exists():

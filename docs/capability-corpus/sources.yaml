@@ -54,3 +54,23 @@ sources:
     entry: harness/scope-of-work.md
     url: internal:framework/scope-of-work/docs/api-reference.md
     cadence: on-merge
+
+  # Model-lineup tracking (AC.CLP-MDL.1/2; D-MDL.1 — model_parse flag).
+  # The models-overview page is Markdown (.md URL) with Claude API IDs in
+  # backtick form: `claude-fable-5`, `claude-sonnet-5`, etc. model_parse:true
+  # activates ID extraction + lineup-artifact write + delta computation on
+  # each run. Verified live 2026-07-01: HTTP 200, Markdown format confirmed.
+  - id: anthropic-models-overview
+    kind: watch
+    model_parse: true
+    url: https://platform.claude.com/docs/en/about-claude/models/overview.md
+    cadence: high-velocity
+
+  # Pricing page: HTML; content changes (price adjustments, new tiers) surface
+  # as review-class pending-deltas via the existing watch mechanism.
+  # No model_parse (HTML normalization strips backticks; ID extraction not
+  # applicable to the rendered pricing page format). Verified live 2026-07-01.
+  - id: anthropic-pricing
+    kind: watch
+    url: https://platform.claude.com/docs/en/about-claude/pricing
+    cadence: high-velocity

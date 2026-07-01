@@ -1,0 +1,51 @@
+# User-state migration — v1.9.0 (dev→build→deploy spine P1 LOCAL tier + refinements)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.9.0 ships five
+# sealed cycles: (A) the first LOCAL deploy tier on the sealed floor
+# (NEW opt-in component local-deploy-tier); (B) a memory-volatility
+# read disposition on the sealed primary-persona; (C) a work-visibility
+# hook-event-name bug fix; (D) a deploy-safety floor fail-policy de-dup
+# (behaviour-preserving); (E) a capability-refresh model-lineup tracking
+# extension.
+
+version: v1.9.0
+slug: v1-9-0-spine-p1-local
+slice: "v1.9.0 MINOR (dev→build→deploy spine P1 LOCAL tier — NEW opt-in component local-deploy-tier at 0.1.0 out-of-graph; memory-volatility read disposition + work-visibility hook fix on sealed primary-persona; deploy-safety floor fail-policy adoption; capability-refresh model-lineup)"
+date: 2026-07-01
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.9.0 re-schemas, moves, or removes NO pre-existing stored .loam/ user
+  state; a user upgrading v1.8.0 -> v1.9.0 needs no state transformation.
+  Cycle-by-cycle: (A) local-deploy-tier is a NEW framework component under
+  framework/local-deploy-tier/ (0.1.0, out-of-install-graph, opt-in) — its
+  acceptance record + LOCAL config are state a user CREATES FRESH on first
+  opt-in; there is no prior local-tier state to carry forward, so nothing to
+  migrate. (B) memory-volatility adds an ADDITIVE, backward-compatible pair of
+  frontmatter fields (volatility, volatile_until) that write_episode emits on
+  records written AFTER the upgrade only; the read-side disposition treats an
+  ABSENT field as durable (fail-safe default), so existing pre-upgrade
+  .loam/memory/ records remain valid and are read unchanged — no in-place
+  rewrite of stored records is required. (C) the work-visibility hook fix
+  restores a required hookEventName field on the hook's stdout — a runtime
+  output shape, not persisted user state. (D) the deploy-safety floor
+  fail-policy adoption is a strictly behaviour-preserving de-dup (routing the
+  existing gate through the shared FAIL_CLOSED primitive) with no user-state
+  effect. (E) capability-refresh model-lineup operates on the loam-repo
+  capability corpus (docs/capability-corpus/, a tracked framework artifact),
+  NOT on user .loam/ state. Therefore: declared no-op.
+
+# Reversibility (protection floor): nothing in a user's .loam/ state is
+# removed, compressed, or overwritten by this release. A revert is a pure
+# code revert; no data move. The additive memory frontmatter is read-back-safe
+# in both directions (a downgraded reader ignores the unknown fields; an
+# upgraded reader treats their absence as durable). The LOCAL deploy tier's
+# acceptance/config artefacts are user-created opt-in state a revert simply
+# stops writing; nothing prior is destroyed.
+reversible: true
+removes_user_state: false
+idempotent: true

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-orchestrator"
-version = "1.8.0"
+version = "1.9.0"
 description = "Session-resilient orchestrator for loam — asyncio process host, Unix-socket JSON-RPC, bind_scope dispatch layer, compaction-survival integration."
 requires-python = ">=3.11"
 dependencies = [

@@ -252,7 +252,16 @@ Using `raw` is strictly more robust. F4: HIGH.
 
 ## §13 Status
 
-_Pending build._
+**SEALED LOCAL 2026-07-01.** Owner gates publish.
+
+| Phase | SHA | Notes |
+|---|---|---|
+| Plan + manifest committed | `46918e20` | Plan-before-code gate satisfied |
+| Source edits + tests committed | `35610096` | 32/32 tests GREEN |
+| `loam amend apply` | `2a7f62c5` | Apply commit (manifest merged + sidecars advanced) |
+| `loam amend seal` | `5e96f08f` | Seal commit; deterministic; `--dry-run` clean post-seal |
+
+AC verdicts: AC.CLP-MDL.1 PASS, AC.CLP-MDL.2 ★ PASS (outcome-altitude — two-run fixture: prior={claude-opus-4-8, claude-sonnet-4-6}, current adds claude-sonnet-5, `delta.added==["claude-sonnet-5"]`), AC.CLP-MDL.3 PASS (regression clean), AC.CLP-MDL.4 PASS. 32/32 tests GREEN. No ODD violations. No out-of-fence drift. No halt triggers fired.
 
 ---
 
@@ -260,6 +269,6 @@ _Pending build._
 
 | ID | Decision | Builder narrative | SHA |
 |---|---|---|---|
-| D-MDL.1 | `model_parse` boolean vs new kind | _pending_ | _pending_ |
-| D-MDL.2 | Lineup artifact path | _pending_ | _pending_ |
-| D-MDL.3 | Extract from raw text | _pending_ | _pending_ |
+| D-MDL.1 | `model_parse` boolean vs new kind | Chose boolean flag on existing `watch` sources. The watch machinery (snapshot/diff/partition) already ran correctly for the new sources — only structured ID extraction was additive. A new `kind` value would have required touching kind-dispatch in `refresh.py` and kind-validation in `sources.py` for strictly additive behavior. Flag defaults `false` → all existing sources unaffected. Rejected on `kind: entry` (entry sources project into four-section corpus docs; model-overview pages don't fit that schema). | `35610096` |
+| D-MDL.2 | Lineup artifact path `.refresh/model-lineup/<id>.json` | `.refresh` is already in `STATE_DIRS`; `resolve_state_path` accepts it by construction — no widening needed. Inline-in-`last-run.json`-only would lose the prior-lineup baseline across runs, defeating the delta computation. A new top-level state dir would require a `STATE_DIRS` edit in `corpus.py`. `(a)` is the least-invasive durable path. | `35610096` |
+| D-MDL.3 | Extract model IDs from `raw` text, not `norm` | The HTML normalizer strips `<code>` tags; if the `.md` URL ever returns rendered HTML, `norm` could lose backtick-quoted IDs. `raw` has literal backticks regardless of upstream format. Confirmed by test: fixture raw Markdown extraction produces exactly `["claude-opus-4-8", "claude-sonnet-4-6"]`. | `35610096` |

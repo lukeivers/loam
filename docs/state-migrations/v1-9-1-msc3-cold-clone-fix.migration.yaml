@@ -1,0 +1,27 @@
+# User-state migration — v1.9.1 (MSC3 cold-clone test fixture fix)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.9.1 is a PATCH
+# that fixes a single test fixture in the primary-persona component;
+# no production source code is changed.
+
+version: v1.9.1
+slug: v1-9-1-msc3-cold-clone-fix
+slice: "v1.9.1 PATCH (MSC3 cold-clone test fixture fix: test_AC_MSC_3_canonical_claude_dev_md_carries_named_surface now passes in bare cold clone)"
+date: 2026-07-01
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.9.1 changes exactly one test fixture file
+  (framework/primary-persona/tests/test_AC_MSC_3_named_thread_surface_in_corpus.py).
+  No production source code, no .loam/ schema, no stored state format, and no
+  install-graph component is modified. A user upgrading v1.9.0 -> v1.9.1 needs
+  no state transformation whatsoever. Declared no-op.
+
+# Reversibility: nothing in a user's .loam/ state is touched.
+reversible: true
+removes_user_state: false
+idempotent: true

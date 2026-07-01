@@ -9,7 +9,7 @@ amendment:
 # (docs(plans): dev-build-deploy spine P1 LOCAL — STATE + roadmap backfill).
 # Re-baselined by the builder at build start to the plan+manifest commit
 # so the seal-diff window narrows to exactly this amendment's surface.
-baseline: "6cf995ef"
+baseline: "5c1fabaa"
 
 plan: docs/plans/wvs-hook-event-name-fix.md
 

@@ -57,18 +57,48 @@ def _resolve_workspace_root(envelope: dict[str, Any]) -> Path | None:
     return None
 
 
+def _hook_event_name(envelope: dict[str, Any]) -> str:
+    """Extract the firing event name from a Claude-Code hook envelope.
+
+    Returns the ``hook_event_name`` string when it is a non-empty str;
+    returns ``""`` otherwise. Used by _wrap_output to decide whether
+    ``hookSpecificOutput`` should be emitted at all (AC.WVS-HOOK-EN.2).
+    """
+    raw = envelope.get("hook_event_name")
+    return raw if isinstance(raw, str) and raw else ""
+
+
+def _wrap_output(event_name: str, additional_context: str) -> dict[str, Any]:
+    """Build the Claude-Code hook output dict (AC.WVS-HOOK-EN.1 / .2 / .3 / .4).
+
+    When ``event_name`` is a non-empty string, returns:
+        ``{"hookSpecificOutput": {"hookEventName": event_name,
+                                  "additionalContext": additional_context}}``
+    When ``event_name`` is empty (unknown / absent), returns ``{}`` so
+    nothing malformed is ever printed (D-EN.3: malformed output is worse
+    than empty output).
+    """
+    if not event_name:
+        return {}
+    return {"hookSpecificOutput": {"hookEventName": event_name, "additionalContext": additional_context}}
+
+
 def run(envelope: dict[str, Any]) -> dict[str, Any]:
     """Execute the refresh + return the Claude-Code hook output dict.
 
     Regenerates the status file (a) and produces the in-context block
-    (c), both off the shared aggregator. On any failure returns an
-    empty-additionalContext dict (fail-closed; AC.WVS-FRESH.2 + the
-    fail-soft envelope mirroring AC.WVS-AGG.2 at the host boundary).
+    (c), both off the shared aggregator. On any failure returns a
+    fail-closed output (AC.WVS-FRESH.2 + the fail-soft envelope
+    mirroring AC.WVS-AGG.2 at the host boundary). Every returned dict
+    that carries ``hookSpecificOutput`` includes ``hookEventName`` equal
+    to the firing event name extracted from the envelope
+    (AC.WVS-HOOK-EN.1 / .2 / .3 / .4).
     """
+    event_name = _hook_event_name(envelope)
     try:
         workspace_root = _resolve_workspace_root(envelope)
         if workspace_root is None:
-            return {"hookSpecificOutput": {"additionalContext": ""}}
+            return _wrap_output(event_name, "")
 
         from .work_visibility_presenters import (
             in_context_block,
@@ -86,9 +116,9 @@ def run(envelope: dict[str, Any]) -> dict[str, Any]:
 
         # (c) the live in-context block.
         block = in_context_block(workspace_root)
-        return {"hookSpecificOutput": {"additionalContext": block}}
+        return _wrap_output(event_name, block)
     except Exception:
-        return {"hookSpecificOutput": {"additionalContext": ""}}
+        return _wrap_output(event_name, "")
 
 
 def main() -> int:

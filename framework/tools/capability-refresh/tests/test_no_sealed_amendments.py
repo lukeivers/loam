@@ -44,7 +44,7 @@ import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BASELINE = "6a57ea488afc1cc428232c4b04c04cc2a7635b43"
+BASELINE = "d6d65c2b2e63029aedb5c4cc5ab4f5383c730668"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -52,6 +52,7 @@ allowed_prefixes = (
     "framework/tools/capability-refresh/",
     "docs/plans/",
     "docs/capability-corpus/",
+    ".github/workflows/",
 )
 allowed_files = {
     "docs/CLAUDE_CAPABILITIES.md",

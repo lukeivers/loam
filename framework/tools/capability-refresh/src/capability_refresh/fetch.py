@@ -24,6 +24,7 @@ silently retaining it as current (AC.CLP-CUR.5).
 from __future__ import annotations
 
 import html as html_mod
+import http.client
 import re
 import urllib.error
 import urllib.request
@@ -60,7 +61,19 @@ def fetch_source(url: str, repo_root: Path, timeout: int = DEFAULT_TIMEOUT) -> s
                 if status and status >= 400:
                     raise FetchError(f"HTTP {status} fetching {url}")
                 data = resp.read()
-        except (urllib.error.URLError, OSError, ValueError) as exc:
+        except (
+            urllib.error.URLError,
+            http.client.IncompleteRead,
+            OSError,
+            ValueError,
+        ) as exc:
+            # http.client.IncompleteRead is an HTTPException, NOT an OSError —
+            # a truncated body read (resp.read() returning fewer bytes than the
+            # Content-Length) would otherwise escape uncaught. Routing it to
+            # FetchError marks the entry stale rather than silently retaining
+            # it as current (AC.CLP-CUR.5 protection floor). This catch was
+            # made in the stranded, unreachable cloud commit and is re-authored
+            # here (capability-refresh-actions-cadence-migration, AC.CRAC.3).
             raise FetchError(f"fetch failed for {url}: {exc}") from exc
         try:
             return data.decode("utf-8")

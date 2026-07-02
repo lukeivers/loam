@@ -1,11 +1,27 @@
-# Cadence binding — cloud routine spec (PRIMARY; activation OWNER-GATED)
+# Cadence binding — cloud routine spec (RETIRED — historical record)
 
-> **Status: SPEC ONLY — no routine has been created.** Live activation of
-> any persistent unattended automation is owner-gated (dispatcher gate
-> 2026-06-11; precedent: the refusal-watchdog persistence ruling,
-> `2026-06-11-refusal-watchdog-persistent-service-keep.md` — persistent
-> unattended automation gets the owner's explicit word before it is
-> switched on). Activation is the single documented step below.
+> **⛔ RETIRED 2026-07-02.** The cloud-routine binding is **no longer the
+> primary cadence mechanism.** The RUN moved to a GitHub Actions scheduled
+> workflow (`.github/workflows/capability-refresh.yml`) per the owner-ratified
+> architecture doc
+> `workspace/strategy/capability-refresh-delivery-architecture-2026-07-02.md`,
+> which reverses the 2026-06-14 cloud-routine activation. See
+> `ACTIVATION.md` for the live binding. **Why retired:** the two routines
+> activated 2026-06-14 (`capability-refresh-daily` `trig_018DZTYo…`,
+> `capability-refresh-weekly` `trig_01R27t…`) 403-stranded every commit — in
+> ~18 days of daily fires not one cloud commit ever reached the repo (proxy /
+> GitHub-MCP 403). The runner had compute-but-no-write. The tool-selection
+> lesson recorded: **Claude-native ≠ correct when the work has no model in
+> it** — a deterministic repo-committing cron script's native primitive is the
+> git host's scheduler (Actions), not an LLM routine.
+>
+> Deleting the routines themselves is an interactive `/schedule` /
+> web-console action; the repo-side binding is retired by this doc. The spec
+> below is kept as the historical record ONLY.
+
+---
+
+## Historical spec (RETIRED — do not activate)
 
 ## D-CUR.2 — why a cloud routine (verified live 2026-06-11)
 

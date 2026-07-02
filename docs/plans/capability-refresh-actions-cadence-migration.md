@@ -153,5 +153,23 @@ Every change traces to a ratified migration step; no scope creep beyond §3.
 
 ## §9 Bookkeeping
 
-- `docs/STATE.md` change-log entry; `docs/release-roadmap.md` §8 register row.
-- §14 SHA backfill after seal.
+- `docs/STATE.md` change-log entry (`docs/release-roadmap.md` has no amendment
+  register — §8 does not exist; STATE.md is the record, per the model-lineup
+  precedent).
+- §10 SHA register (below), backfilled after seal.
+
+## §10 SHA register (backfilled post-seal)
+
+- amendment #193; BASELINE `d6d65c2b`.
+- plan + manifest: `ad3b6f58`
+- fix (fetch IncompleteRead + test): `6d9b12a8`
+- feat (workflow + run-cadence.sh opt-in + retirement docs): `a190ba69`
+- chore (corpus — this morning's refresh output): `9515f6f1`
+- apply: `f197050a`
+- seal: `afaae4ef`
+- seal-diff window: `d6d65c2b..f197050a` (fence-clean); post-seal
+  `apply --dry-run` clean; 34/34 component tests GREEN.
+- system actions: `launchctl bootout` of `com.loam.capability-refresh-daily`
+  + `-weekly` (verified gone).
+- remaining owner/primary-session actions: delete the two cloud routines
+  (`trig_018DZTYo…`, `trig_01R27t…`) via interactive `/schedule`; merge the PR.

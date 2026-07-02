@@ -45,19 +45,30 @@ Enterprise administrators can use allowManagedHooksOnly to block user, project, 
 Hooks from plugins force-enabled in managed settings enabledPlugins are exempt, so administrators can distribute vetted hooks through an organization marketplace.
 See Hook configuration .
 ​ Matcher patterns The matcher field filters when hooks fire.
-How a matcher is evaluated depends on the characters it contains: Matcher value Evaluated as Example "*" , "" , or omitted Match all fires on every occurrence of the event Only letters, digits, _ , and | Exact string, or | -separated list of exact strings Bash matches only the Bash tool; Edit|Write matches either tool exactly Contains any other character JavaScript regular expression ^Notebook matches any tool starting with Notebook; mcp__memory__.* matches every tool from the memory server The FileChanged event does not follow these rules when building its watch list.
+How a matcher is evaluated depends on the characters it contains: Matcher value Evaluated as Example "*" , "" , or omitted Match all fires on every occurrence of the event Only letters, digits, _ , - , spaces, , , and | Exact string, or list of exact strings separated by | or , with optional surrounding whitespace Bash matches only the Bash tool; Edit|Write and Edit, Write each match either tool exactly; code-reviewer matches only that agent type Contains any other character JavaScript regular expression, unanchored ^Notebook matches any tool whose name starts with Notebook ; mcp__memory__.* matches every tool from the memory server A matcher on the regular-expression path is tested with JavaScript’s RegExp.prototype.test , which succeeds on a match anywhere in the value.
+Edit.* matches both Edit and NotebookEdit ; wrap the pattern in ^ and $ , as in ^Edit$ , when you need a whole-string match.
+Comma separators and the surrounding whitespace tolerance require Claude Code v2.1.191 or later.
+Hyphens in the exact-match set require Claude Code v2.1.195 or later.
+On earlier versions a hyphenated name like code-reviewer is evaluated as an unanchored regular expression, so it also fires for senior-code-reviewer ; anchor it as ^code-reviewer$ on those versions to match only that name.
+FileChanged and StopFailure use a narrower exact-match set of letters, digits, _ , and | only.
+A hyphen, space, or comma in a matcher for those two events keeps it on the regular-expression path, and only | separates alternatives.
+Every other event with matcher support in the table that follows accepts | or , .
+The FileChanged event does not follow these rules when building its watch list.
 See FileChanged .
-Each event type matches on a different field: Event What the matcher filters Example matcher values PreToolUse , PostToolUse , PostToolUseFailure , PermissionRequest , PermissionDenied tool name Bash , Edit|Write , mcp__.* SessionStart how the session started startup , resume , clear , compact Setup which CLI flag triggered setup init , maintenance SessionEnd why the session ended clear , resume , logout , prompt_input_exit , bypass_permissions_disabled , other Notification notification type permission_prompt , idle_prompt , auth_success , elicitation_dialog , elicitation_complete , elicitation_response SubagentStart agent type general-purpose , Explore , Plan , or custom agent names PreCompact , PostCompact what triggered compaction manual , auto SubagentStop agent type same values as SubagentStart ConfigChange configuration source user_settings , project_settings , local_settings , policy_settings , skills CwdChanged no matcher support always fires on every directory change FileChanged literal filenames to watch (see FileChanged ) .envrc|.env StopFailure error type rate_limit , overloaded , authentication_failed , oauth_org_not_allowed , billing_error , invalid_request , model_not_found , server_error , max_output_tokens , unknown InstructionsLoaded load reason session_start , nested_traversal , path_glob_match , include , compact UserPromptExpansion command name your skill or command names Elicitation MCP server name your configured MCP server names ElicitationResult MCP server name same values as Elicitation UserPromptSubmit , PostToolBatch , Stop , TeammateIdle , TaskCreated , TaskCompleted , WorktreeCreate , WorktreeRemove , MessageDisplay no matcher support always fires on every occurrence The matcher runs against a field from the JSON input that Claude Code sends to your hook on stdin.
+Each event type matches on a different field: Event What the matcher filters Example matcher values PreToolUse , PostToolUse , PostToolUseFailure , PermissionRequest , PermissionDenied tool name Bash , Edit|Write , mcp__.* SessionStart how the session started startup , resume , clear , compact Setup which CLI flag triggered setup init , maintenance SessionEnd why the session ended clear , resume , logout , prompt_input_exit , bypass_permissions_disabled , other Notification notification type permission_prompt , idle_prompt , auth_success , elicitation_dialog , elicitation_complete , elicitation_response SubagentStart agent type general-purpose , Explore , Plan , custom agent names, or plugin-scoped names like ^my-plugin:reviewer$ PreCompact , PostCompact what triggered compaction manual , auto SubagentStop agent type same values as SubagentStart ConfigChange configuration source user_settings , project_settings , local_settings , policy_settings , skills CwdChanged no matcher support always fires on every directory change FileChanged literal filenames to watch (see FileChanged ) .envrc|.env StopFailure error type rate_limit , overloaded , authentication_failed , oauth_org_not_allowed , billing_error , invalid_request , model_not_found , server_error , max_output_tokens , unknown InstructionsLoaded load reason session_start , nested_traversal , path_glob_match , include , compact UserPromptExpansion command name your skill or command names Elicitation MCP server name your configured MCP server names ElicitationResult MCP server name same values as Elicitation UserPromptSubmit , PostToolBatch , Stop , TeammateIdle , TaskCreated , TaskCompleted , WorktreeCreate , WorktreeRemove , MessageDisplay no matcher support always fires on every occurrence The matcher runs against a field from the JSON input that Claude Code sends to your hook on stdin.
 For tool events, that field is tool_name .
 Each hook event section lists the full set of matcher values and the input schema for that event.
-This example runs a linting script only when Claude writes or edits a file: { "hooks" : { "PostToolUse" : [ { "matcher" : "Edit|Write" , "hooks" : [ { "type" : "command" , "command" : "/path/to/lint-check.sh" } ] } ] } } UserPromptSubmit , PostToolBatch , Stop , TeammateIdle , TaskCreated , TaskCompleted , WorktreeCreate , WorktreeRemove , and CwdChanged don’t support matchers and always fire on every occurrence.
+This example runs a linting script only when Claude writes or edits a file: { "hooks" : { "PostToolUse" : [ { "matcher" : "Edit|Write" , "hooks" : [ { "type" : "command" , "command" : "/path/to/lint-check.sh" } ] } ] } } UserPromptSubmit , PostToolBatch , Stop , TeammateIdle , TaskCreated , TaskCompleted , WorktreeCreate , WorktreeRemove , MessageDisplay , and CwdChanged don’t support matchers and always fire on every occurrence.
 If you add a matcher field to these events, it is silently ignored.
 For tool events, you can filter more narrowly by setting the if field on individual hook handlers.
 if uses permission rule syntax to match against the tool name and arguments together, so "Bash(git *)" runs when any subcommand of the Bash input matches git * and "Edit(*.ts)" runs only for TypeScript files.
 ​ Match MCP tools MCP server tools appear as regular tools in tool events ( PreToolUse , PostToolUse , PostToolUseFailure , PermissionRequest , PermissionDenied ), so you can match them the same way you match any other tool name.
 MCP tools follow the naming pattern mcp__<server>__<tool> , for example: mcp__memory__create_entities : Memory server’s create entities tool mcp__filesystem__read_file : Filesystem server’s read file tool mcp__github__search_repositories : GitHub server’s search tool To match every tool from a server, append .* to the server prefix.
-The .* is required: a matcher like mcp__memory contains only letters and underscores, so it is compared as an exact string and matches no tool.
-mcp__memory__.* matches all tools from the memory server mcp__.*__write.* matches any tool whose name starts with write from any server This example logs all memory server operations and validates write operations from any MCP server: { "hooks" : { "PreToolUse" : [ { "matcher" : "mcp__memory__.*" , "hooks" : [ { "type" : "command" , "command" : "echo 'Memory operation initiated' >> ~/mcp-operations.log" } ] }, { "matcher" : "mcp__.*__write.*" , "hooks" : [ { "type" : "command" , "command" : "/home/user/scripts/validate-mcp-write.py" } ] } ] } } ​ Hook handler fields Each object in the inner hooks array is a hook handler: the shell command, HTTP endpoint, MCP tool, LLM prompt, or agent that runs when the matcher matches.
+The .* is required: a matcher like mcp__memory or mcp__brave-search contains only exact-match characters, so it is compared as an exact string and matches no tool.
+mcp__memory__.* matches all tools from the memory server mcp__brave-search__.* matches all tools from a server whose name contains a hyphen mcp__.*__write.* matches any tool whose name starts with write from any server Hyphens in the exact-match set require Claude Code v2.1.195 or later.
+On earlier versions a bare hyphenated prefix like mcp__brave-search is evaluated as an unanchored regular expression and matches every tool from that server.
+The mcp__brave-search__.* form works on every version.
+This example logs all memory server operations and validates write operations from any MCP server: { "hooks" : { "PreToolUse" : [ { "matcher" : "mcp__memory__.*" , "hooks" : [ { "type" : "command" , "command" : "echo 'Memory operation initiated' >> ~/mcp-operations.log" } ] }, { "matcher" : "mcp__.*__write.*" , "hooks" : [ { "type" : "command" , "command" : "/home/user/scripts/validate-mcp-write.py" } ] } ] } } ​ Hook handler fields Each object in the inner hooks array is a hook handler: the shell command, HTTP endpoint, MCP tool, LLM prompt, or agent that runs when the matcher matches.
 There are five types: Command hooks ( type: "command" ): run a shell command.
 Your script receives the event’s JSON input on stdin and communicates results back through exit codes and stdout.
 HTTP hooks ( type: "http" ): send the event’s JSON input as an HTTP POST request to a URL.
@@ -70,6 +81,10 @@ See Prompt-based hooks .
 Agent hooks ( type: "agent" ): spawn a subagent that can use tools like Read, Grep, and Glob to verify conditions before returning a decision.
 Agent hooks are experimental and may change.
 See Agent-based hooks .
+All matching hooks run in parallel, and identical handlers are deduplicated automatically.
+Command hooks are deduplicated by command string and args , and HTTP hooks are deduplicated by URL.
+Handlers run in the current directory with Claude Code’s environment.
+The $CLAUDE_CODE_REMOTE environment variable is set to "true" in remote web environments and not set in the local CLI.
 ​ Common fields These fields apply to all hook types: Field Required Description type yes "command" , "http" , "mcp_tool" , "prompt" , or "agent" if no Permission rule syntax to filter when this hook runs, such as "Bash(git *)" or "Edit(*.ts)" .
 The hook command only runs if the tool call matches the pattern.
 See the Bash matching table below for how Bash patterns evaluate against subcommands, $() , and backticks.
@@ -93,7 +108,8 @@ See Exec form and shell form async no If true , runs in the background without b
 See Run hooks in the background asyncRewake no If true , runs in the background and wakes Claude on exit code 2.
 Implies async .
 The hook’s stderr, or stdout if stderr is empty, is shown to Claude as a system reminder so it can react to a long-running background failure shell no Shell to use for this hook.
-Accepts "bash" (default) or "powershell" .
+Accepts "bash" or "powershell" .
+Defaults to "bash" , or to "powershell" on Windows when Git Bash isn’t installed.
 Setting "powershell" runs the command via PowerShell on Windows.
 Does not require CLAUDE_CODE_USE_POWERSHELL_TOOL since hooks spawn PowerShell directly.
 Ignored when args is set Exec form and shell form A command hook runs as exec form when args is set, and shell form when args is omitted.
@@ -137,11 +153,7 @@ SessionStart and Setup typically fire before servers finish connecting, so hooks
 This example calls the security_scan tool on the my_server MCP server after each Write or Edit , passing the edited file’s path: { "hooks" : { "PostToolUse" : [ { "matcher" : "Write|Edit" , "hooks" : [ { "type" : "mcp_tool" , "server" : "my_server" , "tool" : "security_scan" , "input" : { "file_path" : "${tool_input.file_path}" } } ] } ] } } ​ Prompt and agent hook fields In addition to the common fields , prompt and agent hooks accept these fields: Field Required Description prompt yes Prompt text to send to the model.
 Use $ARGUMENTS as a placeholder for the hook input JSON.
 Escape with a backslash to include literal text: \$1.00 renders as $1.00 model no Model to use for evaluation.
-Defaults to a fast model All matching hooks run in parallel, and identical handlers are deduplicated automatically.
-Command hooks are deduplicated by command string and args , and HTTP hooks are deduplicated by URL.
-Handlers run in the current directory with Claude Code’s environment.
-The $CLAUDE_CODE_REMOTE environment variable is set to "true" in remote web environments and not set in the local CLI.
-​ Reference scripts by path Use these placeholders to reference hook scripts relative to the project or plugin root, regardless of the working directory when the hook runs: ${CLAUDE_PROJECT_DIR} : the project root.
+Defaults to a fast model ​ Reference scripts by path Use these placeholders to reference hook scripts relative to the project or plugin root, regardless of the working directory when the hook runs: ${CLAUDE_PROJECT_DIR} : the project root.
 Claude Code also sets this variable in the environment of stdio MCP servers and plugin LSP servers.
 ${CLAUDE_PLUGIN_ROOT} : the plugin’s installation directory, for scripts bundled with a plugin .
 Changes on each plugin update.
@@ -183,7 +195,10 @@ To trigger a desktop notification, set a window title, or ring the bell, return 
 ​ Common input fields Hook events receive these fields as JSON, in addition to event-specific fields documented in each hook event section.
 For command hooks, this JSON arrives via stdin.
 For HTTP hooks, it arrives as the POST request body.
-Field Description session_id Current session identifier transcript_path Path to conversation JSON cwd Current working directory when the hook is invoked permission_mode Current permission mode : "default" , "plan" , "acceptEdits" , "auto" , "dontAsk" , or "bypassPermissions" .
+Field Description session_id Current session identifier prompt_id UUID identifying the user prompt currently being processed.
+Matches the prompt.id attribute on OpenTelemetry events , so you can correlate hook output with telemetry for a single prompt.
+Absent until the first user input.
+Requires Claude Code v2.1.196 or later transcript_path Path to conversation JSON cwd Current working directory when the hook is invoked permission_mode Current permission mode : "default" , "plan" , "acceptEdits" , "auto" , "dontAsk" , or "bypassPermissions" .
 Not all events receive this field: see each event’s JSON example below to check effort Object with a level field holding the active effort level for the turn: "low" , "medium" , "high" , "xhigh" , or "max" .
 If the requested model effort exceeds what the current model supports, this is the downgraded level the model actually used.
 Ultracode is not a distinct level and reports as "xhigh" .
@@ -197,10 +212,12 @@ agent_type Agent name (for example, "Explore" or "security-reviewer" ).
 Present when the session uses --agent or the hook fires inside a subagent.
 For subagents, the subagent’s type takes precedence over the session’s --agent value.
 For custom subagents , this is the name field from the agent’s frontmatter, not the filename.
-Only SessionStart hooks receive a model field.
+For subagents shipped by a plugin , this is the plugin-scoped identifier such as my-plugin:reviewer , not the bare frontmatter name.
+See SubagentStart for how to write a matcher against a plugin-scoped name.
+Only SessionStart hooks can receive a model field, and it is not guaranteed to be present.
 There is no $CLAUDE_MODEL environment variable.
 A hook process inherits the parent environment, so it can read $ANTHROPIC_MODEL if you set it in your shell, but that value does not change when you switch models with /model during a session.
-For example, a PreToolUse hook for a Bash command receives this on stdin: { "session_id" : "abc123" , "transcript_path" : "/home/user/.claude/projects/.../transcript.jsonl" , "cwd" : "/home/user/my-project" , "permission_mode" : "default" , "hook_event_name" : "PreToolUse" , "tool_name" : "Bash" , "tool_input" : { "command" : "npm test" } } The tool_name and tool_input fields are event-specific.
+For example, a PreToolUse hook for a Bash command receives this on stdin: { "session_id" : "abc123" , "prompt_id" : "550e8400-e29b-41d4-a716-446655440000" , "transcript_path" : "/home/user/.claude/projects/.../transcript.jsonl" , "cwd" : "/home/user/my-project" , "permission_mode" : "default" , "hook_event_name" : "PreToolUse" , "tool_name" : "Bash" , "tool_input" : { "command" : "npm test" } } The tool_name and tool_input fields are event-specific.
 Each hook event section documents the additional fields for that event.
 ​ Exit code output The exit code from your hook command tells Claude Code whether the action should proceed, be blocked, or be ignored.
 Exit 0 means success.
@@ -284,7 +301,10 @@ Hook failure or missing path fails creation Elicitation hookSpecificOutput actio
 Display-only: the transcript and what Claude sees keep the original SessionStart, Setup, SubagentStart Context only hookSpecificOutput.additionalContext adds context for Claude.
 SessionStart also accepts initialUserMessage , watchPaths , sessionTitle , and reloadSkills .
 No blocking or decision control WorktreeRemove, Notification, SessionEnd, PostCompact, InstructionsLoaded, StopFailure, CwdChanged, FileChanged None No decision control.
-Used for side effects like logging or cleanup A few events can also rewrite content rather than only allow or block it: PreToolUse — updatedInput directly under hookSpecificOutput replaces a tool’s arguments before it runs ( details ) PermissionRequest — updatedInput inside the decision object ( details ) PostToolUse — updatedToolOutput replaces the tool’s result ( details ) UserPromptSubmit — cannot replace the prompt; only injects additionalContext alongside it For redaction or transformation use cases, intercept at PreToolUse for outbound tool inputs and PostToolUse for inbound tool results.
+Used for side effects like logging or cleanup A few events can also rewrite content rather than only allow or block it: PreToolUse : updatedInput directly under hookSpecificOutput replaces a tool’s arguments before it runs.
+See PreToolUse decision control PermissionRequest : updatedInput inside the decision object.
+See PermissionRequest decision control PostToolUse : updatedToolOutput replaces the tool’s result.
+See PostToolUse decision control UserPromptSubmit : cannot replace the prompt; it only injects additionalContext alongside it For redaction or transformation use cases, intercept at PreToolUse for outbound tool inputs and PostToolUse for inbound tool results.
 Here are examples of each pattern in action: Top-level decision PreToolUse PermissionRequest Used by UserPromptSubmit , UserPromptExpansion , PostToolUse , PostToolUseFailure , PostToolBatch , Stop , SubagentStop , ConfigChange , and PreCompact .
 The only value is "block" .
 To allow the action to proceed, omit decision from your JSON, or exit 0 without any JSON at all: { "decision" : "block" , "reason" : "Test suite must pass before proceeding" } Uses hookSpecificOutput for richer control: allow, deny, or escalate to the user.
@@ -302,13 +322,14 @@ Useful for loading development context like existing issues or recent changes to
 For static context that does not require a script, use CLAUDE.md instead.
 SessionStart runs on every session, so keep these hooks fast.
 Only type: "command" and type: "mcp_tool" hooks are supported.
-The matcher value corresponds to how the session was initiated: Matcher When it fires startup New session resume --resume , --continue , or /resume clear /clear compact Auto or manual compaction ​ SessionStart input In addition to the common input fields , SessionStart hooks receive source , model , and optionally agent_type and session_title .
+The matcher value corresponds to how the session was initiated: Matcher When it fires startup New session resume --resume , --continue , or /resume clear /clear compact Auto or manual compaction ​ SessionStart input In addition to the common input fields , SessionStart hooks receive source and optionally model , agent_type , and session_title .
 The source field indicates how the session started: "startup" for new sessions, "resume" for resumed sessions, "clear" after /clear , or "compact" after compaction.
-The model field contains the model identifier.
+The model field contains the active model identifier.
+It can be omitted, for example after /clear or when a session is restored through conversation recovery, so check for the field before reading it.
 If you start Claude Code with claude --agent <name> , an agent_type field contains the agent name.
 The session_title field carries the current session title if one is already set, for example via --name or /rename .
 A hook that emits sessionTitle can check session_title first to avoid overwriting a title the user set explicitly.
-{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "hook_event_name" : "SessionStart" , "source" : "startup" , "model" : "claude-sonnet-4-6" } ​ SessionStart decision control Any text your hook script prints to stdout is added as context for Claude.
+{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "hook_event_name" : "SessionStart" , "source" : "startup" , "model" : "claude-sonnet-5" } ​ SessionStart decision control Any text your hook script prints to stdout is added as context for Claude.
 In addition to the JSON output fields available to all hooks, you can return these event-specific fields: Field Description additionalContext String added to Claude’s context at the start of the conversation, before the first prompt.
 See Add context for Claude for how the text is delivered and what to put in it initialUserMessage String used as the first user message of the session.
 Applies in non-interactive mode ( -p ), where it becomes the first turn even if no prompt is provided.
@@ -358,6 +379,10 @@ This allows you to add additional context based on the prompt/conversation, vali
 UserPromptSubmit hooks have a default timeout of 30 seconds for command , http , and mcp_tool types, shorter than the 600-second default for those types on most other events.
 Because this hook runs before every prompt and blocks model processing until it completes, a stuck hook stalls the session.
 If your hook needs more time, set the timeout field in the hook entry.
+A UserPromptSubmit hook that reaches its timeout is canceled and its output, including any additionalContext , is discarded.
+The prompt still reaches Claude without that context.
+As of v2.1.196, the transcript shows a notice naming the hook, the timeout that fired, and that the output was discarded.
+Earlier versions cancel the hook with no notice.
 ​ UserPromptSubmit input In addition to the common input fields , UserPromptSubmit hooks receive the prompt field containing the text the user submitted.
 { "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "UserPromptSubmit" , "prompt" : "Write a function to calculate the factorial of a number" } ​ UserPromptSubmit decision control UserPromptSubmit hooks can control whether a user prompt is processed and add context.
 All JSON output fields are available.
@@ -416,6 +441,9 @@ Save this script to .claude/hooks/plain-display.ps1 in your project: $batch = [ 
 If the script fails, for example because jq is missing, Claude Code displays the original text and notes the failure only in debug output , not in the session.
 ​ PreToolUse Runs after Claude creates tool parameters and before processing the tool call.
 Matches on tool name: Bash , Edit , Write , Read , Glob , Grep , Agent , WebFetch , WebSearch , AskUserQuestion , ExitPlanMode , and any MCP tool names .
+PreToolUse runs only when Claude calls a tool.
+Files you reference with @ in your prompt are added without any tool call: Claude Code inserts their contents while building the prompt, so no PreToolUse hook fires for them, including hooks matching Read .
+To block specific paths from @ references, use a Read deny rule instead.
 Use PreToolUse decision control to allow, deny, ask, or defer the tool call.
 ​ PreToolUse input In addition to the common input fields , PreToolUse hooks receive tool_name , tool_input , and tool_use_id .
 The tool_input fields depend on the tool: Bash Executes shell commands.
@@ -430,8 +458,11 @@ Defaults to "files_with_matches" -i boolean true Case insensitive search multili
 Field Type Example Description url string "https://example.com/api" URL to fetch content from prompt string "Extract the API endpoints" Prompt to run on the fetched content WebSearch Searches the web.
 Field Type Example Description query string "react hooks best practices" Search query allowed_domains array ["docs.example.com"] Optional: only include results from these domains blocked_domains array ["spam.example.com"] Optional: exclude results from these domains Agent Spawns a subagent .
 Field Type Example Description prompt string "Find all API endpoints" The task for the agent to perform description string "Find API endpoints" Short description of the task subagent_type string "Explore" Type of specialized agent to use model string "sonnet" Optional model alias to override the default In PostToolUse , tool_response for a completed Agent call carries the subagent’s final text along with usage telemetry.
-Read these fields to record per-subagent cost from a hook: Field Type Example Description status string "completed" "completed" for synchronous calls, "async_launched" for run_in_background: true agentId string "a4d2c8f1e0b3a297" Identifier for the subagent run content array [{"type": "text", "text": "Found 12 endpoints..."}] The subagent’s final text blocks totalTokens number 12450 Total tokens billed across the subagent’s turns totalDurationMs number 48211 Wall-clock duration of the subagent run totalToolUseCount number 7 Count of tool calls the subagent made usage object {"input_tokens": 8320, ...} Per-type token breakdown: input_tokens , output_tokens , cache_creation_input_tokens , cache_read_input_tokens For run_in_background: true calls, the tool returns immediately after launching the subagent, so tool_response carries no usage fields.
-It has status: "async_launched" , agentId , description , prompt , and outputFile instead.
+Read these fields to record per-subagent cost from a hook: Field Type Example Description status string "completed" "completed" for synchronous calls, "async_launched" for run_in_background: true agentId string "a4d2c8f1e0b3a297" Identifier for the subagent run content array [{"type": "text", "text": "Found 12 endpoints..."}] The subagent’s final text blocks resolvedModel string "claude-sonnet-4-5" Model the subagent ran on, which may differ from the requested model.
+Requires Claude Code v2.1.174 or later totalTokens number 12450 Total tokens billed across the subagent’s turns totalDurationMs number 48211 Wall-clock duration of the subagent run totalToolUseCount number 7 Count of tool calls the subagent made usage object {"input_tokens": 8320, ...} Per-type token breakdown: input_tokens , output_tokens , cache_creation_input_tokens , cache_read_input_tokens For run_in_background: true calls, the tool returns immediately after launching the subagent, so tool_response carries no usage fields.
+It has status: "async_launched" , agentId , description , prompt , outputFile , and resolvedModel .
+The resolvedModel field names the model the subagent actually runs on, which can differ from the model value in tool_input , such as when availableModels or another override applies.
+It requires Claude Code v2.1.174 or later.
 AskUserQuestion Asks the user one to four multiple-choice questions.
 Field Type Example Description questions array [{"question": "Which framework?", "header": "Framework", "options": [{"label": "React"}], "multiSelect": false}] Questions to present, each with a question string, short header , options array, and optional multiSelect flag answers object {"Which framework?": "React"} Optional.
 Maps question text to the selected option label.
@@ -590,6 +621,8 @@ The common JSON output fields such as systemMessage apply.
 Supports matchers to filter by agent type name.
 For built-in agents, this is the agent name like general-purpose , Explore , or Plan .
 For custom subagents , this is the name field from the agent’s frontmatter, not the filename.
+For subagents shipped by a plugin , the agent type is the plugin-scoped identifier such as my-plugin:reviewer , not the bare frontmatter name.
+The colon places a plugin-scoped name on the regular-expression path, so anchor the matcher with ^ and $ for an exact match: ^my-plugin:reviewer$ .
 ​ SubagentStart input In addition to the common input fields , SubagentStart hooks receive agent_id with the unique identifier for the subagent and agent_type with the agent name (built-in agents like "general-purpose" , "Explore" , "Plan" , or custom agent names).
 { "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "hook_event_name" : "SubagentStart" , "agent_id" : "agent-abc123" , "agent_type" : "Explore" } SubagentStart hooks cannot block subagent creation, but they can inject context into the subagent.
 In addition to the JSON output fields available to all hooks, you can return: Field Description additionalContext String added to the subagent’s context at the start of its conversation, before its first prompt.
@@ -611,10 +644,10 @@ When a TaskCreated hook exits with code 2, the task is not created and the stder
 To stop the teammate entirely instead of re-running it, return JSON with {"continue": false, "stopReason": "..."} .
 TaskCreated hooks do not support matchers and fire on every occurrence.
 ​ TaskCreated input In addition to the common input fields , TaskCreated hooks receive task_id , task_subject , and optionally task_description , teammate_name , and team_name .
-{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TaskCreated" , "task_id" : "task-001" , "task_subject" : "Implement user authentication" , "task_description" : "Add login and signup endpoints" , "teammate_name" : "implementer" , "team_name" : "my-project" } Field Description task_id Identifier of the task being created task_subject Title of the task task_description Detailed description of the task.
+{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TaskCreated" , "task_id" : "task-001" , "task_subject" : "Implement user authentication" , "task_description" : "Add login and signup endpoints" , "teammate_name" : "implementer" , "team_name" : "session-a1b2c3d4" } Field Description task_id Identifier of the task being created task_subject Title of the task task_description Detailed description of the task.
 May be absent teammate_name Name of the teammate creating the task.
-May be absent team_name Name of the team.
-May be absent ​ TaskCreated decision control TaskCreated hooks support two ways to control task creation: Exit code 2 : the task is not created and the stderr message is fed back to the model as feedback.
+May be absent team_name Deprecated.
+Session-derived team name; will be removed in a future release ​ TaskCreated decision control TaskCreated hooks support two ways to control task creation: Exit code 2 : the task is not created and the stderr message is fed back to the model as feedback.
 JSON {"continue": false, "stopReason": "..."} : stops the teammate entirely, matching Stop hook behavior.
 The stopReason is shown to the user.
 This example blocks tasks whose subjects don’t follow the required format: #!/bin/bash INPUT = $( cat ) TASK_SUBJECT = $( echo " $INPUT " | jq -r '.task_subject' ) if [[ !
@@ -626,10 +659,10 @@ When a TaskCompleted hook exits with code 2, the task is not marked as completed
 To stop the teammate entirely instead of re-running it, return JSON with {"continue": false, "stopReason": "..."} .
 TaskCompleted hooks do not support matchers and fire on every occurrence.
 ​ TaskCompleted input In addition to the common input fields , TaskCompleted hooks receive task_id , task_subject , and optionally task_description , teammate_name , and team_name .
-{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TaskCompleted" , "task_id" : "task-001" , "task_subject" : "Implement user authentication" , "task_description" : "Add login and signup endpoints" , "teammate_name" : "implementer" , "team_name" : "my-project" } Field Description task_id Identifier of the task being completed task_subject Title of the task task_description Detailed description of the task.
+{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TaskCompleted" , "task_id" : "task-001" , "task_subject" : "Implement user authentication" , "task_description" : "Add login and signup endpoints" , "teammate_name" : "implementer" , "team_name" : "session-a1b2c3d4" } Field Description task_id Identifier of the task being completed task_subject Title of the task task_description Detailed description of the task.
 May be absent teammate_name Name of the teammate completing the task.
-May be absent team_name Name of the team.
-May be absent ​ TaskCompleted decision control TaskCompleted hooks support two ways to control task completion: Exit code 2 : the task is not marked as completed and the stderr message is fed back to the model as feedback.
+May be absent team_name Deprecated.
+Session-derived team name; will be removed in a future release ​ TaskCompleted decision control TaskCompleted hooks support two ways to control task completion: Exit code 2 : the task is not marked as completed and the stderr message is fed back to the model as feedback.
 JSON {"continue": false, "stopReason": "..."} : stops the teammate entirely, matching Stop hook behavior.
 The stopReason is shown to the user.
 This example runs tests and blocks task completion if they fail: #!/bin/bash INPUT = $( cat ) TASK_SUBJECT = $( echo " $INPUT " | jq -r '.task_subject' ) # Run the test suite if !
@@ -673,7 +706,8 @@ When a TeammateIdle hook exits with code 2, the teammate receives the stderr mes
 To stop the teammate entirely instead of re-running it, return JSON with {"continue": false, "stopReason": "..."} .
 TeammateIdle hooks do not support matchers and fire on every occurrence.
 ​ TeammateIdle input In addition to the common input fields , TeammateIdle hooks receive teammate_name and team_name .
-{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TeammateIdle" , "teammate_name" : "researcher" , "team_name" : "my-project" } Field Description teammate_name Name of the teammate that is about to go idle team_name Name of the team ​ TeammateIdle decision control TeammateIdle hooks support two ways to control teammate behavior: Exit code 2 : the teammate receives the stderr message as feedback and continues working instead of going idle.
+{ "session_id" : "abc123" , "transcript_path" : "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl" , "cwd" : "/Users/..." , "permission_mode" : "default" , "hook_event_name" : "TeammateIdle" , "teammate_name" : "researcher" , "team_name" : "session-a1b2c3d4" } Field Description teammate_name Name of the teammate that is about to go idle team_name Deprecated.
+Session-derived team name; will be removed in a future release ​ TeammateIdle decision control TeammateIdle hooks support two ways to control teammate behavior: Exit code 2 : the teammate receives the stderr message as feedback and continues working instead of going idle.
 JSON {"continue": false, "stopReason": "..."} : stops the teammate entirely, matching Stop hook behavior.
 The stopReason is shown to the user.
 This example checks that a build artifact exists before allowing a teammate to go idle: #!/bin/bash if [ !
@@ -807,7 +841,8 @@ Set continueOnBlock: true to feed the reason back to Claude and continue the tur
 These events end the turn on decision: "block" regardless of continue PostToolUseFailure , TaskCreated , and TaskCompleted : the reason is returned to Claude as a tool error, similar to PreToolUse TeammateIdle : by default the teammate stops and the reason appears as a warning line.
 Set continueOnBlock: true to feed the reason back to the teammate and keep it working instead PermissionRequest : ok: false has no effect.
 To deny an approval from a hook, use a command hook returning hookSpecificOutput.decision.behavior: "deny" PermissionDenied : ok: false has no effect because the denial already happened.
-The only output this event reads is hookSpecificOutput.retry , which prompt and agent hooks cannot set — they run on this event, but their output is discarded.
+The only output this event reads is hookSpecificOutput.retry , which prompt and agent hooks cannot set.
+They run on this event, but their output is discarded.
 Use a command hook to return retry If you need finer control on any event, use a command hook with the per-event fields described in Decision control .
 ​ Example: Multi-criteria Stop hook This Stop hook uses a detailed prompt to check three conditions before allowing Claude to stop.
 If "ok" is false , Claude continues working with the provided reason as its next instruction.
@@ -867,7 +902,10 @@ In shell form, wrap it in double quotes Skip sensitive files : avoid .env , .git
 ​ Windows PowerShell tool On Windows, you can run individual hooks in PowerShell by setting "shell": "powershell" on a command hook.
 Hooks spawn PowerShell directly, so this works regardless of whether CLAUDE_CODE_USE_POWERSHELL_TOOL is set.
 Claude Code auto-detects pwsh.exe (PowerShell 7+) with a fallback to powershell.exe (5.1).
-{ "hooks" : { "PostToolUse" : [ { "matcher" : "Write" , "hooks" : [ { "type" : "command" , "shell" : "powershell" , "command" : "Write-Host 'File written'" } ] } ] } } ​ Debug hooks Hook execution details, including which hooks matched, their exit codes, and full stdout and stderr, are written to the debug log file.
+{ "hooks" : { "PostToolUse" : [ { "matcher" : "Write" , "hooks" : [ { "type" : "command" , "shell" : "powershell" , "command" : "Write-Host 'File written'" } ] } ] } } To reference the project root from a PowerShell shell-form command, read it as an environment variable with $env:CLAUDE_PROJECT_DIR .
+PowerShell treats the bare ${CLAUDE_PROJECT_DIR} form as a local variable, not an environment lookup, and Claude Code substitutes that placeholder in shell form only for plugin hooks .
+For a hook defined in settings.json , either use the $env: form or switch to exec form , where ${CLAUDE_PROJECT_DIR} is substituted in each args element regardless of where the hook is defined.
+The example below shows a settings.json hook that runs a project script with the $env: form: { "type" : "command" , "shell" : "powershell" , "command" : "& \" $env:CLAUDE_PROJECT_DIR \\ .claude \\ hooks \\ check.ps1 \" " } ​ Debug hooks Hook execution details, including which hooks matched, their exit codes, and full stdout and stderr, are written to the debug log file.
 Start Claude Code with claude --debug-file <path> to write the log to a known location, or run claude --debug and read the log at ~/.claude/debug/<session-id>.txt .
 The --debug flag does not print to the terminal.
 [DEBUG] Executing hooks for PostToolUse:Write [DEBUG] Found 1 hook commands to execute [DEBUG] Executing hook command: <Your command> with timeout 600000ms [DEBUG] Hook command completed with status 0: <Your stdout> For more granular hook matching details, set CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose to see additional log lines such as hook matcher counts and query matching.

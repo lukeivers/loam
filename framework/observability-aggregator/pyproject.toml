@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-observability-aggregator"
-version = "1.9.0"
+version = "1.10.0"
 description = "loam observability aggregator — single-user local-first trace store. Subscribes to every sealed component's emission surface (OTel via bootstrap; memory JSONL via tail), stores in DuckDB (SQLite fallback), serves structured + NL + CLI queries, supports replay under decaying retention with v1.1 R10 retention-class honouring."
 requires-python = ">=3.11"
 dependencies = [

@@ -1,0 +1,15 @@
+# Domain review-methodology corpus index (P6 / AC.AR.9).
+#
+# domain_agnostic: the always-on floor — the two KEPT, cited methodology
+#   docs shipped with this capability. Every review seeds with these even
+#   when no domain-specific doc exists (so an uncovered domain still
+#   reviews against a real failure taxonomy, not "good work" in the
+#   abstract).
+# domains: per-domain review-methodology docs, kept from research pulls,
+#   each carrying real citations (claim-or-cite, P6). Reused + staleness
+#   -refreshed across reviews. Seeded empty; populated by CorpusStore
+#   .record_pull as domains are pulled.
+domain_agnostic:
+  - domain-agnostic/adversarial-review-general.md
+  - domain-agnostic/ai-as-critic-and-failure-modes.md
+domains: {}

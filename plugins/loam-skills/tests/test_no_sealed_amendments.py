@@ -90,11 +90,17 @@ def test_only_loam_skills_changed() -> None:
     #     v0.1.7 Cycle 3 pattern (layered-skill-architecture.md was
     #     admitted via the same prefix at workspace-bootstrap's
     #     seal-fence).
+    # v1.10.0 (adversarial-review promotion) admits the co-shipping
+    # partner: the `adversarial-review` SKILL lands under
+    # plugins/loam-skills/skills/adversarial-review/ alongside the NEW
+    # component framework/adversarial-review/. The reverse seal-fence
+    # (adversarial-review's own test) admits plugins/loam-skills/ in kind.
     allowed_prefixes = (
         "plugins/loam-skills/",
         "docs/rebuild/plans/",
         "docs/design/",
         "framework/workspace-bootstrap/",
+        "framework/adversarial-review/",
         "docs/",
         "docs/plans/",
         "framework/hands-off-lifecycle/",

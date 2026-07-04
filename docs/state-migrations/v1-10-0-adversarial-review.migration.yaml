@@ -1,0 +1,32 @@
+# User-state migration — v1.10.0 (on-demand adversarial review)
+#
+# Declared per the migration release-gate convention (gate 7,
+# check_migration_declared / P1.3): EVERY release declares a user-state
+# migration; a NO-OP is a valid declared migration. v1.10.0 promotes the
+# standing adversarial-review capability into canonical loam as a NEW
+# opt-in component (framework/adversarial-review/, 0.1.0, out-of-graph)
+# plus the adversarial-review SKILL added to the loam-skills plugin.
+
+version: v1.10.0
+slug: v1-10-0-adversarial-review
+slice: "v1.10.0 MINOR (on-demand adversarial review — NEW opt-in component adversarial-review at 0.1.0 out-of-graph + the adversarial-review SKILL in loam-skills; the auto-blocking gate ships OFF/experimental)"
+date: 2026-07-04
+disposition: leave
+
+# What user-state this release changes:
+operation: no-op
+rationale: >
+  v1.10.0 re-schemas, moves, or removes NO pre-existing stored .loam/ user
+  state; a user upgrading v1.9.1 -> v1.10.0 needs no state transformation.
+  The adversarial-review capability is a NEW framework component under
+  framework/adversarial-review/ (0.1.0, out-of-install-graph, opt-in): it is
+  stdlib-only, reads the review-methodology corpus that ships in-repo, and
+  reaches the sealed loam-spawn-isolation surface by in-tree import. Its only
+  persisted artifacts are review outputs and any kept domain-methodology docs
+  the user chooses to create on first use — state a user CREATES FRESH, with
+  no prior adversarial-review state to carry forward. The adversarial-review
+  SKILL is a discoverable wrapper added to the loam-skills plugin
+  (plugins/loam-skills/skills/); it is Claude-Code-discovered content, not
+  persisted user state. The auto-blocking gate ships OFF by default and wires
+  to no boundary, so it changes no runtime behavior on upgrade. Therefore:
+  declared no-op.

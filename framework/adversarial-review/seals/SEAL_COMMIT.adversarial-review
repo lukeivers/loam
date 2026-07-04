@@ -1,0 +1,102 @@
+# adversarial-review capability — promotion into canonical loam — apply ladder
+
+Per `docs/plans/release-integration-v1-10-0-adversarial-review.md` (a
+LIFT of the pos3 build-plan + determinations, not a fresh derivation).
+loam's standing adversarial-review capability lands as a NEW opt-in
+component `framework/adversarial-review/` (0.1.0, out-of-graph +
+out-of-lockstep this cut, D-AR-LOCK) plus the discoverable
+`adversarial-review` SKILL added to the sealed loam-skills plugin.
+
+The capability defeats the ways AI review goes soft (sycophancy,
+agreement bias, self-preference, generic critique, hallucinated flaws,
+panel consensus-collapse, performed harshness) STRUCTURALLY — by how
+the review is constructed — never by asking a model to be brutal.
+
+  - AC.AR.1 (outcome-altitude) — the manual on-demand entry
+    (`manual.review_file`) points at ONE artifact + its stated
+    objective and returns a structured harsh review: findings each
+    pinned to location + concrete failure scenario + severity, plus a
+    verdict. No gate, no block. The real entry fn runs over a real
+    file with no pre-arranged state.
+  - AC.AR.2 — the critic seed (`seed.py`) is artifact + objective +
+    methodology + protocol ONLY; the parent conversation, the author's
+    self-assessment, owner enthusiasm, and authorship provenance are
+    excluded (sycophancy is preference-trained and rides the polluted
+    parent context — the isolation is the counter).
+  - AC.AR.3 — the derive phase seed EXCLUDES the artifact bytes; the
+    diff phase carries the derivation + the artifact. The two-spawn
+    ordering is structural, so the "what a correct artifact must
+    contain" derivation is authentically artifact-blind (Nemeth: a
+    position the critic constructed itself is genuinely held).
+  - AC.AR.4 — a finding blocks only AFTER a ground-truth validation
+    pass (`validation.py`) re-checks it; unvalidated findings
+    quarantine as HYPOTHESIZED — visible, severity-capped, never
+    blocking. Keeps critic recall HIGH and spends precision in
+    validation, never by making the critic timid.
+  - AC.AR.5 — the gate verdict (`verdict.py`) BLOCKs by default on
+    validated top-severity findings; the owner override is an explicit,
+    recorded act; a PASS that fails to name (a) its strongest surviving
+    objection and (b) what the review could not check is malformed and
+    rejected.
+  - AC.AR.6 — zero validated substantive findings on a nontrivial
+    artifact raises a suspicion flag on the REVIEW itself, not a clean
+    bill (a shallow review that looks harsh is anti-evidence — F7).
+  - AC.AR.7 — a finding that would be true of any artifact of the class
+    ("could be more robust") is flagged generic and excluded from the
+    verdict calculus (generic critique is the failure that most
+    resembles success — Liang).
+  - AC.AR.8 — every critic / merge-judge / non-executable validator
+    spawn routes through the SEALED `spawn_isolated_claude`
+    (`spawn.py`); a hand-rolled bare `claude` argv (missing
+    `--strict-mcp-config`/`--mcp-config`) is refused — the un-isolated
+    spawn is the proven Telegram-death kill vector, not a style
+    preference. The sealed surface is imported, never edited (Lens 1).
+  - AC.AR.9 — the domain-methodology corpus (`corpus.py`) is checked
+    BEFORE any research pull; a kept doc is indexed with its citations
+    and reused by a later same-domain review; the two seed docs
+    (domain-agnostic layer) ship present. Review N+1 is cheaper +
+    sharper than review N — the standing capability's memory.
+  - AC.AR.10 (outcome-altitude) — feeding a seeded-flaw artifact
+    (`calibration.py`) reads back a computed catch rate; the harness
+    matches critic findings to the seeded flaws. A reviewer whose
+    detection rate is never measured is faith, not protection — the
+    real calibration proof (`calibration/CALIBRATION-RESULT.md`, catch
+    1.0 on the seeded proof) is the recall evidence.
+  - AC.AR.11 — the STANDARD floor (one two-phase falsification critic +
+    validation + verdict) is non-skippable for a boundary artifact;
+    DEEP (`tiers.py`) adds parallel per-axis isolated critics with NO
+    shared context + a separate merge judge preserving disagreement.
+    A symmetric free-form panel is never the mechanism (unguided panels
+    collapse into consensus).
+  - AC.AR.12 — the auto-blocking boundary gate (`gate.py`) is a no-op
+    while the activation switch is OFF (the default). It ships
+    EXPERIMENTAL: it is NOT the named v1.10.0 outcome, and it may not
+    be activated to auto-block any real boundary until a measured
+    false-positive / precision test on clean artifacts is recorded
+    (recall is proven; precision is not — a gate that blocks good work
+    is worse than no gate). Activation is a separate owner-gated
+    amendment. The manual entry works regardless of the switch.
+  - AC.AR.13 — review output carries NO stakeholder-reaction-prediction
+    framing (`critic.py`); a lint rejects "they will think / how X will
+    receive it" — the critic answers "can this survive attack?", never
+    "how will X receive it?" (a generic skeptical-adversary model
+    applied to a bought-in counterparty misjudges the human).
+
+Method-level choices are the builder's call per ODD §1.1; the plan
+fixed the ACs (§6), the named decisions (§5 D-AR-* set), the fence (a
+NEW opt-in component + the SKILL added to loam-skills; the sealed
+spawn-isolation surface read/named only), the experimental-gate
+activation bar (§7), and the halt triggers (§9) — not the
+implementation.
+
+NEW-component first-seal fence on `framework/adversarial-review/`;
+the sealed loam-skills plugin's fence widens by the one admitted
+partner prefix `framework/adversarial-review/` (a normal partner
+admission). No other sealed component's fence moves. Promotion is a
+move + mechanical path-surgery (the pos3 out-of-tree absolute spawn
+reach becomes an in-tree relative reach; README/SKILL pos3 paths become
+canonical) — not a rewrite.
+
+Predecessor: d6d65c2b — the canonical tip at build-dispatch (origin/main
+== local main), carrying the sealed loam-spawn-isolation surface the
+capability composes on.

@@ -268,15 +268,99 @@ path works, the gate blocks nothing.
 - Any surrounding-code ODD violation surfaces during the promotion —
   HALT + surface.
 
-## status — AC verdicts
+## §4 — Acceptance criteria
 
-**GREEN.** All AC.AR.{1–13} + AR.S are satisfied by the promoted test
+The in-scope AC ladder (family `AC.AR.*`, scope-descriptive; ODD §2.5),
+lifted from the pos3 build-plan §4 — the same ladder the shipped tests
+`framework/adversarial-review/tests/test_AC_AR_*.py` satisfy. This is the
+heading form the `acs-verified` gate scans; the prose summary in §6 and the
+verdicts in §status below carry the same set. Outcome-altitude ACs:
+**AC.AR.1** and **AC.AR.10**. The real-calibration smoke test `AR.S`
+(`test_AR_S_real_calibration_smoke`) is env-gated and is exercised in the
+HARD smoke §4, not a numbered AC.
+
+### AC.AR.1 — manual entry returns a structured harsh review (outcome-altitude)
+Manual entry against one artifact file + stated objective returns a
+structured harsh review (findings pinned location+scenario+severity + a
+verdict), no gate/block; exercised through the real entry fn on a real file.
+
+### AC.AR.2 — critic seed excludes the author's world
+Critic seed = artifact + objective + methodology + protocol ONLY; excludes
+parent conversation / author self-assessment / provenance.
+
+### AC.AR.3 — two-spawn artifact-blind derivation before diff
+Derive-phase seed excludes the artifact bytes; diff-phase seed carries
+derivation + artifact; two-spawn ordering is structural.
+
+### AC.AR.4 — validation before a finding can block
+A finding blocks only after ground-truth validation; unvalidated findings
+quarantine as HYPOTHESIZED (visible, severity-capped, non-blocking).
+
+### AC.AR.5 — block-by-default verdict; malformed-PASS rejected
+The gate verdict BLOCKs by default on validated top-severity findings; owner
+override is an explicit act; a PASS missing strongest-surviving-objection +
+what-couldn't-be-checked is malformed and rejected.
+
+### AC.AR.6 — zero-findings suspicion
+Zero validated substantive findings on a nontrivial artifact ⇒ suspicion
+flag on the REVIEW, not a clean pass.
+
+### AC.AR.7 — generic-finding lint
+A finding true-of-any-artifact-of-class is flagged generic + excluded from
+the verdict calculus.
+
+### AC.AR.8 — every spawn via the sealed spawn_isolated_claude
+Every critic/judge/validator spawn routes through `spawn_isolated_claude`; a
+hand-rolled bare `claude` argv is refused.
+
+### AC.AR.9 — kept + indexed methodology corpus
+The corpus is checked before any pull; a kept doc is indexed with citations
+and reused by a later same-domain review; the two seed docs are present.
+
+### AC.AR.10 — seeded-flaw self-calibration reads back a catch rate (outcome-altitude)
+Feeding a seeded-flaw artifact reads back a computed catch rate; the harness
+matches critic findings to seeded flaws (real variant: an actual isolated
+critic run reads back a nonzero catch rate).
+
+### AC.AR.11 — STANDARD floor non-skippable; DEEP parallel-axis critics
+The STANDARD floor is non-skippable for a boundary artifact; DEEP adds
+parallel per-axis isolated critics (no shared context) + a separate merge
+judge preserving disagreement; a symmetric panel is never the mechanism.
+
+### AC.AR.12 — the auto-blocking gate is a no-op while OFF (experimental)
+With the activation switch OFF (default), the gate/automation entry is a
+no-op; the manual entry works regardless. Ships EXPERIMENTAL, activation
+barred on a measured false-positive/precision test (§7).
+
+### AC.AR.13 — internal-QA-lens only; no stakeholder-reaction framing
+Review output carries no stakeholder-reaction-prediction framing; a lint
+rejects "they will think / how X will receive it" framing.
+
+## §status — AC verdicts
+
+**Aggregate: GREEN.** All AC.AR.{1–13} are satisfied by the promoted test
 suite on the canonical tree (56 passed / 1 skipped; the 1 skip is the
-env-gated real-calibration leg, exercised directly in the HARD smoke §4).
-AC.AR.1 + AC.AR.10 are the outcome-altitude ACs (real manual review entry
-+ real catch-rate read-back). Two-component seal `99a1be9` clean; post-seal
-`apply --dry-run` clean. HARD cold-smoke
+env-gated `AR.S` real-calibration leg, exercised directly in the HARD smoke
+§4). AC.AR.1 + AC.AR.10 are the outcome-altitude ACs (real manual review
+entry + real catch-rate read-back). Two-component seal `99a1be9` clean;
+post-seal `apply --dry-run` clean. HARD cold-smoke
 `docs/experiments/v1-10-0-hard-smoke.md` = **GREEN** (cold clone + real
 editable install at 1.10.0 + system binary operational + a real
 subscription-mode spawn-isolated `claude -p` review leg returning output +
 touched-component and ride-along regressions clean). Public steps NOT run.
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC.AR.1 | **GREEN** | `test_AC_AR_1_manual_entry_returns_review` (outcome-altitude) |
+| AC.AR.2 | **GREEN** | `test_AC_AR_2_isolation_seed_excludes_author_world` |
+| AC.AR.3 | **GREEN** | `test_AC_AR_3_derive_before_read_is_artifact_blind` |
+| AC.AR.4 | **GREEN** | `test_AC_AR_4_validation_before_surfacing` |
+| AC.AR.5 | **GREEN** | `test_AC_AR_5_verdict_blocks_and_pass_names_residual` |
+| AC.AR.6 | **GREEN** | `test_AC_AR_6_zero_findings_suspicion` |
+| AC.AR.7 | **GREEN** | `test_AC_AR_7_generic_finding_lint` |
+| AC.AR.8 | **GREEN** | `test_AC_AR_8_spawn_isolation` |
+| AC.AR.9 | **GREEN** | `test_AC_AR_9_corpus_keep_and_reuse` |
+| AC.AR.10 | **GREEN** | `test_AC_AR_10_seeded_flaw_calibration` (outcome-altitude) |
+| AC.AR.11 | **GREEN** | `test_AC_AR_11_depth_tiers` |
+| AC.AR.12 | **GREEN** | `test_AC_AR_12_inactive_gate_default_off` |
+| AC.AR.13 | **GREEN** | `test_AC_AR_13_internal_lens_only` |

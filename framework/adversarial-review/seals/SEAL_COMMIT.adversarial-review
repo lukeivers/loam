@@ -1,6 +1,6 @@
 # adversarial-review capability — promotion into canonical loam — apply ladder
 
-Per `docs/plans/release-integration-v1-10-0-adversarial-review.md` (a
+Per `docs/plans/v1-10-0-adversarial-review.md` (a
 LIFT of the pos3 build-plan + determinations, not a fresh derivation).
 loam's standing adversarial-review capability lands as a NEW opt-in
 component `framework/adversarial-review/` (0.1.0, out-of-graph +

@@ -4,7 +4,7 @@
 **Quality tag:** END-USER — a new thing a loam user can do that they could
 not do before.
 **Migration:** `no-op` (`docs/state-migrations/v1-10-0-adversarial-review.migration.yaml`).
-**Plan-doc:** `docs/plans/release-integration-v1-10-0-adversarial-review.md`.
+**Plan-doc:** `docs/plans/v1-10-0-adversarial-review.md`.
 
 > **Objective —** A loam user can get a genuinely harsh, evidence-bound
 > adversarial review of any artifact, on demand. Point loam at one artifact

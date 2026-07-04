@@ -19,7 +19,7 @@ amendment:
 # halt). Built on a dedicated worktree off main so the paused
 # feat/memory-redesign-s1a partial tree is never touched.
 #
-# AC families locked per docs/plans/release-integration-v1-10-0-adversarial-review.md
+# AC families locked per docs/plans/v1-10-0-adversarial-review.md
 # §6 (lifted from the pos3 build-plan §4; the shipped tests
 # framework/adversarial-review/tests/test_AC_AR_*.py already satisfy them):
 #   AC.AR.1  — manual entry returns a structured harsh review (outcome-altitude).
@@ -43,8 +43,8 @@ amendment:
 # + offline (the frame_judge test posture — stub only the model leg).
 baseline: "d6d65c2b2e63029aedb5c4cc5ab4f5383c730668"
 
-plan: docs/plans/release-integration-v1-10-0-adversarial-review.md
-plan_doc_ref: docs/plans/release-integration-v1-10-0-adversarial-review.md
+plan: docs/plans/v1-10-0-adversarial-review.md
+plan_doc_ref: docs/plans/v1-10-0-adversarial-review.md
 
 components:
   - name: adversarial-review
@@ -81,7 +81,7 @@ narrative:
   body: |
     # adversarial-review capability — promotion into canonical loam — apply ladder
 
-    Per `docs/plans/release-integration-v1-10-0-adversarial-review.md` (a
+    Per `docs/plans/v1-10-0-adversarial-review.md` (a
     LIFT of the pos3 build-plan + determinations, not a fresh derivation).
     loam's standing adversarial-review capability lands as a NEW opt-in
     component `framework/adversarial-review/` (0.1.0, out-of-graph +

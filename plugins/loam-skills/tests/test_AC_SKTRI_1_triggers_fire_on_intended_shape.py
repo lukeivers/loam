@@ -69,6 +69,10 @@ from conftest import discover_skill_packages, load_skill_text
 # disk MUST have an entry here (asserted below) — so the table can
 # never silently drift from the installed surface.
 INTENDED_SHAPES: dict[str, list[str]] = {
+    "adversarial-review": [
+        "do an adversarial review of this proposal",
+        "red-team my plan doc",
+    ],
     "audit-block-on-telegram": [
         "reply to the user via telegram",
         "structure an audit block under the message",

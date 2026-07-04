@@ -1,10 +1,11 @@
 # Loam Skills plugin for loam
 
-Twenty-six SKILL.md packages: loam's load-bearing translation
+Twenty-seven SKILL.md packages: loam's load-bearing translation
 patterns, a cluster of per-primitive auto-loaders for Claude Code's
 scheduling / background / hook surface, the three-skill
-dispatch-decision discipline (catalogue → decide → record), and the
-meta-decision-haiku borderline-rule arbiter. Discoverable by Claude
+dispatch-decision discipline (catalogue → decide → record), the
+meta-decision-haiku borderline-rule arbiter, and the
+adversarial-review capability wrapper. Discoverable by Claude
 Code via the standard `<plugin>/skills/<skill-name>/SKILL.md`
 filesystem walk. Composes with raw Claude Code — a stranger can
 install this plugin and benefit from loam's patterns without
@@ -15,8 +16,8 @@ The skill count above is derived from disk: every subdirectory of
 
 ## What this plugin contains
 
-Twenty-six packaged skills in `skills/<skill-name>/SKILL.md` shape,
-in three clusters.
+Twenty-seven packaged skills in `skills/<skill-name>/SKILL.md` shape,
+in four clusters.
 
 ### Translation-pattern skills
 
@@ -116,6 +117,18 @@ against the refresh-kept capability corpus (`docs/capability-corpus/`).
   Packaged by the principle-foundation-structural-enforcement
   candidate (AC.PFSE.8), filling the slot the sealed loam-skills
   root-cause ruling held open.
+
+### Standing-capability wrapper
+
+- **`adversarial-review`** — wraps loam's standing adversarial-review
+  capability (`framework/adversarial-review/`): on "do an adversarial
+  review of X" / "tear this apart" / "red-team this" / "poke holes in
+  this", point the reviewer at one artifact + its stated objective and
+  return a genuinely harsh, evidence-bound, validated review in plain
+  language. Harshness is structural (artifact-blind isolation, two-phase
+  falsification, ground-truth validation, block-by-default verdict,
+  seeded-flaw calibration), never a "be brutal" instruction. The SKILL is
+  the invocation wrapper — it never rebuilds the reviewer.
 
 ## How skills are discovered
 

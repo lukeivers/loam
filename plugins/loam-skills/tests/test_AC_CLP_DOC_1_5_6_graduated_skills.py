@@ -157,6 +157,8 @@ def test_AC_CLP_DOC_6_readme_count_derives_from_disk() -> None:
         24: "twenty-four",
         25: "twenty-five",
         26: "twenty-six",
+        27: "twenty-seven",
+        28: "twenty-eight",
     }
     word = number_words.get(packaged, "")
     assert (

@@ -184,6 +184,22 @@ doctrine, translate:
   `workspace/.scratch/claude-output/adversarial-review-<slug>.md` and give the
   owner a short plain-English summary plus the path (per the output convention).
 
+## Graceful degradation
+
+Without loam's adversarial-review capability installed (a stranger running
+raw Claude Code, or a workspace where `framework/adversarial-review/` is
+absent), the fallback is a hand-driven review: ask a FRESH Claude context —
+one that has not seen the artifact or your reasoning — to attack the
+artifact against its stated objective ("this shipped and failed;
+reconstruct why"), then re-check each claimed flaw against the artifact
+before you act on it. This preserves the two guarantees that matter most —
+an artifact-blind critic and validation before a finding blocks — but it
+does NOT enforce them structurally: the isolation, the two-spawn
+derivation, the quarantine of unvalidated findings, the zero-findings
+suspicion, and the seeded-flaw calibration are all on you rather than the
+tool. Treat the raw-Claude result as advisory, never as a measured harsh
+review.
+
 ## What this SKILL is NOT
 
 - Not a rebuild of the reviewer — it wraps `framework/adversarial-review`.

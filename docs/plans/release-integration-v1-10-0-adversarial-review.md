@@ -270,7 +270,13 @@ path works, the gate blocks nothing.
 
 ## status — AC verdicts
 
-Filled at seal + smoke close. All AC.AR.{1–13} + AR.S are satisfied by
-the promoted test suite (the same suite that passed pos3-local); the
-release gate is the HARD cold-smoke's `GREEN` verdict + the AR suite
-passing on the promoted canonical tree.
+**GREEN.** All AC.AR.{1–13} + AR.S are satisfied by the promoted test
+suite on the canonical tree (56 passed / 1 skipped; the 1 skip is the
+env-gated real-calibration leg, exercised directly in the HARD smoke §4).
+AC.AR.1 + AC.AR.10 are the outcome-altitude ACs (real manual review entry
++ real catch-rate read-back). Two-component seal `99a1be9` clean; post-seal
+`apply --dry-run` clean. HARD cold-smoke
+`docs/experiments/v1-10-0-hard-smoke.md` = **GREEN** (cold clone + real
+editable install at 1.10.0 + system binary operational + a real
+subscription-mode spawn-isolated `claude -p` review leg returning output +
+touched-component and ride-along regressions clean). Public steps NOT run.

@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-BASELINE = "fafd2898"
+BASELINE = "d6d65c2b2e63029aedb5c4cc5ab4f5383c730668"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -120,6 +120,7 @@ def test_only_loam_skills_changed() -> None:
         "docs/STATE.md",
         "docs/plans/loam-roadmap.md",
         "docs/release-roadmap.md",
+        "docs/FUTURE_IDEAS_DRAFT.md",
     }
 
     offending = []

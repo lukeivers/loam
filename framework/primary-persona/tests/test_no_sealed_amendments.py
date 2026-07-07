@@ -182,7 +182,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              this amendment's source commit — the HEAD~1 pattern) so the
 #              seal-diff window shows ONLY this amendment's primary-persona +
 #              docs/plans/ surfaces.
-BASELINE = "a58456ae322bdc38394592c3ca29057e39390814"
+BASELINE = "5f23c3c2"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

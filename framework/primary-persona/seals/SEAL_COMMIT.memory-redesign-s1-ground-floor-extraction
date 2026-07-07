@@ -1,0 +1,57 @@
+# Memory redesign S1a — ground-floor extraction (constitutional carve-out of the ranked pool)
+
+Per `docs/plans/memory-redesign-s1-ground-floor-extraction.md` (owner-ratified rev-2;
+owner GO on the three forks, 2026-07-02) and the ratified design
+`workspace/strategy/research/memory-human-vs-harness-2026-07-02/synthesis-v2.md` (Stage 1).
+Single-component amendment on the EXISTING `framework/primary-persona/` component;
+advances the existing sidecar. The first, safety-critical, reversible stage of the
+memory redesign — it makes the later ranker changes (S3 threshold) safe: nothing that
+must-always-appear can be starved by a relevance filter once it is out of the pool.
+
+The over-injection (Tier-0, verified at build): the always-on constitutional floor
+(the `~/.claude/CLAUDE.md` hierarchy) is BM25-ranked into the per-turn relevance pool
+via `discover_corpus`'s `claude_homes` loop, fed by the two live resolvers. That copy
+is REDUNDANT — the constitution is injected unconditionally every turn by the
+SessionStart corpus-inline floor (main session), the subagent microkernel bundle, and
+Claude Code's native CLAUDE.md load — and it consumes a scored slot a genuinely-topical
+fact should hold (the always-on rules always match the work anchor, so they crowd out
+topical hits). The ranked-pool cap is `DEFAULT_TOP_N = 5` (`retrieval.py:72`); the carve
+is authored K-AGNOSTIC so it is correct under both today's top-K and the S3 threshold.
+
+This cycle adds a NAMED, reversible lever at the LIVE-CONFIG layer, where ranked-pool
+policy belongs:
+
+  - `RANK_CONSTITUTIONAL_FLOOR = False` (the S1a default) — the two production
+    resolvers (`_resolve_live_config`, `_resolve_composer_config`) thread
+    `claude_homes=(claude_home,)` only when the lever is on; by default they pass `()`,
+    so no CLAUDE.md hit can enter the relevance-ranked block on ANY prompt. Flipping the
+    lever True re-admits the constitution exactly as before (reversibility — nothing is
+    deleted; the floor content on disk is untouched and still injected by the floor
+    surfaces). The general `discover_corpus` + the `RetrievalConfig.claude_homes` field
+    are UNCHANGED, so direct-config callers (tests, the omnibus-penalty suite) are
+    unaffected. `objectives_home` is threaded as before (OBJECTIVES.md is the anchor
+    source, already special-cased to a non-surfaced empty pointer).
+
+Scope is S1a ONLY (the safe subtraction). The physical CLAUDE.md file-split — moving
+the situational design lenses into a rules store, recalled on feature-design situations
+— is S1b, DEFERRED to land with S4's situational recall (owner-ruled): removing the
+lenses from the always-on floor before a situational-recall destination exists would
+open a discipline gap. No CLAUDE.md file is edited and no lens is moved in this cycle.
+
+  - AC.GFE.1 — the live resolvers do not thread the `~/.claude` constitutional home into
+    the ranked corpus (`claude_homes == ()`), for any prompt (on-topic or off).
+  - AC.GFE.2 — the constitution still injects every session via the existing floor: the
+    SessionStart corpus-inline always-load set still carries `CLAUDE.md` (removed from
+    ranking, retained on the floor).
+  - AC.GFE.3 (outcome-altitude) — over the production resolver + `retrieve()` with no
+    pre-arranged state, on a query where the constitution previously ranked alongside a
+    topical hit: the ranked block carries the topical hit and no constitutional hit
+    (regardless of count); flipping the lever on restores the constitutional hit,
+    proving it was competing for the freed slot.
+  - AC.GFE.4 — no regression: the general `discover_corpus` contract is unchanged (a
+    direct caller passing `claude_homes` still gets `CLAUDE.md`); the retrieval suites
+    (KP1/FBMU/FBM-FILTER/SRF/RQ80/SUP/DLG) stay green.
+  - AC.GFE.5 — reversible by the named `RANK_CONSTITUTIONAL_FLOOR` lever.
+
+No ODD violation in surrounding code; the change is a single named tunable lever
+consumed at the two resolvers, no defensive code for unnamed cases.

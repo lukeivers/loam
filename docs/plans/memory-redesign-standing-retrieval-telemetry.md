@@ -136,5 +136,10 @@ None of these are owner-gated (no critical-call / public-action / financial deci
 
 ## §12 — Method-decision register (populated at build; SHA-backfilled at seal)
 
-- D1–D7 — builder method decisions (§10), recorded pre-build.
-- SOURCE SHA / APPLY SHA / SEAL SHA: _backfilled at seal._
+- D1–D7 — builder method decisions (§10), recorded pre-build; all held as built (no in-flight fork fired).
+- Capture point as built: `keep_pace/retrieval.py::rank()` — `injected = decision_hits + merged` then a guarded `_record_telemetry(...)` before the return; `rank()` signature/return unchanged.
+- Fixtures updated in-cycle: NONE — the cycle is additive (new module + guarded side-effect + behavior-inert `_event_time` field + two resolver threadings). Full `framework/primary-persona` regression green (1305 passed, 1 pre-existing `requires_live_store` skip).
+- SOURCE SHA: `08ce1e93` (feat commit — source + AC.RTEL.1..7 tests).
+- APPLY SHA: `c5e4370b` (manifest + sidecar/BASELINE bump to `5f23c3c2`).
+- SEAL SHA: `a7ef6ce2` (deterministic seal; post-seal `apply --dry-run` clean; sidecar advanced to `c5e4370b`).
+- BASELINE: `5f23c3c2` (S1a seal tip on origin/main).

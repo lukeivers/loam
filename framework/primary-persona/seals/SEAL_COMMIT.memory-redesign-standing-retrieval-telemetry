@@ -1,0 +1,69 @@
+# Memory redesign — standing retrieval telemetry (baseline-capture layer, pure observation)
+
+Per `docs/plans/memory-redesign-standing-retrieval-telemetry.md` and the owner
+requirement `workspace/strategy/research/memory-human-vs-harness-2026-07-02/owner-refinements-2026-07-02.md`
+#1 ("Store, per turn, {the prompt} vs {which memories got pulled}... a STANDING
+layer... a reviewable dataset to fine-tune the pull-algorithm") + the ratified
+design `synthesis-v2.md` (Stage 2 — standing telemetry, `[pure instrumentation,
+ship early to baseline]`). Single-component amendment on the EXISTING
+`framework/primary-persona/` component; advances the existing sidecar. This is
+the baseline-capture layer the coming ranker change (design Stage 3) is gated on:
+it captures a before-signal so a recall behavior that touches every turn is not
+flipped unmeasured.
+
+THE LOAD-BEARING CONSTRAINT — PURE OBSERVATION. The telemetry records what the
+ranker ALREADY did. It does not change recall behavior, results, or ordering, and
+adds no measurable regression: `retrieve()` returns a byte-identical block with
+telemetry configured vs not (AC.RTEL.1); the recorder reads scalar copies off the
+already-computed hit dicts and never mutates a hit, never re-runs a search; every
+write is fail-open (any error swallowed, the turn proceeds unchanged — AC.RTEL.4).
+
+THE CAPTURE POINT (Tier-0, verified at build): the end of
+`keep_pace/retrieval.py::rank()`, before its existing `return decision_hits +
+merged`. This is the single point where BOTH the full candidate pool
+(`corpus_hits` + `episode_hits` + `decision_hits`) AND the injected subset
+(`decision_hits` + `merged`, post-gate/floor/dedup/top-N) are in scope, so the log
+distinguishes discovered-not-injected from injected. `rank()`'s signature + return
+value are UNCHANGED — the P@5 retrieval-relevance metric reads `rank()`'s ordered
+hits, a sealed contract; the capture is a side-effect call, not a shape change.
+
+This cycle adds:
+
+  - `keep_pace/retrieval_telemetry.py` (NEW) — `telemetry_dir_for_workspace`
+    (mirrors `file_memory.memory_dir_for_workspace`), the daily-rotated file path
+    (`retrieval-telemetry-<UTC-date>.jsonl` under `<workspace>/workspace/.loam/`,
+    gitignored → standing but untracked), the JSONL record builder, and
+    `record_retrieval(...)` — the fully fail-open append.
+  - `RetrievalConfig.telemetry_dir` (+ optional `telemetry_turn_id`) — keyword
+    field defaulting to `None`, so direct-config callers (tests, the
+    omnibus-penalty suite) are a no-op and unaffected. Only the two live resolvers
+    (`_resolve_live_config`, `_resolve_composer_config`) turn it on.
+  - `_event_time` carried from the episode search result's `valid_at` (the EVENT
+    time — `reference_time`) onto the episode hit in `_episode_hits`. A
+    behavior-inert additive read (no ranker path reads that key; the rendered
+    block is unchanged) — it is what makes offline recency-re-weight tuning
+    possible from the log.
+
+Captured per turn: `{schema_version, turn_id, ts, prompt, work_anchor_tokens,
+budget{top_n,char_cap}, counts, candidates[]}`; per candidate `{source, path,
+pointer, score (raw discovery), salience, event_time, injected, rank}` — enough
+to offline-tune both a relevance threshold (per-candidate score + injected flag)
+and a recency re-weight (event_time), which is the coming ranker cycle's input.
+
+Scope is OBSERVATION ONLY. No threshold, no recency-relocation, no ranker change
+lands here — those are design Stage 3, deferred and gated on the baseline this
+layer captures. The S2 `recency-relocation` plan-doc is untouched.
+
+  - AC.RTEL.1 — pure observation: `retrieve()` byte-identical with telemetry on vs off.
+  - AC.RTEL.2 — per-turn record shape (turn-level keys + per-candidate keys).
+  - AC.RTEL.3 — discovered-vs-injected distinction (dropped candidate `injected=false`;
+    surfaced candidates `injected=true` + integer rank; matches the returned block).
+  - AC.RTEL.4 — fail-open: an unwritable sink never raises + never changes the block.
+  - AC.RTEL.5 — tuning-sufficiency: per-candidate raw `score`; episode `event_time` non-null.
+  - AC.RTEL.6 — standing/append + daily rotation (two turns → two lines in the day file).
+  - AC.RTEL.7 (outcome-altitude) — production `retrieve()` over the real resolver, no
+    pre-arranged state: one well-formed record whose injected candidates match the live
+    block, and the block equals the telemetry-off block.
+
+No ODD violation in surrounding code; the change is a named, gated, fail-open
+observation layer — no defensive code for unnamed cases, no recall behavior change.

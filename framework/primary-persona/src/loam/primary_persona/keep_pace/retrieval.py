@@ -203,6 +203,18 @@ class RetrievalConfig:
     # AC.FBMU.1 — episode group ids to scope the episode search; None
     # => the store searches every group (the live workspace slug).
     episode_group_ids: Optional[tuple[str, ...]] = None
+    # AC.RTEL.* — standing retrieval-telemetry sink. When set, ``rank``
+    # appends one PURE-OBSERVATION per-turn record (query vs discovered
+    # candidates + scores + event-time + injected subset) to the daily
+    # JSONL log under this dir; the recorder is fail-open and never
+    # mutates a hit or alters recall. ``None`` (the default) => the
+    # recorder is a no-op, so direct-config callers are byte-identical
+    # (AC.RTEL.1) — only the two live resolvers turn it on.
+    telemetry_dir: Optional[Path] = None
+    # AC.RTEL.* — optional stable turn id for the telemetry record (the
+    # hook for later engagement correlation). ``None`` => the recorder
+    # generates a uuid4 per turn.
+    telemetry_turn_id: Optional[str] = None
 
     def objectives_path(self) -> Path:
         return _objectives.user_scope_objectives_path(self.objectives_home)
@@ -351,6 +363,12 @@ def _episode_hits(
         # AC.SRF.1 — carry the episode's source path onto the hit so
         # the model-facing render can emit a followable pointer.
         path = str(ep.get("path", "") or "").strip()
+        # AC.RTEL.5 — carry the episode's EVENT time (``valid_at`` =
+        # ``reference_time``) onto the hit so the standing telemetry can
+        # log it for offline recency-re-weight tuning. Behavior-inert:
+        # no ranker path reads this slot, so the rendered block + every
+        # existing suite are unchanged (the pure-observation guarantee).
+        event_time = ep.get("valid_at")
         hits.append(
             {
                 "pointer": pointer,
@@ -358,6 +376,7 @@ def _episode_hits(
                 "score": score_val,
                 "_episode": True,
                 "_salience": salience_val,
+                "_event_time": str(event_time) if event_time else "",
             }
         )
     return hits
@@ -551,7 +570,64 @@ def rank(
     # ledger on disk this contributes nothing and the merged output is
     # unchanged (the AC.FBMU.2 no-regression envelope extends here).
     decision_hits = _decision_hits(query_tokens=query_tokens, config=config)
-    return decision_hits + merged
+    injected = decision_hits + merged
+    # AC.RTEL.* — STANDING RETRIEVAL TELEMETRY (pure observation). This is
+    # the single point where BOTH the full candidate pool (corpus +
+    # episode + decision hits, as the ranker fetched them) AND the
+    # injected subset (``injected``) are in scope. The recorder reads
+    # scalar copies off the hit dicts, marks membership by identity, and
+    # appends one fail-open JSONL record — it NEVER mutates a hit, never
+    # re-runs a search, and is a no-op when no sink is configured. The
+    # returned value is unchanged, so ``rank``'s sealed shape (the P@5
+    # metric contract) and recall behavior are byte-identical (AC.RTEL.1).
+    _record_telemetry(
+        config=config,
+        prompt=prompt,
+        query_tokens=query_tokens,
+        corpus_hits=corpus_hits,
+        episode_hits=episode_hits,
+        decision_hits=decision_hits,
+        injected=injected,
+    )
+    return injected
+
+
+def _record_telemetry(
+    *,
+    config: RetrievalConfig,
+    prompt: str,
+    query_tokens: list[str],
+    corpus_hits: list[dict[str, object]],
+    episode_hits: list[dict[str, object]],
+    decision_hits: list[dict[str, object]],
+    injected: list[dict[str, object]],
+) -> None:
+    """Fire the standing retrieval-telemetry record (AC.RTEL.*), fail-open.
+
+    Delegates to :func:`retrieval_telemetry.record_retrieval`, which is
+    itself a no-op when ``config.telemetry_dir`` is None and swallows any
+    error. Wrapped here too so an import failure can never reach ``rank``
+    (belt-and-suspenders on the pure-observation guarantee).
+    """
+    if config.telemetry_dir is None:
+        return
+    try:
+        from .retrieval_telemetry import record_retrieval
+
+        record_retrieval(
+            telemetry_dir=config.telemetry_dir,
+            prompt=prompt,
+            work_anchor_tokens=query_tokens,
+            corpus_hits=corpus_hits,
+            episode_hits=episode_hits,
+            decision_hits=decision_hits,
+            injected=injected,
+            top_n=config.top_n,
+            char_cap=INJECTION_CHAR_CAP,
+            turn_id=config.telemetry_turn_id,
+        )
+    except Exception:  # noqa: BLE001 — fail-open; telemetry never breaks recall
+        return
 
 
 def retrieve(
@@ -973,6 +1049,29 @@ def _resolve_live_config(envelope: dict) -> RetrievalConfig:
     except Exception:  # noqa: BLE001 — fail-soft; unify degrades to corpus-only
         episode_memory_dir = None
 
+    # AC.RTEL.* — resolve the standing telemetry sink from the SAME repo
+    # root the episode store resolves from (sibling of the memory dir).
+    # Fail-soft: any error leaves telemetry_dir None and recall proceeds
+    # untelemetered (never a recall change).
+    telemetry_dir = None
+    try:
+        from .retrieval_telemetry import telemetry_dir_for_workspace
+        from loam.workspace_bootstrap.workspace_paths import (
+            WORKSPACE_STATE_SUBDIR,
+        )
+        import os as _os
+
+        env_root = _os.environ.get("LOAM_WORKSPACE_ROOT")
+        if env_root:
+            tel_root = Path(env_root)
+        elif workspace_root.name == WORKSPACE_STATE_SUBDIR:
+            tel_root = workspace_root.parent
+        else:
+            tel_root = workspace_root
+        telemetry_dir = telemetry_dir_for_workspace(tel_root)
+    except Exception:  # noqa: BLE001 — fail-soft; recall runs untelemetered
+        telemetry_dir = None
+
     return RetrievalConfig(
         workspace_root=workspace_root,
         memory_dir=memory_dir,
@@ -982,6 +1081,7 @@ def _resolve_live_config(envelope: dict) -> RetrievalConfig:
         claude_homes=(claude_home,) if RANK_CONSTITUTIONAL_FLOOR else (),
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
+        telemetry_dir=telemetry_dir,
     )
 
 
@@ -1069,6 +1169,17 @@ def _resolve_composer_config(
     except Exception:  # noqa: BLE001 — fail-soft; unify degrades to corpus-only
         episode_memory_dir = None
 
+    # AC.RTEL.* — the standing telemetry sink beside the episode store
+    # (``workspace_root`` is already the repo root on this resolver).
+    # Fail-soft: an error leaves telemetry off; recall is unchanged.
+    telemetry_dir: Optional[Path] = None
+    try:
+        from .retrieval_telemetry import telemetry_dir_for_workspace
+
+        telemetry_dir = telemetry_dir_for_workspace(workspace_root)
+    except Exception:  # noqa: BLE001 — fail-soft; recall runs untelemetered
+        telemetry_dir = None
+
     return RetrievalConfig(
         workspace_root=workspace_root,
         memory_dir=memory_dir,
@@ -1079,6 +1190,7 @@ def _resolve_composer_config(
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
         episode_group_ids=(workspace_slug,) if workspace_slug else None,
+        telemetry_dir=telemetry_dir,
     )
 
 

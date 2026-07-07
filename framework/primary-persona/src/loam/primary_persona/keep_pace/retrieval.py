@@ -150,6 +150,30 @@ DEDUP_JACCARD_THRESHOLD = 0.85
 _DEDUP_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
 
+# AC.GFE.* — GROUND-FLOOR EXTRACTION (memory redesign, Stage 1a). The always-on
+# constitutional FLOOR (the ``CLAUDE.md`` hierarchy under ``~/.claude``) is
+# injected UNCONDITIONALLY every turn by surfaces that are NOT the ranked pool:
+# the SessionStart corpus-inline floor (main session), the subagent microkernel
+# bundle, and Claude Code's native CLAUDE.md load. Ranking that same content in
+# the per-turn relevance pool is therefore REDUNDANT and consumes a scored slot
+# a genuinely-topical fact should hold — the over-injection this stage removes
+# (the always-on rules crowd out topical hits because they always match the work
+# anchor). When ``False`` (the S1a default) the LIVE-WIRING resolvers do NOT
+# thread the ``~/.claude`` constitutional home into the ranked corpus, so no
+# CLAUDE.md hit can enter the relevance-ranked block on ANY prompt.
+#
+# A NAMED, tunable lever (mirrors this module's other reversible constants):
+# flipping it ``True`` re-admits the constitution into the ranked pool exactly as
+# before (AC.GFE.5 reversibility — nothing is deleted; the floor content on disk
+# is untouched and still injected by the floor surfaces). The carve lives ONLY
+# at the live-config layer, where the ranked-pool policy belongs: the general
+# ``discover_corpus`` + the ``RetrievalConfig.claude_homes`` field are UNCHANGED,
+# so a direct-config caller (tests, the omnibus-penalty suite) is unaffected. The
+# ``objectives_home`` is NOT the floor and is threaded as before (OBJECTIVES.md
+# is the anchor source, already special-cased to a non-surfaced empty pointer).
+RANK_CONSTITUTIONAL_FLOOR = False
+
+
 @dataclass
 class RetrievalConfig:
     """Resolution config for the work-anchored retrieval entry-point.
@@ -952,7 +976,10 @@ def _resolve_live_config(envelope: dict) -> RetrievalConfig:
     return RetrievalConfig(
         workspace_root=workspace_root,
         memory_dir=memory_dir,
-        claude_homes=(claude_home,),
+        # AC.GFE.1 — the constitutional floor is carved OUT of the ranked pool
+        # (injected unconditionally by the floor surfaces instead). Threaded
+        # only when the reversibility lever is flipped on (AC.GFE.5).
+        claude_homes=(claude_home,) if RANK_CONSTITUTIONAL_FLOOR else (),
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
     )
@@ -1045,7 +1072,10 @@ def _resolve_composer_config(
     return RetrievalConfig(
         workspace_root=workspace_root,
         memory_dir=memory_dir,
-        claude_homes=(claude_home,),
+        # AC.GFE.1 — constitutional floor carved out of the ranked pool for the
+        # composer + subagent-bundle surfaces too (both route through here);
+        # re-admitted only when the reversibility lever is on (AC.GFE.5).
+        claude_homes=(claude_home,) if RANK_CONSTITUTIONAL_FLOOR else (),
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
         episode_group_ids=(workspace_slug,) if workspace_slug else None,

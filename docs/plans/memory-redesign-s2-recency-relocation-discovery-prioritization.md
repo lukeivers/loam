@@ -178,5 +178,7 @@ Prioritization keys on `reference_time`/`valid_at` (when the thing happened), no
 
 **Verification:** AC.RDP.1–6 all pass (14 tests); full component regression green; before/after telemetry probe confirms the recall delta is captured (legacy levers inject the near-miss; S2 levers gate it, `injected=False` at raw 0.608 < threshold, event-recency orders newest-first).
 
-- **SOURCE SHA:** _backfilled below._
-- **APPLY SHA / SEAL SHA:** _backfilled by `loam amend seal --plan-doc`._
+- **SOURCE SHA:** `79858ab1` (feat(primary-persona) — source + tests + plan-doc), on the telemetry tip `a2ce742d` (baseline).
+- **APPLY SHA:** `69eaeede` (chore(amend) — manifest + BASELINE/sidecar bump to a2ce742d).
+- **SEAL SHA:** `669adf04` (chore(seals) — primary-persona at 69eaeed). Post-seal `apply --dry-run` clean.
+- **Branch:** `feat/memory-redesign-s2-ranker` (stacked on `feat/memory-redesign-standing-retrieval-telemetry`). NOT pushed — behavior-changer, owner-gated public step.

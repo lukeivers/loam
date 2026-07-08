@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 # capability-refresh cadence runner — the exact command both cadence
 # bindings (cloud routine / launchd fallback) execute per tick.
 #
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 CLASS="${1:?usage: run-cadence.sh <high-velocity|long-form|on-merge|all>}"
-SCRIPT_DIR="${0:A:h}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 COMPONENT="$REPO_ROOT/framework/tools/capability-refresh"
 

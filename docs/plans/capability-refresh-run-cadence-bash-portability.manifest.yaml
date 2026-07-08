@@ -1,0 +1,109 @@
+schema_version: 1
+amendment:
+  number: 194  # Next sequential after #193
+               # (capability-refresh-actions-cadence-migration, highest on
+               # disk). Builder CONFIRMS the exact number at
+               # `loam amend apply` against the live counter
+               # (feedback_version_numbers_at_release_time).
+  slug: capability-refresh-run-cadence-bash-portability
+  title: "Capability-refresh run-cadence.sh bash-portability fix (AC.CRSP.1-3). The #193 GitHub Actions cadence binding runs framework/tools/capability-refresh/scripts/run-cadence.sh on ubuntu-latest, which has no zsh; the script's shebang (#!/bin/zsh) and its zsh-only line-16 SCRIPT_DIR=\"${0:A:h}\" both fail there (kernel cannot exec /bin/zsh → exit 127 → the scheduled refresh never runs). This amendment ports ONLY the shell portability: shebang → #!/usr/bin/env bash (present on both Ubuntu and macOS) and ${0:A:h} → $(cd \"$(dirname \"$0\")\" && pwd) (the standard portable script-dir idiom, matching the script's own adjacent line-17 convention; identical result on the symlink-free real invocation, so no macOS behaviour change). The refresh logic, set -euo pipefail semantics, and the LOAM_REFRESH_NO_COMMIT=1 opt-in are all preserved byte-for-byte. AC.CRSP.1 (★ outcome-altitude) executes the real fixed script through its shebang under a genuinely zsh-free PATH (real bash+dirname symlinked; python3/git stubbed) and proves it reaches python3 -m capability_refresh with the repo root correctly resolved. AC.CRSP.2 is the fails-on-old/passes-on-new portability regression. AC.CRSP.3 proves set -e + LOAM_REFRESH_NO_COMMIT behaviour is unchanged. No public-action steps; the fix is a repo file change sealed locally on the worktree branch."
+
+# BASELINE: HEAD of main at plan authoring (a1166b8d). The component seal
+# test's BASELINE literal + the SEAL_COMMIT sidecar advance to this at apply;
+# the sidecar then advances to this amendment's seal commit. Builder confirms
+# the tip at apply time.
+baseline: "a1166b8df958b55aa8a42d9ee0b8b5b660ac7259"
+
+plan: docs/plans/capability-refresh-run-cadence-bash-portability.md
+
+seal_description: |
+  Capability-refresh run-cadence.sh bash-portability fix (AC.CRSP.1-3).
+
+  The #193 GitHub Actions cadence binding runs
+  framework/tools/capability-refresh/scripts/run-cadence.sh on
+  ubuntu-latest, which has no zsh. The script's shebang (#!/bin/zsh) and its
+  zsh-only line-16 SCRIPT_DIR="${0:A:h}" both fail there — the kernel cannot
+  exec /bin/zsh (exit 127) and ${0:A:h} has no bash equivalent — so the
+  scheduled refresh dies before doing any work.
+
+  Fix (portability only; refresh logic untouched):
+    1. shebang → #!/usr/bin/env bash (present on both Ubuntu and macOS;
+       correct for the bash-3.2 feature set the script already uses).
+    2. ${0:A:h} → $(cd "$(dirname "$0")" && pwd) — the standard portable
+       script-dir idiom, matching the script's own adjacent line-17
+       convention. Symlink-free real invocation yields the identical
+       directory, so REPO_ROOT is unchanged and macOS behaviour preserved.
+
+  set -euo pipefail semantics and the LOAM_REFRESH_NO_COMMIT=1 opt-in are
+  preserved byte-for-byte.
+
+  AC.CRSP.1 (★ outcome-altitude): the fixed script is executed through its
+  own shebang under a PATH from which zsh is genuinely absent (asserted
+  unresolvable as a precondition; real bash + dirname symlinked, python3 +
+  git stubbed to capture and do no I/O), and reaches
+  python3 -m capability_refresh --cadence-class all with cwd == repo root and
+  PYTHONPATH including the component src. AC.CRSP.2: fails-on-old /
+  passes-on-new portability regression on ${0:A:h}. AC.CRSP.3: set -e +
+  LOAM_REFRESH_NO_COMMIT=1 behaviour unchanged.
+
+  No public-action steps — the fix is a repo file change. Sealed locally on
+  the worktree branch fix/capability-refresh-bash-portability; the owner
+  holds the push (public repo). BASELINE a1166b8d; counter 194 confirmed at
+  apply.
+
+components:
+  - name: capability-refresh
+    seal_test: framework/tools/capability-refresh/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/capability-refresh/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions. docs/plans/ (plan-doc + manifest + sealed narrative);
+# STATE + roadmap (bookkeeping). The seal test already admits all of these
+# plus the component prefix; no NEW prefix is introduced by this amendment.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/capability-refresh-run-cadence-bash-portability.md
+  body: |
+    # Capability-refresh run-cadence.sh bash-portability fix — apply ladder
+
+    Extension of the capability-refresh component (plan
+    `docs/plans/claude-leverage-program-s1-currency.md`; RUN migration
+    `capability-refresh-actions-cadence-migration` #193). Fixes the shell
+    portability of the cadence runner so the #193 GitHub Actions binding
+    actually executes on ubuntu-latest.
+
+    Root cause (Tier-0, CI log): `run-cadence.sh` shipped with a
+    `#!/bin/zsh` shebang and a zsh-only line-16 `SCRIPT_DIR="${0:A:h}"`.
+    The Ubuntu runner has no zsh, so the kernel cannot exec the shebang
+    (`cannot execute: required file not found`, exit 127) and the refresh
+    never runs. macOS (which ships /bin/zsh) was unaffected — which is why
+    the defect only surfaced in CI.
+
+    This amendment (portability only; refresh logic byte-unchanged):
+      1. shebang → `#!/usr/bin/env bash` — present on both Ubuntu and
+         macOS, correct for the script's bash-3.2-safe feature set
+         (`set -euo pipefail`, `[[ ]]`, `${var:?}`, `${var:+}`,
+         `${var:-}`).
+      2. `${0:A:h}` → `$(cd "$(dirname "$0")" && pwd)` — the standard
+         portable script-dir idiom, matching the script's own adjacent
+         line-17 `cd … && pwd`. Symlink-free real invocation yields the
+         same directory, so REPO_ROOT and all downstream behaviour are
+         unchanged on macOS.
+
+    AC.CRSP.1 ★ (outcome-altitude): the fixed script is EXECUTED through
+    its own shebang under a genuinely zsh-free PATH and proven to reach
+    `python3 -m capability_refresh` with the repo root correctly resolved —
+    not verified by source inspection.
+
+    `set -euo pipefail` and the `LOAM_REFRESH_NO_COMMIT=1` opt-in from #193
+    are preserved. NO Anthropic API key involved. NO public-action steps —
+    the fix is a repo file; it is sealed LOCALLY on the worktree branch and
+    the owner holds the push. BASELINE `a1166b8d`; counter 194 confirmed at
+    apply.

@@ -128,6 +128,12 @@ DO NOT PUSH. Seal locally on the worktree branch; the owner holds the push
 
 Commit SHAs backfilled at seal via `loam amend seal --plan-doc`.
 
+### Commit SHAs
+
+- Amendment commit: `b22befdcdef3ff6243cc19a4993909adfa11f6d6` —
+  `chore(amend): Capability-refresh run-cadence.sh bash-portability fix (AC.CRSP.1-3).`
+- Seal commit: `3e6875ce1076fb8638f35d878dfb5799e4dcf351` —
+  `chore(seals): Capability-refresh run-cadence.sh bash-portability fix (AC.CRSP.1-3).`
 ## §15 Backwards-compat verification
 
 - The existing capability-refresh suite

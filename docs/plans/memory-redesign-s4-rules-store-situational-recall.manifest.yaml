@@ -36,7 +36,7 @@ amendment:
 # situation — S4 creates the destination but does NOT edit any CLAUDE.md or floor surface.
 # S5 (automated offline rule-EXTRACTION at the high frustration/outcome/idea threshold)
 # is a separate later stage; S4 ships the store + situational recall + MANUAL/seeded authoring.
-baseline: "a0444859"
+baseline: "c158000b"
 
 plan: docs/plans/memory-redesign-s4-rules-store-situational-recall.md
 

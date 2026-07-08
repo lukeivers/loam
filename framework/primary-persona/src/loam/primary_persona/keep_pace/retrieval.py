@@ -222,6 +222,107 @@ _DEDUP_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 RANK_CONSTITUTIONAL_FLOOR = False
 
 
+# AC.RSR.* — SITUATIONAL RULES CHANNEL (memory redesign, Stage 4). Store (c) —
+# behavioral directives recalled by the turn's SITUATION, never always-on —
+# injects as a SEPARATE labeled block on a SEPARATE budget, NEVER through
+# ``_merge_by_score`` (AC.RSR.4). The three levers below are ALL named + tunable
+# (mirroring this module's other reversible constants); restoring their no-op
+# values reproduces the pre-S4 recall byte-for-byte (AC.RSR.6 reversibility).
+
+# The MASTER lever (mirrors :data:`RANK_CONSTITUTIONAL_FLOOR`). ``False`` reverts
+# store (c) to a complete no-op: no situation is detected, no rules store is
+# read, no rules block is emitted, so ``retrieve`` returns the pre-S4 fact block
+# byte-for-byte with NOTHING deleted on disk (AC.RSR.6). Default ``True``: the
+# channel is live-but-DORMANT — it fires only where a workspace's rules store
+# has been seeded AND the turn's situation matches, so a workspace with no
+# ``rules/`` store (every workspace on day one) sees an unchanged turn until the
+# store is populated (the S1b gated flip / S5 offline engine).
+SITUATIONAL_RULES_ENABLED = True
+
+# AC.RSR.5 (context-budget-bound) — the HARD cap on rules injected per pull, the
+# owner's governing context-budget dial ("if we condense too many things into
+# behavioral rules we overload the context window and none of this works"). At
+# most this many rules inject regardless of how many match the situation; excess
+# matches are dropped by the store's deterministic priority (strength / recency /
+# path), never half-emitted. ``0`` is a NO-OP that emits no rules block (the
+# second reversibility path, AC.RSR.6). Mirrors ``DECISION_TOP_N = 3``.
+SITUATIONAL_RULE_CAP = 3
+
+# AC.RSR.5 — the rules block's byte SUB-BUDGET, sized WITHIN the 5000-char
+# INJECTION_CHAR_CAP regime but applied to the rules block SEPARATELY (Fork E:
+# rules never share the fact block's budget, so they physically cannot crowd out
+# a topical fact). A rule that would overflow the sub-budget is dropped whole,
+# never half-emitted.
+SITUATIONAL_RULE_CHAR_CAP = 1200
+
+# AC.RSR.3 — the conservative SITUATION DETECTOR seam (Fork B2a). Each situation
+# tag maps to high-precision trigger patterns; :func:`detect_situation` emits a
+# tag ONLY when a trigger unambiguously matches the turn text, and stays SILENT
+# on ambiguous input. This is the deliberate UNDER-fire bias (Fork B2): the error
+# asymmetry says over-fire = over-injection reborn (the failure the whole
+# redesign fights), while under-fire is a missed rule the design's promote-to-
+# floor mitigation covers — so an important rule whose situation cannot be
+# reliably detected stays on the always-on floor (``floor_promote``) rather than
+# fire loosely. This registry is the NAMED, PLUGGABLE seam: richer signals
+# (PreToolUse tool-events, threaded task-context) feed the SAME tag output in a
+# later stage without reshaping the store. Deterministic regex only — no LLM, no
+# score (a score on the match side is halt trigger §6.1).
+SITUATION_TRIGGERS: dict[str, tuple[re.Pattern[str], ...]] = {
+    # The turn is DISPATCHING a sub-agent.
+    "dispatching-subagent": (
+        re.compile(r"\bsub-?agents?\b", re.IGNORECASE),
+        re.compile(
+            r"\bdispatch(?:ing|es|ed)?\s+(?:a\s+|an\s+|the\s+)?"
+            r"(?:background\s+)?agent",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\bbackground agents?\b", re.IGNORECASE),
+        re.compile(
+            r"\bspawn(?:ing|s|ed)?\s+(?:a\s+|an\s+)?agent", re.IGNORECASE
+        ),
+    ),
+    # The turn is AUTHORING text bound for a human / external channel.
+    "authoring-outbound-text": (
+        re.compile(
+            r"\b(?:draft|write|compose|send)\s+(?:an?\s+|the\s+)?email\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\boutbound\s+(?:email|text|message|copy|reply)\b", re.IGNORECASE),
+        re.compile(r"\bexternal-bound\b", re.IGNORECASE),
+    ),
+    # The turn is running a sealed-component amendment cycle.
+    "amending-sealed-component": (
+        re.compile(r"\bloam amend\b", re.IGNORECASE),
+        re.compile(
+            r"\bseal(?:ing|s|ed)?\s+the\s+(?:amendment|component)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\bsealed component\b", re.IGNORECASE),
+    ),
+}
+
+
+def detect_situation(prompt: str, *, last_topic: str = "") -> frozenset[str]:
+    """The turn's situation tags, from the conservative day-one detector
+    (AC.RSR.3 — Fork B2a). Reads the recall-surface text signals (prompt +
+    last-topic) and emits a tag for each :data:`SITUATION_TRIGGERS` entry
+    whose high-precision trigger matches. Empty on ambiguous input (the
+    UNDER-fire bias): a turn that announces no situation matches NO rule.
+
+    The seam is the registry, not this function's signature — richer
+    signals feed the same tag output later without reshaping the store.
+    Deterministic; never an LLM; never a score.
+    """
+    text = f"{prompt or ''}\n{last_topic or ''}"
+    if not text.strip():
+        return frozenset()
+    return frozenset(
+        tag
+        for tag, patterns in SITUATION_TRIGGERS.items()
+        if any(p.search(text) for p in patterns)
+    )
+
+
 @dataclass
 class RetrievalConfig:
     """Resolution config for the work-anchored retrieval entry-point.
@@ -263,6 +364,15 @@ class RetrievalConfig:
     # hook for later engagement correlation). ``None`` => the recorder
     # generates a uuid4 per turn.
     telemetry_turn_id: Optional[str] = None
+    # AC.RSR.* — the SITUATIONAL RULES store root (store (c)). The rules
+    # live at ``<rules_memory_dir>/rules/`` — the decision-ledger's
+    # ``decisions/`` sibling, so the two live resolvers thread the SAME
+    # store root they resolve for episodes/decisions. ``None`` (the
+    # default) => the rules channel contributes NOTHING and ``retrieve``'s
+    # output is byte-identical to pre-S4 (the telemetry-dir no-op
+    # precedent) — so direct-config callers (tests, the omnibus-penalty
+    # suite) are unaffected; only the two live resolvers turn it on.
+    rules_memory_dir: Optional[Path] = None
 
     def objectives_path(self) -> Path:
         return _objectives.user_scope_objectives_path(self.objectives_home)
@@ -682,6 +792,96 @@ def _record_telemetry(
         return
 
 
+def _situational_rules(
+    *, prompt: str, config: RetrievalConfig, last_topic: str
+) -> tuple[frozenset[str], list]:
+    """The situational-rules channel (AC.RSR.3) — detect the turn's
+    situation, then fetch the rules whose situation set matches by EXACT
+    tag-membership (no score). Returns ``(situation_tags, matched_rules)``
+    where ``matched_rules`` is store-ordered by the deterministic priority
+    (pre-cap). A no-op — ``(frozenset(), [])`` — when the master lever is
+    off, the cap is zero, no rules store is configured, or the detector
+    fires on nothing. Fail-soft: any boundary error degrades to the no-op
+    so the channel can NEVER break the turn (AC.RSR.8 fail-open)."""
+    if not SITUATIONAL_RULES_ENABLED or SITUATIONAL_RULE_CAP <= 0:
+        return frozenset(), []
+    if config.rules_memory_dir is None:
+        return frozenset(), []
+    try:
+        situation = detect_situation(prompt, last_topic=last_topic)
+        if not situation:
+            return situation, []
+        from ..rules_store import rules_for_situation
+
+        matched = rules_for_situation(config.rules_memory_dir, situation)
+        return situation, matched
+    except Exception:  # noqa: BLE001 — fail-soft; the rules channel degrades to no-op
+        return frozenset(), []
+
+
+def _render_rules_block(
+    rules: list, *, cap: int, char_cap: int
+) -> tuple[str, list]:
+    """Render up to ``cap`` matched rules as their OWN labeled block on
+    their OWN byte budget (AC.RSR.4 / AC.RSR.5). Rules are pre-ordered by
+    priority; the cap drops the lowest-priority excess and the byte
+    sub-budget drops a rule WHOLE (never half-emitted). Returns
+    ``(block, injected_rules)`` — ``("", [])`` when nothing is emitted."""
+    if not rules or cap <= 0:
+        return "", []
+    header = (
+        "[behavioral-rules] Situational directives for what you're doing "
+        "this turn:"
+    )
+    lines = [header]
+    budget_used = len(header) + 1
+    injected: list = []
+    for rule in rules:
+        if len(injected) >= cap:
+            break  # AC.RSR.5 — hard count cap
+        text = rule.directive_text()
+        line = f"  - {text}"
+        if budget_used + len(line) + 1 > char_cap:
+            break  # AC.RSR.5 — drop whole on byte-budget overflow
+        lines.append(line)
+        budget_used += len(line) + 1
+        injected.append(rule)
+    if not injected:
+        return "", []
+    return "\n".join(lines), injected
+
+
+def _record_situational_telemetry(
+    *,
+    config: RetrievalConfig,
+    prompt: str,
+    situation_tags: frozenset[str],
+    matched_rules: list,
+    injected_rules: list,
+) -> None:
+    """Fire the additive ``{situation -> rules fired}`` telemetry record
+    (AC.RSR — pure observation, fail-open). No-op when no sink is
+    configured; delegates to the recorder, which swallows any error so it
+    can never perturb recall."""
+    if config.telemetry_dir is None:
+        return
+    try:
+        from .retrieval_telemetry import record_situational_recall
+
+        record_situational_recall(
+            telemetry_dir=config.telemetry_dir,
+            prompt=prompt,
+            situation_tags=sorted(situation_tags),
+            matched_rules=matched_rules,
+            injected_rules=injected_rules,
+            rule_cap=SITUATIONAL_RULE_CAP,
+            char_cap=SITUATIONAL_RULE_CHAR_CAP,
+            turn_id=config.telemetry_turn_id,
+        )
+    except Exception:  # noqa: BLE001 — fail-open; telemetry never breaks recall
+        return
+
+
 def retrieve(
     *,
     prompt: str,
@@ -731,7 +931,50 @@ def retrieve(
         relevance_threshold=relevance_threshold,
         recency_weight=recency_weight,
     )
-    return _render_injection(merged, cap=INJECTION_CHAR_CAP)
+    # The store-(b) fact block — computed from ``rank`` alone, so it is
+    # BYTE-IDENTICAL whether or not any rule fires (AC.RSR.4): the rules
+    # channel never enters ``rank`` / ``_merge_by_score`` and never
+    # occupies a fact slot.
+    fact_block = _render_injection(merged, cap=INJECTION_CHAR_CAP)
+
+    # AC.RSR.3-5 — the SITUATIONAL RULES channel (store (c)): a SEPARATE
+    # labeled block on a SEPARATE budget. When the master lever is off /
+    # the cap is 0 / no rules store is configured / the detector fires on
+    # nothing, ``rules_block`` is "" and ``retrieve`` returns the fact
+    # block byte-for-byte (AC.RSR.6 reversibility / no-op).
+    situation, matched_rules = _situational_rules(
+        prompt=prompt, config=config, last_topic=last_topic
+    )
+    rules_block, injected_rules = _render_rules_block(
+        matched_rules,
+        cap=SITUATIONAL_RULE_CAP,
+        char_cap=SITUATIONAL_RULE_CHAR_CAP,
+    )
+    # Record the ``{situation -> rules fired}`` observation ONLY when the
+    # channel is LIVE (master lever on, cap > 0, a rules store configured)
+    # — so under-fires (an empty situation with a store present) ARE
+    # measured, while a caller not using the rules channel writes NO
+    # situational record and its telemetry file is byte-identical (the RTEL
+    # suite's per-turn-record-count guarantee holds).
+    if (
+        SITUATIONAL_RULES_ENABLED
+        and SITUATIONAL_RULE_CAP > 0
+        and config.rules_memory_dir is not None
+    ):
+        _record_situational_telemetry(
+            config=config,
+            prompt=prompt,
+            situation_tags=situation,
+            matched_rules=matched_rules,
+            injected_rules=injected_rules,
+        )
+    if not rules_block:
+        return fact_block
+    if not fact_block:
+        return rules_block
+    # Context order (Fork E): situational rules (c) precede topical facts
+    # (b); the always-on floor (a) is injected by other surfaces upstream.
+    return rules_block + "\n\n" + fact_block
 
 
 def _minmax_norm(hits: list[dict[str, object]]) -> list[float]:
@@ -1254,6 +1497,12 @@ def _resolve_live_config(envelope: dict) -> RetrievalConfig:
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
         telemetry_dir=telemetry_dir,
+        # AC.RSR.* — the rules store (c) lives at ``<store-root>/rules/``,
+        # the ``decisions/`` sibling, so it resolves from the SAME store
+        # root as episodes/decisions. The master lever (SITUATIONAL_RULES_
+        # ENABLED / SITUATIONAL_RULE_CAP) gates whether it is read; an
+        # absent store keeps the channel a dormant no-op.
+        rules_memory_dir=episode_memory_dir,
     )
 
 
@@ -1363,6 +1612,9 @@ def _resolve_composer_config(
         episode_memory_dir=episode_memory_dir,
         episode_group_ids=(workspace_slug,) if workspace_slug else None,
         telemetry_dir=telemetry_dir,
+        # AC.RSR.* — rules store (c) resolves from the same store root as
+        # episodes/decisions (the ``decisions/`` sibling ``rules/`` dir).
+        rules_memory_dir=episode_memory_dir,
     )
 
 

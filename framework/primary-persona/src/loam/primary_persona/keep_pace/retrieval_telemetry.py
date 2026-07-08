@@ -238,3 +238,96 @@ def record_retrieval(
             fh.write(line + "\n")
     except Exception:  # noqa: BLE001 — fail-open; telemetry never breaks a turn
         return
+
+
+def build_situational_record(
+    *,
+    prompt: str,
+    situation_tags: Sequence[str],
+    matched_rules: Sequence[object],
+    injected_rules: Sequence[object],
+    rule_cap: int,
+    char_cap: int,
+    turn_id: Optional[str] = None,
+    now: Optional[datetime] = None,
+) -> dict[str, object]:
+    """Assemble one ``{situation -> rules fired}`` telemetry record
+    (memory redesign Stage 4 / AC.RSR).
+
+    The situational-rules channel runs SEPARATELY from the store-(b) merge
+    (it never enters ``rank``), so it emits its OWN record — ``kind:
+    "situational-recall"`` — leaving the fact-recall record shape untouched
+    (the RTEL suite's byte-identical guarantee holds). Both failure
+    directions are measurable: an OVER-fire shows a large ``n_matched`` on a
+    situation that should not have fired; an UNDER-fire shows an empty
+    ``situation`` on a turn where a rule was wanted. ``rules`` carries each
+    MATCHED rule's identity + whether it was injected (cap / budget may drop
+    a matched rule) and its rank."""
+    now = now or datetime.now(timezone.utc)
+    injected_ids = {id(r): i for i, r in enumerate(injected_rules)}
+    rules: list[dict[str, object]] = []
+    for rule in matched_rules:
+        rank = injected_ids.get(id(rule))
+        rules.append(
+            {
+                "path": str(getattr(rule, "path", "") or "") or None,
+                "directive": str(getattr(rule, "directive", "") or "") or None,
+                "situation": list(getattr(rule, "situation", ()) or ()),
+                "strength": getattr(rule, "strength", None),
+                "injected": rank is not None,
+                "rank": rank,
+            }
+        )
+    return {
+        "schema_version": TELEMETRY_SCHEMA_VERSION,
+        "kind": "situational-recall",
+        "turn_id": turn_id or uuid.uuid4().hex,
+        "ts": now.astimezone(timezone.utc).isoformat(),
+        "prompt": prompt,
+        "situation": list(situation_tags),
+        "budget": {"rule_cap": rule_cap, "char_cap": char_cap},
+        "counts": {
+            "n_matched": len(rules),
+            "n_injected": sum(1 for r in rules if r["injected"]),
+        },
+        "rules": rules,
+    }
+
+
+def record_situational_recall(
+    *,
+    telemetry_dir: Optional[Path],
+    prompt: str,
+    situation_tags: Sequence[str],
+    matched_rules: Sequence[object],
+    injected_rules: Sequence[object],
+    rule_cap: int,
+    char_cap: int,
+    turn_id: Optional[str] = None,
+    now: Optional[datetime] = None,
+) -> None:
+    """Append one ``{situation -> rules fired}`` record — FAIL-OPEN, no-op
+    if unset. Same daily-rotated JSONL log as the fact-recall records
+    (distinguished by ``kind: "situational-recall"``); any error is
+    swallowed so the recorder can NEVER break the turn or perturb recall."""
+    if telemetry_dir is None:
+        return
+    try:
+        record = build_situational_record(
+            prompt=prompt,
+            situation_tags=situation_tags,
+            matched_rules=matched_rules,
+            injected_rules=injected_rules,
+            rule_cap=rule_cap,
+            char_cap=char_cap,
+            turn_id=turn_id,
+            now=now,
+        )
+        line = json.dumps(record, ensure_ascii=False)
+        directory = Path(telemetry_dir)
+        directory.mkdir(parents=True, exist_ok=True)
+        target = _daily_file(directory, now=now or datetime.now(timezone.utc))
+        with target.open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except Exception:  # noqa: BLE001 — fail-open; telemetry never breaks a turn
+        return

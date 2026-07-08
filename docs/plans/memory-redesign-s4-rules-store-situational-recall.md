@@ -181,12 +181,12 @@ The KP1 / FBMU / FBM-FILTER / SRF / RDP / RTEL / DLG suites must stay green (AC.
 
 *Placeholder — populated by the builder at build time (D-Q.\* fork resolutions from §10) and by `loam amend seal --plan-doc` (commit SHAs) at seal time.*
 
-- **D-Q.A** — store location + schema (Fork A): _pending build._
-- **D-Q.B** — situation representation + detection seam (Fork B): _pending build._
-- **D-Q.C** — budget cap value + threshold marker (Fork C): _pending build._
-- **D-Q.D** — provenance validation (Fork D): _pending build._
-- **D-Q.E** — separate-channel injection + ordering (Fork E): _pending build._
-- **D-Q.F** — reversibility lever (Fork F): _pending build._
+- **D-Q.A** — store location + schema (Fork A): built to recommendation (1). New `rules_store.py` mirroring `decision_ledger.py`; records at `<store-root>/rules/` (the `decisions/` sibling). `RuleRecord` fields: `directive`, `situation` (tag tuple), `provenance` (pointer tuple), `status`, `strength`, `floor_promote` (carried, NOT wired — S1b), `trigger` (Fork C marker), `date`, `source`. Frontmatter'd markdown, atomic tmp+`os.replace`, supersession-by-marking.
+- **D-Q.B** — situation representation + detection seam (Fork B): built to recommendation (1) + B2a-as-seam. Rule↔situation match is EXACT tag set-membership (`rules_for_situation`), no score. The turn's situation is derived by a conservative keyword-trigger registry `SITUATION_TRIGGERS` + `detect_situation()` in `retrieval.py` — under-fires (empty) on ambiguous turns; the registry IS the pluggable seam richer signals feed later. Day-one tags: `dispatching-subagent`, `authoring-outbound-text`, `amending-sealed-component`.
+- **D-Q.C** — budget cap value + threshold marker (Fork C): `SITUATIONAL_RULE_CAP = 3` (mirrors `DECISION_TOP_N`) + `SITUATIONAL_RULE_CHAR_CAP = 1200` byte sub-budget (within the 5000-char regime, applied separately). The fact→rule extraction threshold is recorded as the schema `trigger` marker (`frustration`/`bad-outcome`/`key-idea`) for S5 to fit; not a gate in S4.
+- **D-Q.D** — provenance validation (Fork D): built to recommendation. `write_rule` raises `RuleValidationError` on empty directive or zero non-empty provenance pointers — a rule is invalid by construction without evidence.
+- **D-Q.E** — separate-channel injection + ordering (Fork E): rules render as a distinct `[behavioral-rules]` block on the separate byte sub-budget, NEVER through `_merge_by_score` / `rank`; context order rules (c) → facts (b) within `retrieve`'s output. Fact block is byte-identical whether or not a rule fires.
+- **D-Q.F** — reversibility lever (Fork F): master lever `SITUATIONAL_RULES_ENABLED = True` (mirrors `RANK_CONSTITUTIONAL_FLOOR`) + `SITUATIONAL_RULE_CAP = 0`; either reverts `retrieve` to byte-identical pre-S4 with the store untouched on disk. Live resolvers thread `rules_memory_dir = episode-store-root`; the channel is live-but-dormant until a store is seeded.
 - **D-build.\*** — source / apply / seal SHAs: _backfilled at seal._
 
 ---

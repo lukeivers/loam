@@ -197,3 +197,69 @@ The KP1 / FBMU / FBM-FILTER / SRF / RDP / RTEL / DLG suites must stay green (AC.
 - Owner refinements: `owner-refinements-2026-07-02.md` #4 (the three-way split; "guidance on how to behave is not a memory, it's a prompt"); `owner-refinements-round2-2026-07-02.md` (a single utterance → a memory always, a rule only sometimes; LIBERAL fact ingest / CONSERVATIVE high-threshold rule extraction; the context-window budget as the governing dial; rules carry provenance; rule-list stays human-reviewable/prunable).
 - Landed code pinned Tier-0: `keep_pace/retrieval.py` (`_merge_by_score` store-(b) pipeline, `_decision_hits` third-source pattern, `RANK_CONSTITUTIONAL_FLOOR` reversibility-lever pattern at :222, the two live resolvers `_resolve_live_config` :1167 / `_resolve_composer_config` :1301, the envelope shape at the contributor :1283); `keep_pace/retrieval_telemetry.py` (the pure-observation fail-open recorder to extend); `decision_ledger.py` (`write_decision` :145, `DecisionRecord` :96 — the store shape to mirror; `DECISION_TOP_N` :64).
 - Predecessor plans: `docs/plans/memory-redesign-s1-ground-floor-extraction.md` §5 (S1b deferral gated on S4's situational-recall destination); `docs/plans/memory-redesign-s2-recency-relocation-discovery-prioritization.md` (the store-(b) discovery/prioritization split S4 leaves intact).
+
+# Memory redesign S4 (design Stage 4) — rules store + situational recall (the third leg of the three-way split)
+
+Per `docs/plans/memory-redesign-s4-rules-store-situational-recall.md`
+(build-ready pending owner GO on the §10 forks) and the ratified design
+`workspace/strategy/research/memory-human-vs-harness-2026-07-02/synthesis-v2.md`
+(design Stage 4 — "rule store (c) + situational recall + write-side fact/rule discipline")
++ owner refinements round 2 (a single utterance → a memory always, a rule only sometimes;
+LIBERAL fact ingest / CONSERVATIVE high-threshold rule extraction; the context-window budget
+as the governing dial). Single-component amendment on the EXISTING `framework/primary-persona/`
+component; advances the sidecar. Composes on S1a ground-floor extraction, the standing
+retrieval telemetry, and the S2 ranker (relevance-threshold recall + event-recency prioritizer)
+— and does NOT reshape the store-(b) `_merge_by_score` pipeline.
+
+The load-bearing design point: loam's measured failure was one BM25 ranker emitting one block
+for three jobs, so procedural rules (always relevant) crowded out topical facts. Separating the
+STORES is necessary but not sufficient — the RECALL DISCIPLINES are what differ. Store (c) is
+procedural/situational: cued by what the turn is DOING (dispatching, outbound-text, building,
+replying), not by what it is ABOUT. S4 delivers that as a distinct channel:
+
+  - The rules store — a new `rules_store.py` mirroring the sealed `decision_ledger.py`
+    (frontmatter'd markdown under `<memory_dir>/rules/`; atomic write; supersession; human-
+    prunable). A rule carries a directive + situation-tag set + provenance pointers + status.
+  - Write-side classification — a rule is REJECTED without >=1 provenance pointer to a store-(b)
+    record (auditable to evidence — info-trust applied to (c)); the store-(b) facts-only
+    discipline is left intact; fact-half and rule-half are authored APART at write time.
+  - Situational recall — a rule surfaces ONLY on a turn whose detected situation is in its tag
+    set (exact set-membership, no relevance/BM25 score can admit a rule); it injects in a
+    SEPARATE labeled block on a SEPARATE budget, NEVER entering `_merge_by_score`, so the
+    store-(b) fact output for a turn is byte-identical whether or not a rule fires.
+  - The context-budget dial — a NAMED `SITUATIONAL_RULE_CAP` hard cap (the owner's governing
+    constraint: "if we condense too many things into behavioral rules, we'll overload the
+    context window and none of this works") + a byte sub-budget.
+  - Reversibility — a NAMED master lever (mirroring RANK_CONSTITUTIONAL_FLOOR); off / cap 0
+    reverts to byte-identical pre-S4 recall with nothing on disk deleted.
+  - A conservative situation-detector as a named pluggable seam — leaning toward UNDER-firing
+    (the error asymmetry: over-fire = over-injection reborn; under-fire = a missed rule the
+    design's promote-to-floor mitigation covers), so richer signals feed it later.
+
+All levers are NAMED and reversible; restoring the no-op values reproduces the pre-stage recall
+(AC.RSR.6). Additive-only on `RetrievalConfig` (new fields default to no-ops, the telemetry-dir
+precedent) so direct-config callers stay byte-identical. No data migration; the store-(b)
+episodes/corpus/decisions and the derived index are untouched.
+
+  - AC.RSR.1 — the rules store exists, distinct from facts (b) + floor (a), human-prunable.
+  - AC.RSR.2 — write-side classification: a rule requires provenance (auditable to evidence);
+    facts stay facts; fact/rule authored apart at write time.
+  - AC.RSR.3 — situational recall: a rule fires only on a matching situation, never always-on;
+    no relevance score can admit a rule.
+  - AC.RSR.4 — separate recall channel: rules never enter `_merge_by_score`; the fact output for
+    a turn is byte-identical with the rules channel empty vs populated.
+  - AC.RSR.5 (context-budget-bound) — at most `SITUATIONAL_RULE_CAP` rules per pull, within the
+    byte sub-budget; a named tunable lever.
+  - AC.RSR.6 (reversibility) — the master lever reverts (c) to byte-identical pre-S4; nothing
+    deleted.
+  - AC.RSR.7 (outcome-altitude) — production entry-point, no pre-arranged state, seeded store:
+    a matching-situation turn surfaces the rule's directive, a non-matching turn surfaces none,
+    and topical fact recall is intact.
+  - AC.RSR.8 — no regression: KP1/FBMU/FBM-FILTER/SRF/RDP/RTEL/DLG suites green; fail-open on an
+    absent/broken rules store.
+
+Deferred (plan §7): S1b (move the situational design-lenses off always-on CLAUDE.md into (c))
+sequences immediately AFTER S4, gated on S4 telemetry proving recall — S4 creates the destination
+but edits no CLAUDE.md/floor surface. S5 (automated offline rule-extraction at the high threshold)
+is a separate later stage. No ODD violation in surrounding code; the change is named tunable levers
++ a new store consumed as a separate channel, no defensive code for unnamed cases.

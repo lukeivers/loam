@@ -159,3 +159,40 @@ Commit SHAs backfilled at seal via `loam amend seal --plan-doc`.
   bash port makes the whole script correct (verified: the fixed script runs
   past line 24 to completion under bash in AC.CRSP.1/3a). Surfaced for the
   dispatcher's record.
+
+# Capability-refresh run-cadence.sh bash-portability fix — apply ladder
+
+Extension of the capability-refresh component (plan
+`docs/plans/claude-leverage-program-s1-currency.md`; RUN migration
+`capability-refresh-actions-cadence-migration` #193). Fixes the shell
+portability of the cadence runner so the #193 GitHub Actions binding
+actually executes on ubuntu-latest.
+
+Root cause (Tier-0, CI log): `run-cadence.sh` shipped with a
+`#!/bin/zsh` shebang and a zsh-only line-16 `SCRIPT_DIR="${0:A:h}"`.
+The Ubuntu runner has no zsh, so the kernel cannot exec the shebang
+(`cannot execute: required file not found`, exit 127) and the refresh
+never runs. macOS (which ships /bin/zsh) was unaffected — which is why
+the defect only surfaced in CI.
+
+This amendment (portability only; refresh logic byte-unchanged):
+  1. shebang → `#!/usr/bin/env bash` — present on both Ubuntu and
+     macOS, correct for the script's bash-3.2-safe feature set
+     (`set -euo pipefail`, `[[ ]]`, `${var:?}`, `${var:+}`,
+     `${var:-}`).
+  2. `${0:A:h}` → `$(cd "$(dirname "$0")" && pwd)` — the standard
+     portable script-dir idiom, matching the script's own adjacent
+     line-17 `cd … && pwd`. Symlink-free real invocation yields the
+     same directory, so REPO_ROOT and all downstream behaviour are
+     unchanged on macOS.
+
+AC.CRSP.1 ★ (outcome-altitude): the fixed script is EXECUTED through
+its own shebang under a genuinely zsh-free PATH and proven to reach
+`python3 -m capability_refresh` with the repo root correctly resolved —
+not verified by source inspection.
+
+`set -euo pipefail` and the `LOAM_REFRESH_NO_COMMIT=1` opt-in from #193
+are preserved. NO Anthropic API key involved. NO public-action steps —
+the fix is a repo file; it is sealed LOCALLY on the worktree branch and
+the owner holds the push. BASELINE `a1166b8d`; counter 194 confirmed at
+apply.

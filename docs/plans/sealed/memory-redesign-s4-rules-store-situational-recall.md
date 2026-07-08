@@ -191,6 +191,12 @@ The KP1 / FBMU / FBM-FILTER / SRF / RDP / RTEL / DLG suites must stay green (AC.
 
 ---
 
+### Commit SHAs
+
+- Amendment commit: `aefb3eb6dfd39bae4bb200a234a187938491b5ae` —
+  `chore(amend): memory-redesign-s4-rules-store-situational-recall manifest+apply — primary-persona BASELINE+sidecar bump to c158000`
+- Seal commit: `3af7e6db8bcd328b0a557a18436b814b26cc189e` —
+  `chore(seals): memory-redesign-s4-rules-store-situational-recall — primary-persona at aefb3eb`
 ## §11 Provenance trail
 
 - Design: `workspace/strategy/research/memory-human-vs-harness-2026-07-02/synthesis-v2.md` — §"The three stores + their distinct recall mechanisms" (the (c) row: situational recall, small budget, provenance→(b)); §"the single biggest residual risk" (situational recall unproven, over-injection-reborn failure mode + promote-uncertain-to-floor mitigation); Stage 4 in the staged build plan.

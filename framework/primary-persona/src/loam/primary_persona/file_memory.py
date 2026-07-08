@@ -542,20 +542,23 @@ RECENCY_HALF_LIFE_DAYS = 5.0
 
 # Candidate-pool widening factor. ``_fts_search`` fetches
 # ``num_results * RECENCY_CANDIDATE_FACTOR`` BM25 hits (floored at
-# RECENCY_CANDIDATE_FLOOR) so the recency re-rank has a pool deep
-# enough that a slightly-weaker-lexical but most-recent active-thread
-# episode is reachable, then returns the top ``num_results`` after the
-# blend. Bounded so the widened query stays within the session-start
-# 5s envelope on a 600+-episode store.
+# RECENCY_CANDIDATE_FLOOR) so the ``_compose_score`` stage (validity-
+# interval filter + supersession penalty) has a candidate pool deep
+# enough that ``num_results`` genuine survivors remain after superseded
+# records are filtered out, then returns the top ``num_results``. Bounded
+# so the widened query stays within the session-start 5s envelope on a
+# 600+-episode store.
+#
+# NOTE (memory redesign S2 / AC.RDP.1): DISCOVERY IS RELEVANCE-ONLY. The
+# per-turn episode discovery score is ``BM25 × activation(default-off) ×
+# supersession`` (:func:`_compose_score`) — there is NO recency term in
+# discovery. Event-recency is a PRIORITIZER applied later, at the merge
+# (``keep_pace/retrieval.py``), over the already-discovered set only; it
+# never decides membership. The pre-S2 ``_blend_recency`` that blended
+# recency INTO the discovery score was already dead (zero call sites) and
+# is retired in S2 so it cannot be re-wired into discovery.
 RECENCY_CANDIDATE_FACTOR = 8
 RECENCY_CANDIDATE_FLOOR = 40
-
-# Relative weight of the recency channel against the BM25-relevance
-# channel in the blended score. 0.0 → pure relevance (pre-MSC
-# behaviour); 1.0 → pure recency. 0.5 keeps both channels load-bearing
-# so neither drowns the other (§12 halt trigger 4 — recency must not
-# trade away retrieval quality).
-RECENCY_BLEND_WEIGHT = 0.5
 
 # AC.FBMT1.SUPM.2 — multiplicative penalty applied to the blended
 # score of a memory file whose frontmatter carries a
@@ -1036,7 +1039,8 @@ class FileMemoryStore:
     @staticmethod
     def _index_schema_is_current(conn: sqlite3.Connection) -> bool:
         """Return ``True`` when the ``episodes`` FTS5 table carries the
-        ``reference_time`` column the recency blend requires.
+        ``reference_time`` column (the EVENT-time carried onto each hit for
+        the merge-side recency prioritizer; discovery itself is relevance-only).
 
         A pre-MSC index lacks it. Probing via a bounded SELECT keeps
         this stdlib + FTS5-portable (``PRAGMA table_info`` is empty for
@@ -1097,14 +1101,15 @@ class FileMemoryStore:
         if not tokens:
             return []
         safe_query = " OR ".join(tokens)
-        # AC.MSC.1 / D-MSC.2: fetch a widened BM25 candidate pool so
-        # the recency re-rank has depth — a slightly-weaker-lexical
-        # but most-recent active-thread episode is reachable in the
-        # pool even though pure BM25 would have ranked it below the
-        # ``num_results`` cut. The pool is still ``ORDER BY score``
-        # (BM25) at the SQL layer; the recency blend happens in
-        # Python over the returned pool (stdlib, deterministic, no
-        # SQL date-math portability risk).
+        # Fetch a widened BM25 candidate pool so ``_compose_score`` (the
+        # validity-interval filter + supersession penalty) has depth — enough
+        # candidates that ``num_results`` genuine survivors remain after
+        # superseded records are filtered out. The pool is ``ORDER BY score``
+        # (BM25) at the SQL layer; ``_compose_score`` composes BM25 ×
+        # activation(default-off) × supersession over the returned pool
+        # (stdlib, deterministic). DISCOVERY IS RELEVANCE-ONLY (AC.RDP.1):
+        # there is NO recency term here — event-recency is a merge-side
+        # PRIORITIZER over the already-discovered set, never a discovery signal.
         candidate_limit = max(
             num_results * RECENCY_CANDIDATE_FACTOR,
             RECENCY_CANDIDATE_FLOOR,
@@ -1586,7 +1591,7 @@ def _superseded_marker_target_missing(
     penalty (so the superseded file stays demoted) and the warning
     is observable to the caller via the contributor's diagnostic
     surface. This helper is the predicate; the warning emission
-    happens in :func:`_blend_recency` where the memory_root is in
+    happens in :func:`_compose_score` where the memory_root is in
     scope.
     """
     if not marker or memory_root is None:
@@ -1748,7 +1753,7 @@ def _filter_by_interval(
 _SUPERSEDED_SENTINEL_CLOSE = datetime(9999, 12, 31, tzinfo=timezone.utc)
 
 
-# AC.FBMT1.SUPM.4: warnings collected during a single ``_blend_recency``
+# AC.FBMT1.SUPM.4: warnings collected during a single ``_compose_score``
 # call are appended here so tests and the contributor can observe the
 # soft-error surface without a stdlib ``logging`` dependency. Cleared at
 # the start of each call. Module-level so an in-process test can read
@@ -1756,73 +1761,18 @@ _SUPERSEDED_SENTINEL_CLOSE = datetime(9999, 12, 31, tzinfo=timezone.utc)
 _LAST_RANKER_WARNINGS: list[str] = []
 
 
-def _blend_recency(
-    rows: list[dict[str, Any]], *, num_results: int, now: datetime,
-    memory_root: Path | None = None,
-) -> list[dict[str, Any]]:
-    """Re-rank a BM25-ordered candidate pool by a recency-blended
-    score and return the top ``num_results`` (AC.MSC.1 / D-MSC.2).
-
-    ``rows`` arrives BM25-ordered (best-relevance first). Each row's
-    BM25 *rank position* is converted to a normalised relevance
-    channel in ``[0.0, 1.0]`` (1.0 = best-ranked) and blended with
-    its recency weight:
-
-        blended = (1 - W) * relevance_channel + W * recency_channel
-
-    with ``W = RECENCY_BLEND_WEIGHT``. Both channels stay
-    load-bearing so a recency-shaped query reaches the newest
-    active-thread episode within the top-N while a non-recency query
-    still surfaces a directly-relevant older answer (§12 halt
-    trigger 4). Stable: equal blended scores preserve the incoming
-    BM25 order (Python sort is stable).
-
-    AC.FBMT1.SUPM.2 + AC.FBMT1.SUPM.3: rows pointing at memory files
-    whose frontmatter carries ``superseded-by:`` are multiplicatively
-    penalised by :data:`SUPERSEDED_PENALTY`. The penalty applies at
-    the blended-score step so the row stays in the candidate set
-    (not filtered) — a sufficiently-high-relevance superseded file
-    can still surface, just demoted.
-
-    AC.FBMT1.SUPM.4: when ``memory_root`` is supplied and the marker
-    points at a non-existent path, the warning is appended to
-    :data:`_LAST_RANKER_WARNINGS` (a soft error — the penalty still
-    applies; ranker does not crash).
-    """
-    global _LAST_RANKER_WARNINGS  # noqa: PLW0603 — AC.FBMT1.SUPM.4 surface
-    _LAST_RANKER_WARNINGS = []
-    if not rows:
-        return []
-    total = len(rows)
-    scored: list[tuple[float, int, dict[str, Any]]] = []
-    for idx, row in enumerate(rows):
-        # Best BM25 row (idx 0) → relevance_channel 1.0; worst → ~0.
-        relevance_channel = (total - idx) / total
-        ref_time = _parse_reference_time(str(row.get("valid_at", "")))
-        recency_channel = _recency_weight(ref_time, now=now)
-        blended = (
-            (1.0 - RECENCY_BLEND_WEIGHT) * relevance_channel
-            + RECENCY_BLEND_WEIGHT * recency_channel
-        )
-        # AC.FBMT1.SUPM.2: apply the multiplicative demotion when the
-        # file's frontmatter carries ``superseded-by``.
-        marker = _superseded_marker(str(row.get("path", "")))
-        if marker is not None:
-            blended = blended * SUPERSEDED_PENALTY
-            # AC.FBMT1.SUPM.4: surface the warning when the marker
-            # points at a non-existent file. The penalty already
-            # applied above so the demotion still holds even when
-            # the target is missing.
-            if _superseded_marker_target_missing(marker, memory_root):
-                _LAST_RANKER_WARNINGS.append(
-                    f"superseded-by target missing: "
-                    f"{row.get('path')!s} -> {marker}"
-                )
-        scored.append((blended, idx, row))
-    # Sort by blended score desc; ``idx`` as a stable secondary key so
-    # equal-blend ties preserve the original BM25 ordering.
-    scored.sort(key=lambda t: (-t[0], t[1]))
-    return [row for _, _, row in scored[:num_results]]
+# RETIRED (memory redesign S2 / design Stage 3 / plan Fork 6): the
+# ``_blend_recency`` ranker blended event-recency INTO the discovery score
+# (``blended = (1-W)*relevance + W*recency`` with W = RECENCY_BLEND_WEIGHT).
+# It was orphaned by the AC.EVX Slice-1 simplification of ``_compose_score``
+# (BM25 × activation(off) × supersession) and had ZERO call sites. Leaving it
+# in place was a correctness HAZARD: a future builder could re-wire it into
+# discovery and silently break the "discovery is relevance-only" invariant
+# (AC.RDP.1). It is deleted here — recency is now a PRIORITIZER applied at the
+# merge over the already-discovered set (``keep_pace/retrieval.py``), never a
+# discovery signal (AC.RDP.3). The reusable decay primitive ``_recency_weight``
+# (keyed on EVENT time) survives and is consumed by that merge-side prioritizer.
+# Recoverable from git history if ever needed (reversibility).
 
 
 def activation_enabled() -> bool:

@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -69,7 +70,54 @@ from .work_anchor import WorkAnchor, is_trivial_prompt
 
 
 # AC.KP1.3 — top-N injection cap. The design recipe is N <= 5.
+#
+# AC.RDP.2 / AC.RDP.5 (memory redesign S2 / design Stage 3) — this is now the
+# SAFETY COUNT CAP that sits ABOVE the relevance threshold, NOT the primary
+# set-determiner. The relevance threshold (:data:`RELEVANCE_THRESHOLD`) decides
+# WHICH records are discovered (empty-OK); this cap is cheap insurance against a
+# pathological over-injection turn where many records clear the threshold. A
+# NAMED tunable lever (per-call ``top_n``): raising it relaxes the cap; the
+# threshold remains the real gate.
 DEFAULT_TOP_N = 5
+
+# AC.RDP.2 (memory redesign S2 / design Stage 3) — the ABSOLUTE RELEVANCE
+# THRESHOLD that decides the DISCOVERED SET (empty-OK), replacing the fixed
+# count as the set-determiner. An episode hit is admitted only when its RAW BM25
+# relevance (the ``_bm25_raw`` slot, larger = stronger) is >= this. Applied at
+# the merge AFTER the pure-noise episode floor, in the POPULATED regime only:
+# it mirrors the episode floor's over-filter safeguard (self-disables when no
+# episode clears :data:`EPISODE_MIN_RELEVANCE_SCORE`), so the sealed lone-sparse-
+# episode rescue (AC-FBM-RN-2 / AC-FBM-FLOOR-1 safeguard) is preserved — a
+# raw~0 fresh episode in an IDF-collapsed store is a SCORING artefact, not a
+# near-miss, and must never be hidden.
+#
+# Day-one default is a CONSERVATIVE, deliberately-LOOSE start just above the
+# 0.1 noise floor (owner ruling). The live regime scores a genuine multi-term
+# episode match ~2.9-5.2 and a single-weak-term near-miss ~0.6 (verified
+# against the store this session), so 0.5 trims only sub-0.5 near-noise and
+# never hides a real match — the owner's stated asymmetry (an over-tighten
+# silently hides a relevant memory; a missed-tighten only costs a little extra
+# context). NAMED + tunable (per-call ``relevance_threshold``); a value <=
+# :data:`EPISODE_MIN_RELEVANCE_SCORE` is a NO-OP that reverts to the pre-stage
+# count-capped set (AC.RDP.5 reversibility). Tuned OFFLINE against the standing
+# retrieval telemetry later — never a hot-path LLM.
+RELEVANCE_THRESHOLD = 0.5
+
+# AC.RDP.3 (memory redesign S2 / design Stage 3) — the BOUNDED event-recency
+# PRIORITIZER weight. A discovered hit's boosted score is re-weighted by
+# ``(1 - W) + W * recency_weight``, where ``recency_weight`` in ``[0, 1]`` is
+# ``file_memory._recency_weight`` over the hit's EVENT time (``valid_at`` /
+# ``reference_time`` — NOT injection time; AC.RDP.4). The factor is BOUNDED to
+# ``[1 - W, 1]``, so recency REORDERS within the discovered set (newer-by-event-
+# time ahead when relevance is comparable — the owner's project complete/
+# incomplete example) but can NEVER resurrect a below-threshold record (the
+# re-weight runs AFTER the threshold gate, over survivors only) and cannot
+# leapfrog a much-stronger-relevance record. A hit with no parseable event-time
+# (corpus rules are timeless) is recency-NEUTRAL (factor 1.0; owner Fork 5).
+# NAMED + tunable (per-call ``recency_weight``); ``0.0`` is a NO-OP (factor
+# constant 1.0 → pre-stage order; AC.RDP.5). Default 0.3: recency influences
+# ordering but relevance stays primary. Tuned offline like the threshold.
+RECENCY_PRIORITIZER_WEIGHT = 0.3
 
 # AC.SRF.3 (memory recall cycle, Slice 2) — the NAMED, tunable
 # ~5KB-class per-turn injection budget, sized to accommodate at least
@@ -501,6 +549,8 @@ def rank(
     config: RetrievalConfig,
     last_topic: str = "",
     salience_threshold: float = SALIENCE_THRESHOLD,
+    relevance_threshold: float = RELEVANCE_THRESHOLD,
+    recency_weight: float = RECENCY_PRIORITIZER_WEIGHT,
 ) -> list[dict[str, object]]:
     """The PRODUCTION ranked-hit accessor — the ordered merged hit list,
     PRE-render, that :func:`retrieve` injects (AC.KP1.6 + AC.FBM-P5-METRIC.*).
@@ -561,6 +611,8 @@ def rank(
         episode_hits,
         top_n=config.top_n,
         salience_threshold=salience_threshold,
+        relevance_threshold=relevance_threshold,
+        recency_weight=recency_weight,
     )
     # AC.DLG.3 (memory recall cycle, Slice 3) — decision records are a
     # THIRD merged source, positioned FIRST for whole-record injection
@@ -636,6 +688,8 @@ def retrieve(
     config: RetrievalConfig,
     last_topic: str = "",
     salience_threshold: float = SALIENCE_THRESHOLD,
+    relevance_threshold: float = RELEVANCE_THRESHOLD,
+    recency_weight: float = RECENCY_PRIORITIZER_WEIGHT,
 ) -> str:
     """The PRODUCTION work-anchored retrieval entry-point (AC.KP1.6).
 
@@ -674,6 +728,8 @@ def retrieve(
         config=config,
         last_topic=last_topic,
         salience_threshold=salience_threshold,
+        relevance_threshold=relevance_threshold,
+        recency_weight=recency_weight,
     )
     return _render_injection(merged, cap=INJECTION_CHAR_CAP)
 
@@ -794,6 +850,73 @@ def _apply_episode_floor(
     return [h for h in episode_hits if _bm25_raw_of(h) >= floor]
 
 
+def _apply_relevance_threshold(
+    episode_hits: list[dict[str, object]], *, threshold: float, noise_floor: float
+) -> list[dict[str, object]]:
+    """AC.RDP.2 — the RELEVANCE-THRESHOLD set-determiner (empty-OK), applied in
+    the POPULATED regime only.
+
+    Drops an episode whose raw BM25 relevance (the ``score`` slot = ``_bm25_raw``)
+    is below ``threshold`` — BUT only when the regime is a meaningful relevance
+    discriminator (at least one episode cleared ``noise_floor``). This is the
+    same over-filter safeguard the episode floor uses (:func:`_apply_episode_floor`):
+    in the SPARSE / IDF-collapsed regime (no episode reaches the noise floor)
+    every episode scores ~0 regardless of relevance, so the threshold
+    SELF-DISABLES and the sealed lone-sparse-episode rescue (AC-FBM-RN-2 /
+    AC-FBM-FLOOR-1 safeguard) is preserved — a raw~0 genuinely-relevant fresh
+    episode is a scoring artefact, not a near-miss, and must not be hidden.
+
+    In the POPULATED regime this is the empty-OK gate: if no episode reaches the
+    threshold the episode set is EMPTY and the merge falls to corpus-only /
+    empty — nothing is padded up to the count cap. Runs AFTER the noise floor,
+    so a ``threshold <= noise_floor`` is a no-op (the floor already keeps only
+    ``>= noise_floor`` hits; AC.RDP.5 reversibility). Pure arithmetic on
+    already-fetched hits; no new I/O on the live hook.
+    """
+    if not episode_hits:
+        return episode_hits
+    if not any(_bm25_raw_of(h) >= noise_floor for h in episode_hits):
+        # Sparse regime — raw BM25 is not a relevance discriminator here; defer
+        # to the sealed min-max rescue rather than over-filter (owner asymmetry:
+        # an over-tighten silently hides a relevant memory).
+        return episode_hits
+    return [h for h in episode_hits if _bm25_raw_of(h) >= threshold]
+
+
+def _recency_factor(
+    hit: dict[str, object], *, now: datetime, weight: float
+) -> float:
+    """AC.RDP.3 — the BOUNDED event-recency re-weight factor in ``[1 - weight, 1]``.
+
+    ``1.0`` (no demotion) for the newest / future-dated event AND for any hit
+    with no parseable EVENT time (corpus feedback-rules are timeless →
+    recency-neutral; owner Fork 5), decaying toward ``1 - weight`` for older
+    events. Keyed on the hit's ``_event_time`` slot (``valid_at`` =
+    ``reference_time`` — when the thing HAPPENED), NEVER on injection history
+    (AC.RDP.4). ``weight <= 0`` is a no-op (constant 1.0; AC.RDP.5).
+
+    Note: ``file_memory._recency_weight`` returns ``0.0`` for an absent/
+    unparseable timestamp (its own additive-channel neutral), so this function
+    treats "no event-time" as a factor of ``1.0`` DIRECTLY (the multiplicative
+    neutral) rather than routing it through that ``0.0`` — otherwise a timeless
+    corpus rule would be demoted by the full weight.
+    """
+    if weight <= 0.0:
+        return 1.0
+    raw = str(hit.get("_event_time", "") or "").strip()
+    if not raw:
+        return 1.0
+    # Lazy cross-module import (module convention — keep_pace stays importable
+    # without the persona's full memory surface; mirrors salient_snippet).
+    from ..file_memory import _parse_reference_time, _recency_weight
+
+    parsed = _parse_reference_time(raw)
+    if parsed is None:
+        return 1.0
+    recency = _recency_weight(parsed, now=now)  # [0, 1]; 1.0 = newest
+    return (1.0 - weight) + weight * recency
+
+
 def _dedup_tokens(hit: dict[str, object]) -> frozenset[str]:
     """The hit's content token-set for the near-dup Jaccard (AC-FBM-DEDUP-1).
 
@@ -860,10 +983,35 @@ def _merge_by_score(
     *,
     top_n: int,
     salience_threshold: float = SALIENCE_THRESHOLD,
+    relevance_threshold: float = RELEVANCE_THRESHOLD,
+    recency_weight: float = RECENCY_PRIORITIZER_WEIGHT,
+    now: Optional[datetime] = None,
 ) -> list[dict[str, object]]:
     """Merge corpus + episode hits by descending WEIGHTED-NORMALIZED score,
-    with pinned rules force-included, below-salience episodes gated, capped
-    at top_n.
+    with pinned rules force-included, below-salience episodes gated, below-
+    relevance-threshold episodes gated (empty-OK), an event-recency re-weight
+    over the discovered set, capped at top_n (the safety cap).
+
+    Memory redesign S2 (design Stage 3) — two deltas + a lock over the sealed
+    Slice-B pipeline:
+
+      - **AC.RDP.2 RELEVANCE-THRESHOLD set-determiner (empty-OK).** After the
+        pure-noise episode floor, :func:`_apply_relevance_threshold` drops
+        episodes below ``relevance_threshold`` in the populated regime (self-
+        disabling in the sparse regime to preserve the sealed lone-sparse-episode
+        rescue). The threshold — not ``top_n`` — decides the discovered set;
+        ``top_n`` is the SAFETY CAP above it. Nothing is padded up to the cap.
+      - **AC.RDP.3 BOUNDED event-recency prioritizer.** Each discovered hit's
+        boosted score is re-weighted by :func:`_recency_factor` (bounded to
+        ``[1 - recency_weight, 1]``, keyed on EVENT time) BEFORE the partition
+        sort, so a newer-by-event-time record is ordered ahead of an
+        equally-relevant older one — and can never resurrect a below-threshold
+        record (the re-weight runs over survivors only). Corpus rules are
+        timeless → recency-neutral.
+      - **AC.RDP.1 / AC.RDP.4 lock.** Discovery membership is decided by
+        relevance (raw BM25) alone; neither event-time nor injection history
+        changes the set. The re-weight is pure arithmetic over already-fetched
+        hits — no injection-history signal, no new I/O.
 
     Slice B — the SYSTEMATIC pre-merge filter stage. Three mechanisms run in one
     named stage here, replacing the reactive per-case load patches
@@ -949,10 +1097,22 @@ def _merge_by_score(
     episode_hits = _apply_episode_floor(
         episode_hits, floor=EPISODE_MIN_RELEVANCE_SCORE
     )
+    # AC.RDP.2 — RELEVANCE-THRESHOLD set-determiner (empty-OK). After the
+    # pure-noise floor, gate out below-threshold near-misses in the populated
+    # regime so the discovered set is the genuinely-relevant few (possibly
+    # zero), not the top-N that merely cleared noise. Self-disables in the
+    # sparse regime (sealed AC-FBM-RN-2 rescue preserved).
+    episode_hits = _apply_relevance_threshold(
+        episode_hits,
+        threshold=relevance_threshold,
+        noise_floor=EPISODE_MIN_RELEVANCE_SCORE,
+    )
     if not episode_hits:
-        # Every episode was gated out as junk OR sub-floor — fall back to the
-        # byte-identical corpus-only path (AC-FBM-SAL-2 / AC.FBMU.2 no-regression:
-        # a turn with no surviving episode renders exactly the corpus output).
+        # Every episode was gated out as junk, sub-floor, OR below the relevance
+        # threshold — fall back to the byte-identical corpus-only path
+        # (AC-FBM-SAL-2 / AC.FBMU.2 no-regression: a turn with no surviving
+        # episode renders exactly the corpus output; with no corpus hit either,
+        # the surface is empty — the AC.RDP.2 empty-OK outcome).
         return corpus_hits
     combined = list(corpus_hits) + list(episode_hits)
     # Per-source min-max normalize so the two incompatible BM25 scales compete
@@ -967,12 +1127,24 @@ def _merge_by_score(
         * _salience_of(combined[i])
         for i in range(len(combined))
     ]
+    # AC.RDP.3 — BOUNDED event-recency re-weight over the DISCOVERED set (post-
+    # threshold survivors). Each hit's boosted score is scaled by its recency
+    # factor in [1 - recency_weight, 1] (newest / timeless = 1.0), so a newer-
+    # by-event-time episode is ordered ahead of an equally-relevant older one
+    # without ever displacing a much-stronger-relevance hit or resurrecting a
+    # below-threshold record. Pure arithmetic over already-fetched hits.
+    now_dt = now if now is not None else datetime.now(timezone.utc)
+    reweighted = [
+        boosted[i] * _recency_factor(combined[i], now=now_dt, weight=recency_weight)
+        for i in range(len(combined))
+    ]
     # Partition: pinned rules are the hard floor (AC-FBM-W-2) — force-included
-    # at the front regardless of relevance; the rest sort by boosted score.
+    # at the front regardless of relevance; the rest sort by the recency-
+    # reweighted boosted score.
     pinned_idx = [i for i in range(len(combined)) if _is_pinned(combined[i])]
     rest_idx = [i for i in range(len(combined)) if not _is_pinned(combined[i])]
-    pinned_order = sorted(pinned_idx, key=lambda i: (-boosted[i], i))
-    rest_order = sorted(rest_idx, key=lambda i: (-boosted[i], i))
+    pinned_order = sorted(pinned_idx, key=lambda i: (-reweighted[i], i))
+    rest_order = sorted(rest_idx, key=lambda i: (-reweighted[i], i))
     order = pinned_order + rest_order
     combined = [combined[i] for i in order]
     # AC-FBM-DEDUP-1 (Slice B / B2) — NEAR-DUPLICATE COLLAPSE over the combined,

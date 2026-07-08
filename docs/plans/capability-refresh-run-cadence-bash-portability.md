@@ -117,6 +117,14 @@ DO NOT PUSH. Seal locally on the worktree branch; the owner holds the push
 - **D-CRSP.3 — no other change.** Every other construct in the script
   (`set -euo pipefail`, `[[ ]]`, `${1:?}`, `${PYTHONPATH:+…}`,
   `${LOAM_REFRESH_NO_COMMIT:-0}`) is bash-compatible and left byte-identical.
+- **D-CRSP.4 — line-24 `status=$?` incidentally corrected by the shebang
+  change; no extra edit.** A THIRD zsh-incompatibility exists at line 24:
+  `status` is a read-only special parameter in zsh, so `status=$?` errors
+  (`read-only variable: status`) under the old `#!/bin/zsh`. Under bash
+  `status` is an ordinary variable, so the D-CRSP.1 shebang change resolves
+  it with no change to line 24. Because the fix needs no MORE than the
+  two named lines, this does NOT trip the §6 halt trigger. See §16 for the
+  F2 correction on the "works on macOS" framing.
 
 Commit SHAs backfilled at seal via `loam amend seal --plan-doc`.
 
@@ -137,3 +145,17 @@ Commit SHAs backfilled at seal via `loam amend seal --plan-doc`.
   ancestor and the diff window resolves). This amendment's apply/seal
   rewrites both BASELINE and SEAL_COMMIT to commits in this branch, so the
   condition does not affect the cycle. Noted for the dispatcher.
+- **F2 correction on the dispatch framing (surfaced, not blocking):** the
+  brief states the fix should preserve "identical behavior where it already
+  works (macOS)." Evidence (`zsh -c 'status=0'` → `read-only variable:
+  status`; the same error reproduced by executing the pre-fix script under
+  `/bin/zsh` on this macOS at line 24 after the entry-point was reached)
+  shows the pre-fix script would ALSO die under zsh at line 24 whenever the
+  refresh actually ran — so it did not fully "work" on macOS either. This
+  never surfaced operationally because the launchd fallback died earlier at
+  `python3 -m capability_refresh` (`ModuleNotFoundError: yaml` under the
+  Xcode Python 3.9, per #193), before line 24. Net operational effect
+  (the refresh never landed) is unchanged, so the fix objective stands; the
+  bash port makes the whole script correct (verified: the fixed script runs
+  past line 24 to completion under bash in AC.CRSP.1/3a). Surfaced for the
+  dispatcher's record.

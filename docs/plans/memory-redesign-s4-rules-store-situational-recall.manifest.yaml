@@ -1,0 +1,126 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: memory-redesign-s4-rules-store-situational-recall
+  title: "Memory redesign S4 (design Stage 4) — the SEPARATE rules store (behavioral directives, provenance-bearing, auditable to the fact that spawned them) + SITUATIONAL recall (fire only on a matching situation via exact tag-membership, never always-on) under a hard context-budget cap; a distinct recall channel that never re-merges with the store-(b) fact pipeline"
+
+# BASELINE: the pre-amendment tip immediately before this cycle's source commit.
+# PLACEHOLDER at plan-authoring (2026-07-07) — origin/main tip (the sealed S2 ranker
+# close-out). RETARGET at build time to the actual HEAD~1 at apply time (the source
+# commit lands directly on the then-current tip). S4 STACKS on the sealed three-way-split
+# predecessors (S1a ground-floor extraction -> standing telemetry -> S2 ranker); it adds
+# a NEW recall channel and never reshapes the store-(b) merge, so it fast-forwards cleanly.
+#
+# Single-component amendment on the EXISTING primary-persona component (NOT a new
+# component). Adds: (1) a NEW `rules_store.py` (sibling of decision_ledger.py) — the
+# behavioral-rule store (frontmatter'd markdown under <memory_dir>/rules/, mirroring the
+# sealed decision-ledger write discipline: atomic tmp+os.replace, append-not-rewrite,
+# supersession-by-marking, human-prunable); (2) write-side classification — a rule requires
+# a directive + situation-tags + >=1 provenance pointer to a store-(b) record (auditable to
+# evidence), authored APART from facts at write time; (3) SITUATIONAL recall in
+# keep_pace/retrieval.py — a SEPARATE labeled block on a SEPARATE budget, surfacing a rule
+# only when the turn's detected situation is in its tag set (exact set-membership, NO
+# relevance score), NEVER merged into _merge_by_score; (4) NAMED reversible levers —
+# SITUATIONAL_RULE_CAP (the owner's governing context-budget dial; 0 == no-op) + a master
+# flag mirroring RANK_CONSTITUTIONAL_FLOOR (off == byte-identical pre-S4); (5) a conservative
+# situation-detector as a named pluggable seam (richer tool-event/threaded-context signals
+# feed it later without reshaping the store); (6) an additive {situation -> rules fired}
+# telemetry record on the existing fail-open recorder. Adds AC.RSR.1..8 (AC.RSR.7
+# outcome-altitude via the production entry-point with no pre-arranged state; AC.RSR.5
+# context-budget-bound; AC.RSR.6 reversibility).
+#
+# DEFERRED (out of this cycle, see plan §7 sequencing): S1b (physically moving the
+# situational design-lenses out of always-on CLAUDE.md into store (c)) sequences immediately
+# AFTER S4, gated on S4 telemetry proving situational recall reliably fires on the design-lens
+# situation — S4 creates the destination but does NOT edit any CLAUDE.md or floor surface.
+# S5 (automated offline rule-EXTRACTION at the high frustration/outcome/idea threshold)
+# is a separate later stage; S4 ships the store + situational recall + MANUAL/seeded authoring.
+baseline: "a0444859"
+
+plan: docs/plans/memory-redesign-s4-rules-store-situational-recall.md
+
+components:
+  - name: primary-persona
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/primary-persona/tests/test_no_sealed_amendments.py
+    sidecar: framework/primary-persona/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/memory-redesign-s4-rules-store-situational-recall.md
+  body: |
+    # Memory redesign S4 (design Stage 4) — rules store + situational recall (the third leg of the three-way split)
+
+    Per `docs/plans/memory-redesign-s4-rules-store-situational-recall.md`
+    (build-ready pending owner GO on the §10 forks) and the ratified design
+    `workspace/strategy/research/memory-human-vs-harness-2026-07-02/synthesis-v2.md`
+    (design Stage 4 — "rule store (c) + situational recall + write-side fact/rule discipline")
+    + owner refinements round 2 (a single utterance → a memory always, a rule only sometimes;
+    LIBERAL fact ingest / CONSERVATIVE high-threshold rule extraction; the context-window budget
+    as the governing dial). Single-component amendment on the EXISTING `framework/primary-persona/`
+    component; advances the sidecar. Composes on S1a ground-floor extraction, the standing
+    retrieval telemetry, and the S2 ranker (relevance-threshold recall + event-recency prioritizer)
+    — and does NOT reshape the store-(b) `_merge_by_score` pipeline.
+
+    The load-bearing design point: loam's measured failure was one BM25 ranker emitting one block
+    for three jobs, so procedural rules (always relevant) crowded out topical facts. Separating the
+    STORES is necessary but not sufficient — the RECALL DISCIPLINES are what differ. Store (c) is
+    procedural/situational: cued by what the turn is DOING (dispatching, outbound-text, building,
+    replying), not by what it is ABOUT. S4 delivers that as a distinct channel:
+
+      - The rules store — a new `rules_store.py` mirroring the sealed `decision_ledger.py`
+        (frontmatter'd markdown under `<memory_dir>/rules/`; atomic write; supersession; human-
+        prunable). A rule carries a directive + situation-tag set + provenance pointers + status.
+      - Write-side classification — a rule is REJECTED without >=1 provenance pointer to a store-(b)
+        record (auditable to evidence — info-trust applied to (c)); the store-(b) facts-only
+        discipline is left intact; fact-half and rule-half are authored APART at write time.
+      - Situational recall — a rule surfaces ONLY on a turn whose detected situation is in its tag
+        set (exact set-membership, no relevance/BM25 score can admit a rule); it injects in a
+        SEPARATE labeled block on a SEPARATE budget, NEVER entering `_merge_by_score`, so the
+        store-(b) fact output for a turn is byte-identical whether or not a rule fires.
+      - The context-budget dial — a NAMED `SITUATIONAL_RULE_CAP` hard cap (the owner's governing
+        constraint: "if we condense too many things into behavioral rules, we'll overload the
+        context window and none of this works") + a byte sub-budget.
+      - Reversibility — a NAMED master lever (mirroring RANK_CONSTITUTIONAL_FLOOR); off / cap 0
+        reverts to byte-identical pre-S4 recall with nothing on disk deleted.
+      - A conservative situation-detector as a named pluggable seam — leaning toward UNDER-firing
+        (the error asymmetry: over-fire = over-injection reborn; under-fire = a missed rule the
+        design's promote-to-floor mitigation covers), so richer signals feed it later.
+
+    All levers are NAMED and reversible; restoring the no-op values reproduces the pre-stage recall
+    (AC.RSR.6). Additive-only on `RetrievalConfig` (new fields default to no-ops, the telemetry-dir
+    precedent) so direct-config callers stay byte-identical. No data migration; the store-(b)
+    episodes/corpus/decisions and the derived index are untouched.
+
+      - AC.RSR.1 — the rules store exists, distinct from facts (b) + floor (a), human-prunable.
+      - AC.RSR.2 — write-side classification: a rule requires provenance (auditable to evidence);
+        facts stay facts; fact/rule authored apart at write time.
+      - AC.RSR.3 — situational recall: a rule fires only on a matching situation, never always-on;
+        no relevance score can admit a rule.
+      - AC.RSR.4 — separate recall channel: rules never enter `_merge_by_score`; the fact output for
+        a turn is byte-identical with the rules channel empty vs populated.
+      - AC.RSR.5 (context-budget-bound) — at most `SITUATIONAL_RULE_CAP` rules per pull, within the
+        byte sub-budget; a named tunable lever.
+      - AC.RSR.6 (reversibility) — the master lever reverts (c) to byte-identical pre-S4; nothing
+        deleted.
+      - AC.RSR.7 (outcome-altitude) — production entry-point, no pre-arranged state, seeded store:
+        a matching-situation turn surfaces the rule's directive, a non-matching turn surfaces none,
+        and topical fact recall is intact.
+      - AC.RSR.8 — no regression: KP1/FBMU/FBM-FILTER/SRF/RDP/RTEL/DLG suites green; fail-open on an
+        absent/broken rules store.
+
+    Deferred (plan §7): S1b (move the situational design-lenses off always-on CLAUDE.md into (c))
+    sequences immediately AFTER S4, gated on S4 telemetry proving recall — S4 creates the destination
+    but edits no CLAUDE.md/floor surface. S5 (automated offline rule-extraction at the high threshold)
+    is a separate later stage. No ODD violation in surrounding code; the change is named tunable levers
+    + a new store consumed as a separate channel, no defensive code for unnamed cases.

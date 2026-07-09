@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-weekly-cap-alert"
+version = "0.0.0"
+description = "loam weekly-cap alert (WS-A1) — reads the SEALED usage-window-guard's REAL seven_day (weekly) Anthropic cap utilization and, when it crosses the owner-ratified threshold (60%, D5), fires a channel notification; below threshold it stays silent; on UsageUnavailable it fires the categorical failure reason and NEVER a fabricated number. Channel-agnostic (H-3): the delivery surface is injected; the launchd job bridges to a workspace poster via --notify-cmd. Runs as a periodic launchd job that survives a session ending."
+requires-python = ">=3.11"
+dependencies = ["loam-usage-window-guard"]
+
+[tool.setuptools]
+package-dir = {"loam.weekly_cap_alert" = "src/loam/weekly_cap_alert"}
+packages = ["loam.weekly_cap_alert"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

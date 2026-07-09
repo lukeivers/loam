@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Weekly-cap alert — launchd user agent (macOS), PERIODIC (not a daemon).
+
+  Variables (bare names below so Template does not expand them in this comment;
+  filled by src/loam/weekly_cap_alert/install.py):
+    LABEL            service label (com.loam.weekly-cap-alert)
+    PYTHON           absolute path to the venv Python interpreter
+    WORKING_DIR      cwd for the process (usually the loam repo root)
+    NOTIFY_CMD_ARGS  zero or more string ProgramArguments entries wiring the
+                     notify-cmd flag to the workspace poster (empty means the
+                     alert falls back to its stdout default, in STDOUT_LOG)
+    STDOUT_LOG       absolute path to stdout log (also the alert's default
+                     delivery sink when the notify-cmd flag is unwired)
+    STDERR_LOG       absolute path to stderr log
+    INTERVAL_SECS    seconds between runs (StartInterval; periodic tick)
+
+  This is a PERIODIC job: RunAtLoad fires it once on load, StartInterval re-fires
+  it every INTERVAL_SECS. There is deliberately NO KeepAlive: the alert is a
+  short probe-and-exit tick, not a persistent process to be resurrected. The
+  agent is a LaunchAgent, so it survives any single Claude session ending.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${LABEL}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>${PYTHON}</string>
+        <string>-m</string>
+        <string>loam.weekly_cap_alert</string>${NOTIFY_CMD_ARGS}
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>${WORKING_DIR}</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StartInterval</key>
+    <integer>${INTERVAL_SECS}</integer>
+
+    <key>StandardOutPath</key>
+    <string>${STDOUT_LOG}</string>
+
+    <key>StandardErrorPath</key>
+    <string>${STDERR_LOG}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+</dict>
+</plist>

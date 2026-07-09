@@ -87,7 +87,7 @@ def read_decisions(pm_dirs: list[Path] | Path | str) -> list[dict]:
     A PM dir with no ``decision-queue.yaml`` contributes ``[]`` (empty is
     normal); a genuinely-missing package or a corrupted queue propagates
     up as an unavailable source."""
-    from loam.per_project_pm import load_decision_queue
+    from loam.per_project_pm.loader import load_decision_queue
 
     if isinstance(pm_dirs, (str, Path)):
         pm_dirs = [Path(pm_dirs)]

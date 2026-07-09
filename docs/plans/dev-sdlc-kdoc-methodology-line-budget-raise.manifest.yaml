@@ -1,0 +1,46 @@
+schema_version: 3
+amendment:
+  slug: dev-sdlc-kdoc-methodology-line-budget-raise
+  title: "dev-sdlc KDOC methodology-spec line-budget raise 360->380 — admit the recall-volume AC.RVL.8 cap-bias checklist (the two sealed constraints are otherwise incompatible); 4th fence of the v1.11.0 cut"
+
+# BASELINE: dd25353a — canonical loam HEAD at authoring time (the v1.11.0
+# release-integration STATE/roadmap backfill tip). The plan + manifest commit
+# lands INSIDE this window under docs/plans/ (universally admitted); the test
+# edits follow. Single-component fence on the sealed dev-sdlc plugin
+# (plugins/dev-sdlc/). Dispatcher-ruled per the v1.11.0 KDOC collision surface.
+baseline: "dd25353a3ce6da556c19174105aca07614d36910"
+
+plan: docs/plans/dev-sdlc-kdoc-methodology-line-budget-raise.md
+
+components:
+  - name: dev-sdlc
+    new_component: false
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/dev-sdlc-kdoc-methodology-line-budget-raise.md
+  body: |
+    # dev-sdlc — methodology-spec line-budget raise (KDOC 360 -> 380) — apply ladder
+
+    Per docs/plans/dev-sdlc-kdoc-methodology-line-budget-raise.md.
+
+    The v1.11.0 recall-volume reshape (AC.RVL.8) adds a required cap-bias
+    checklist (§7.6 + reviewer item 15) to plugins/dev-sdlc/docs/odd-methodology.md,
+    growing it 360 -> 373 lines. dev-sdlc's test_AC_KDOC_1 asserted the doc
+    <= 360 lines (a keel-adoption leanness guard). The two sealed constraints
+    collide. Per feedback_loose_AC_text_fix_AC_not_implementation the numeric
+    bound is the too-tight AC, not the content: raise it 360 -> 380 (the sole
+    dependent on the number), credit the AC.RVL.8 §7.6 checklist in a comment,
+    and add AC.MSLB.1's own test so the raise is ODD §2.5-traceable. No
+    production source changes; odd-methodology.md itself is unchanged by this
+    amendment. F-SEAL-PLUGINS-TESTS-SKIPPED: dev-sdlc suite run manually pre-seal.

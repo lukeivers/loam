@@ -45,3 +45,32 @@ patterns:
     guard_class: "spawn-isolation fence integrity (class 11)"
   - pattern: "framework/tools/handsoff-loop/tests/test_AC_TPI_5_*.py"
     guard_class: "telegram-marker fence integrity (class 11)"
+  # Class 12 — cross-component SHARED-DOC content guards (2026-07-08
+  # release-seal near-miss audit, Class C). Each guard pins the content of
+  # a FILE-level universal-admitted doc (a doc any cycle's manifest admits
+  # editing) but lives in a component whose fence a foreign seal need not
+  # run — the exact gap that let the v1.11.0 recall seal grow
+  # odd-methodology.md past dev-sdlc's KDOC line-count guard unseen.
+  # Flooring them runs each at EVERY seal. The set is enumerated Tier-0 and
+  # kept from rotting by the shared-doc-coverage meta-check (below), which
+  # REDs if a surface doc gains a content guard absent from this floor.
+  # (docs/plans/shared-doc-guard-floor-coverage.md §3, AC.SDG.1.)
+  - pattern: "plugins/dev-sdlc/tests/test_AC_KDOC_*.py"
+    guard_class: "shared-doc guard — odd-methodology.md structure/honesty (class 12)"
+  - pattern: "plugins/dev-sdlc/tests/test_AC_MSLB_1_*.py"
+    guard_class: "shared-doc guard — odd-methodology.md line budget (class 12)"
+  - pattern: "framework/primary-persona/tests/test_AC_RVL_8_*.py"
+    guard_class: "shared-doc guard — odd-methodology.md cap-bias line, cross-component (class 12)"
+  - pattern: "plugins/dev-sdlc/tests/test_AC_CH0_*.py"
+    guard_class: "shared-doc guard — VALUE_PROPOSITION.md + charter.md genesis/labels (class 12)"
+  - pattern: "framework/tools/capability-refresh/tests/test_AC_CLP_CUR_1_2_*.py"
+    guard_class: "shared-doc guard — CLAUDE_CAPABILITIES.md reference surface (class 12)"
+  - pattern: "framework/hands-off-lifecycle/tests/test_AC_OGP_3_*.py"
+    guard_class: "shared-doc guard — CLAUDE.dev.md lean-grounding references (class 12)"
+  - pattern: "framework/primary-persona/tests/test_AC_NTU_7_*.py"
+    guard_class: "shared-doc guard — implementation-tiers.md tier picker (class 12)"
+  # The shared-doc-coverage META-CHECK itself — floored so it runs at every
+  # seal and cannot be skipped by a component whose fence excludes it
+  # (anti-rot closure, AC.SDC.4).
+  - pattern: "plugins/dev-sdlc/tools/loam-amend/tests/test_AC_SDC_*.py"
+    guard_class: "shared-doc-coverage meta-check — registry cannot silently rot (class 12)"

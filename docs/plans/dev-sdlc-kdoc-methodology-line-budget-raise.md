@@ -39,4 +39,4 @@ The `test_AC_KDOC_1` methodology-spec line-count guard bound is raised from 360 
 
 ## §14 — SHA register (backfilled at cycle close)
 
-- plan+manifest `TBD` · test edits `TBD` · apply `TBD` · seal `TBD`.
+- plan+manifest `8919a713` · test edits `4094467b` · apply `20700c2` · seal `badd2d6f` (BASELINE `dd25353a`; dev-sdlc fence window = own delta only; dev-sdlc suite 399 passed / 7 skipped).

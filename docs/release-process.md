@@ -8,6 +8,14 @@ This is the runbook a dispatcher (or a future session, or another persona) can r
 
 ---
 
+## 0. No grouping discretion — deterministic cut rule
+
+Before the gates: a release cut is COMPUTED, not chosen. This runbook never asks "how many versions should this be" or "which changes group together."
+
+> A release cut = all unreleased seals at release time (main + merging branches) minus only explicitly owner-held items; SemVer class from content (breaking→MAJOR, else any new backwards-compatible capability→MINOR, else PATCH); number = bump(current_published_on_origin, class); ALWAYS one version per cut; the objective sentence describes the cut and never drives a split; "how many versions / which grouping" is never a decision to surface.
+
+The objective sentence describes the whole cut; it does not drive a split. If the content classes ≠ the expected class (a breaking change surfaces, or the class resolves other than anticipated), that is a halt-and-surface event, not a silent re-number. Authoritative statement + class-quality-gate: `docs/release-versioning-policy.md` §"No grouping discretion — deterministic cut rule".
+
 ## 1. Pre-publish gates (what `loam release` checks)
 
 Every publish goes through seven structural gates before any tag or push happens. The CLI's `--dry-run` flag runs the full gate set + reports verdicts without acting; use it to verify state without committing to publish. (Gate 7 — `system-binary-operational` — was added in v0.7.1 as documentation-only after a v1.0-readiness audit found the system binary had been broken on the maintainer's machine since v0.5.1; structural CLI implementation deferred to v0.8.0+.)

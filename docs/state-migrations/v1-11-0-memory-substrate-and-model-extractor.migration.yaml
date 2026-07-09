@@ -1,0 +1,43 @@
+# User-state migration — v1.11.0 (memory write-side facts-discipline +
+# recall volume-limits reshape + capability-refresh model-extractor robustness)
+#
+# Declared per the migration release-gate convention: EVERY release declares a
+# user-state migration; a NO-OP is a valid declared migration. v1.11.0 is a
+# MIXED MINOR reconciling three sealed cycles onto main (re-apply/re-seal per
+# the S1a precedent); it re-schemas, moves, or removes NO pre-existing stored
+# .loam/ user state.
+
+version: v1.11.0
+slug: v1-11-0-memory-substrate-and-model-extractor
+slice: "v1.11.0 MIXED MINOR — memory write-side facts-discipline (AC.WFD.*) + recall volume-limits reshape (AC.RVL.*) on the sealed primary-persona component + capability-refresh model-extractor format-robustness (AC.CLP-MDLR.*)"
+date: 2026-07-08
+disposition: leave
+
+operation: no-op
+rationale: >
+  A user upgrading v1.10.0 -> v1.11.0 needs no state transformation. Verified
+  Tier-0 against the three cycles' source:
+
+  (1) WRITE-SIDE facts-discipline adds only an ADDITIVE `epistemic:` frontmatter
+  field to NEW store-(b) memory writes (the write SET is unchanged, AC.WFD.7).
+  The read side defaults a record with no `epistemic:` key to EPISTEMIC_FACT
+  (AC.WFD.2 failsafe), so pre-v1.11.0 records without the field read back safely
+  and unchanged — additive + read-back-safe, no rewrite of existing records.
+  AC.WFD.8 verifies byte-identical reversibility.
+
+  (2) RECALL volume-limits reshape changes the scored-recall QUERY path only
+  (retire fetch-side count truncation of corpus + episode candidates; sunset
+  DEFAULT_TOP_N / SITUATIONAL_RULE_CAP to named telemetry-triggered backstops;
+  re-anchor byte budgets to named resources). It makes NO change to the
+  corpus_index.sqlite schema (no CREATE TABLE / ALTER / ADD COLUMN); an existing
+  index is queried, never migrated. Behavior on upgrade: relevant stored memories
+  are no longer silently truncated by an internal count cap — a strictly-more-
+  inclusive read of the SAME stored state.
+
+  (3) CAPABILITY-REFRESH model-extractor robustness changes only how the live
+  Claude model lineup is parsed from the fetched comparison-table snapshot
+  (backtick-agnostic union). The lineup artifact SHAPE is unchanged (still an
+  `ids` list); on the next refresh it simply detects the models an upstream
+  backtick->plain reformat had been hiding. No stored user state is transformed.
+
+  Therefore: declared no-op.

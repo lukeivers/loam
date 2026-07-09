@@ -76,6 +76,14 @@ The post-ship review surfaces a major-eval verdict to owner; owner decides wheth
 
 ---
 
+## No grouping discretion — deterministic cut rule
+
+Release grouping is NOT a decision. A release cut is computed, not chosen:
+
+> A release cut = all unreleased seals at release time (main + merging branches) minus only explicitly owner-held items; SemVer class from content (breaking→MAJOR, else any new backwards-compatible capability→MINOR, else PATCH); number = bump(current_published_on_origin, class); ALWAYS one version per cut; the objective sentence describes the cut and never drives a split; "how many versions / which grouping" is never a decision to surface.
+
+The objective sentence names what the cut delivers; it does not license splitting one cut into several versions, nor merging several cuts into one. "How many versions should this be / which changes group together" is a question with a mechanical answer (the rule above), so it is never surfaced to the owner as an open decision. If the content classes ≠ the expected class (a breaking change appears, or the class resolves other than anticipated), that is a halt-and-surface event, not a silent re-number. Composes with `~/.claude` memory `feedback_release_grouping_is_not_a_decision` + the number-derivation recipe below.
+
 ## Number derivation at build-commence time
 
 Per `feedback_version_numbers_at_release_time` (captured 2026-05-13) + the priority-queue restructure (`docs/plans/release-roadmap-priority-queue-restructure.md`), the version number for a forward-looking candidate is **derived at build-commence time** from two inputs, not pre-assigned at queue-authoring time. The recipe:

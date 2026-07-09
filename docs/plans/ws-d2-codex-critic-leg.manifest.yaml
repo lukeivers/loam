@@ -38,7 +38,7 @@ universal_paths:
     - docs/FUTURE_IDEAS_DRAFT.md
 
 ac_count: 3
-smoke_outcome: "AC.CDX.{1-3} GREEN (11 new tests) + pre-existing AC.AR.{1-13}+AC.MRR.{1-3}+AR.S unchanged (77 passed, 2 opt-in smokes skipped). Default single-Claude render path byte-identical (untouched: render_report/critic/registry/pipeline). Live-codex proof is the opt-in AR.S real-codex smoke (owner-gated: codex install + D2 sign-in), auto-skipped when codex absent."
+smoke_outcome: "AC.CDX.{1-3} GREEN (11 new tests); AC.AR.{1-13}+AC.MRR.{1-3}+AR.S unchanged (77 passed, 2 opt-in smokes skipped). Default Claude render path byte-identical. Live-codex proof is the opt-in AR.S smoke."
 
 narrative:
   target: framework/adversarial-review/seals/SEAL_COMMIT.codex-critic-leg

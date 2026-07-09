@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-telegram-interface"
-version = "1.12.0"
+version = "1.13.0"
 description = "Telegram channel adapter for loam — consumes the Claude MCP Telegram plugin via adapter-pattern injection into OneOnOneChannel; supports multi-identity allowlist, availability probe, direct Bot API fallback, and session-two setup walkthrough."
 requires-python = ">=3.11"
 dependencies = [

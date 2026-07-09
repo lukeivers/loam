@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-file-lease-registry"
-version = "0.0.0"
+version = "1.13.0"
 description = "File-lease registry + admission throttle for loam (WS-B1) — grant/release/reap of file-glob claims at dispatch time, with dependency-manifest single-writer and a concurrent-lease ceiling."
 requires-python = ">=3.11"
 dependencies = []

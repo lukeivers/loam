@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-weekly-cost-rollup"
-version = "0.0.0"
+version = "1.13.0"
 description = "loam weekly cost roll-up (WS-A5) — once a week emits one channel message in three sections: this machine's weekly Claude cap % (from the SEALED usage-window-guard), the top-3 projects by Claude tokens (a proxy, ranked from the local ~/.claude/projects transcripts with per-(message.id,requestId) dedup + a weekly timestamp window; never dollars), and metered-model spend month-to-date (Vercel AI Gateway). Missing sources are NAMED, never silently omitted. Channel-agnostic (H-3): the delivery surface is injected (reuses WS-A1's notify seam); runs as a weekly launchd job that survives a session ending."
 requires-python = ">=3.11"
 dependencies = ["loam-usage-window-guard", "loam-weekly-cap-alert"]

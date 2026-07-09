@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "adversarial-review"
-version = "0.1.0"
+version = "1.13.0"
 description = "loam's standing adversarial-review capability (ready-but-inactive; manual-run + seeded-flaw calibration)"
 requires-python = ">=3.9"
 # Stdlib-only at the core. PyYAML is an OPTIONAL nicety for the corpus

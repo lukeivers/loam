@@ -66,6 +66,20 @@ import pytest
 # "shipped runtime components" criterion they belong in-scope. They were
 # tree-added at 1.0.0 and join the lockstep at this cut. Bumped 1.0.0 ->
 # 1.1.0 alongside the existing cohort.
+#
+# v1.13.0 release cut (operational-backplane integration): the five NEW
+# backplane runtime components (file-lease-registry, fleet-collector,
+# fleet-page, weekly-cap-alert, weekly-cost-rollup) + adversarial-review
+# FOLDED INTO lockstep. The five ship for the first time in this MINOR and
+# adversarial-review (a pre-existing 0.1.0 straggler, never previously in
+# the lockstep) is now a registered install-graph runtime component
+# (added to install-from-source.txt this cut) — so by the policy's
+# "shipped runtime components" criterion all six belong in-scope. The five
+# were tree-added at 0.0.0 and adversarial-review at 0.1.0; all bumped to
+# 1.13.0 alongside the existing cohort. Same precedent as the v1.0.0 /
+# v1.1.0 fold-ins above (plain release-commit edit; the dev-sdlc seal-test
+# stays GREEN because the version field / allowlist edit lands outside
+# every BASELINE..SEAL_COMMIT fence window).
 IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "framework/cost-governance/pyproject.toml",
     "framework/dormancy/pyproject.toml",
@@ -98,6 +112,14 @@ IN_SCOPE_PYPROJECTS: tuple[str, ...] = (
     "plugins/dev-sdlc/tools/loam-amend/pyproject.toml",
     "plugins/dev-sdlc/tools/loam-mode/pyproject.toml",
     "plugins/loam-skills/pyproject.toml",
+    # v1.13.0 operational-backplane fold-in (five new components +
+    # adversarial-review) — see the cut note above IN_SCOPE_PYPROJECTS.
+    "framework/file-lease-registry/pyproject.toml",
+    "framework/fleet-collector/pyproject.toml",
+    "framework/fleet-page/pyproject.toml",
+    "framework/weekly-cap-alert/pyproject.toml",
+    "framework/weekly-cost-rollup/pyproject.toml",
+    "framework/adversarial-review/pyproject.toml",
 )
 
 # Excluded pyprojects — measurement / experimental harnesses with

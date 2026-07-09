@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-fleet-page"
-version = "0.0.0"
+version = "1.13.0"
 description = "Fleet page static render for loam (WS-A3) — regenerates one static HTML page (live agents + recent outcomes + weekly cost proxy + decision queue) from the WS-A2 fleet JSON, the observability-aggregator cost API, and the per-project-pm decision queue. No server; a launchd/cron job regenerates it. Degrades gracefully when a source is absent."
 requires-python = ">=3.11"
 dependencies = []

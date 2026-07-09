@@ -581,33 +581,58 @@ No new hook event, scheduler, or orchestrator is introduced.
 ## §14 — Method-decision register (populated at build; SHA-backfilled at seal)
 
 **Design decision rulings (carried from the ratified design — recommendations in §10):**
-- D1 (session key = CLAUDE_PERSONA + fallbacks) — _pending build confirmation_.
-- D2 (episodic session-scoped / semantic global) — _pending build confirmation_.
-- D3 (capture at enqueue / materialize from record) — _pending build confirmation_.
-- D4 (handoff file secondary) — _pending build confirmation_.
-- D5 (age-out, no backfill) — _pending build confirmation_.
+- D1 (session key = CLAUDE_PERSONA + fallbacks) — ADOPTED. `session_identity.resolve_session_key`
+  implements CLAUDE_PERSONA → DISCORD_STATE_DIR basename → None. The D1
+  `workspace_slug` tail is expressed as None (filter-off → workspace-global): a
+  reader that cannot resolve its own key must NOT filter by `workspace_slug`
+  (that would starve a persona-tagged store — AC.PSR.5), so None disables the
+  filter. Verified AC.PSR.1/.5.
+- D2 (episodic session-scoped / semantic global) — ADOPTED. Only the episode
+  branch is scoped; corpus + decision branches + the decision-ledger catch-up
+  sweep stay global. Verified AC.PSR.4/.7.
+- D3 (capture at enqueue / materialize from record) — ADOPTED. Worker reads
+  `record.get("session_key")`; env-independent. Verified AC.PSR.6 (worker env
+  set WRONG / unset both stamp from the record).
+- D4 (handoff file secondary) — ADOPTED. `handoffs.py` writes/reads
+  `<persona>.md`; surfaced AFTER episodes in the digest. Verified AC.PSR.2.
+- D5 (age-out, no backfill) — ADOPTED. Absent-key-inclusive matching
+  (`_episode_session_matches` / SQL `session_key = ? OR session_key = ''`); no
+  source rewrite. Verified AC.PSR.3.
 
 **Build forks:**
-- D-ForkA (session_key frontmatter placement — additive scalar alongside
-  salience/volatility/epistemic recommended) — _pending_.
-- D-ForkB (read-side filter mechanism; in-scan-upstream-of-every-cut mandatory;
-  per-surface recommendation in §10 — recency-walk bounded, FTS column via D-MSC.5
-  rebuild, grep frontmatter fence) — _pending_.
+- D-ForkA — RESOLVED: `session_key` is an ADDITIVE TOP-LEVEL frontmatter field
+  (sibling to salience/volatility/epistemic), NOT a 5th `context:` field — the
+  sealed 4-field context schema (AC.FBMT1.ENCC.1) is untouched.
+- D-ForkB — RESOLVED per surface: (a) `recent_episodes` — persona-aware bounded
+  walk reading frontmatter in-walk, `RECENCY_SESSION_SCAN_CEILING=400` hard
+  read ceiling, counts P-matches toward `limit` (no `limit*4` starvation); (b)
+  `_fts_search` — fts5 `session_key UNINDEXED` column filtered in SQL WHERE,
+  upstream of candidate_limit → num_results → INJECTION_CHAR_CAP (rides the
+  D-MSC.5 rebuild via `_index_schema_is_current`); (c) `_grep_search` —
+  frontmatter fence before scoring. All absent-key-inclusive.
 
 **Rebase judgment recorded (Lens 6):** Halt-trigger 4 evaluated against the
 FTS-column-add mechanism → does NOT fire (derived-cache rebuild ≠ source-store
 migration; new writes gain a frontmatter field; D5 age-out purpose intact). §2A.
+CONFIRMED at build: the fts5 column-add is caught by `_index_schema_is_current`
+and drops+rebuilds the derived index; episode source markdown is never rewritten.
 
-**Builder method decisions:** _populated at build._
+**Builder method decisions:** session-key resolver placed in a dedicated
+`session_identity.py` (imported by both write + read surfaces); handoff surface
+in a dedicated `handoffs.py`. The dormant `memory_consumer` twin threads
+session_key with a TypeError-tolerant retry so legacy/kwarg-less clients (the D7
+fixtures) still work — re-enabling the MCP path cannot reintroduce the leak.
 
-**Verification:** _AC.PSR.1–8 results (AC.PSR.8 = the RVL byte-cap falsifier) +
-RVL/WFD/RDP/RTEL/EVX no-regression state populated at build._
+**Verification:** AC.PSR.1–8 ALL GREEN (22 new tests). Full primary-persona
+suite: 1432 passed / 0 failed / 1 pre-existing skip — MSC/FBMU/FBM-FILTER/SRF/
+KP/DLG/J/M + RVL/WFD/RDP/RTEL/EVX all green (no fixture legitimately encoded
+workspace-only episode scoping needed changing; §14 names none).
 
-- **SOURCE SHA:** _backfill._
-- **APPLY SHA:** _backfill._
-- **SEAL SHA:** _backfill._
-- **Branch:** _backfill (behavior-changer on read/write paths — owner-gated public
-  push; seal LOCAL first, sync canonical → pos3)._
+- **SOURCE SHA:** `c290d211`
+- **APPLY SHA:** `c6de424`
+- **SEAL SHA:** `0fa74f79`
+- **Branch:** `main` (canonical, LOCAL only — behavior-changer on read/write
+  paths; owner-gated public push, not pushed; sync canonical → pos3 pending).
 
 ---
 

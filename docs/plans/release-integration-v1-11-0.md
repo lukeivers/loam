@@ -118,22 +118,26 @@ The `loam release v1.11.0 --dry-run` `acs-verified` gate reads these verdicts. F
 
 | AC | Verdict | Evidence |
 |---|---|---|
-| AC.REL.1 | GREEN | this doc at `docs/plans/release-integration-v1-11-0.md` |
-| AC.REL.2 | PENDING | reconciled seal SHAs recorded at §14-equivalent below on seal |
-| AC.REL.3 | PENDING | lockstep bump commit + PCVR test |
-| AC.REL.4 | PENDING | `docs/experiments/v1-11-0-hard-smoke.md` GREEN token |
-| AC.REL.5 | PENDING | touched-suite results in HARD smoke |
-| AC.REL.6 | PENDING | STATE.md change-log entry |
-| AC.REL.7 | PENDING | roadmap §2 seal-row + §3 |
-| AC.REL.8 | PENDING | `docs/state-migrations/v1-11-0-*.migration.yaml` |
-| AC.REL.9 | PENDING | clause in both policy docs |
-| AC.REL.S | PENDING | HARD smoke recall fixture + dry-run gate report |
+| AC.REL.1 | GREEN | this doc at `docs/plans/release-integration-v1-11-0.md` (resolved by the release-side fallback in `gates.py`) |
+| AC.REL.2 | GREEN | four fences reconciled (§14); each `test_no_sealed_amendments.py` passes with window = own delta; seals `f2d88060` / `c9c94f0d` / `2cd8b714` / `badd2d6f` HEAD-reachable; original branches source-of-record |
+| AC.REL.3 | GREEN | lockstep bump `4a86b816` (ACTIVE_MINOR 1.11.0 + 31 pyprojects + `loam --version`→1.11.0); `test_AC_PCVR_pyproject_version_lockstep` 5 passed |
+| AC.REL.4 | GREEN | `docs/experiments/v1-11-0-hard-smoke.md` carries the `GREEN` token + gate-7 evidence |
+| AC.REL.5 | GREEN | cold-tree suites: capability-refresh 46, primary-persona green (exit 0), dev-sdlc 399/7-skip (HARD smoke §3) |
+| AC.REL.6 | GREEN | `docs/STATE.md` `**v1.11.0 MIXED MINOR SHIPPED LOCAL**` change-log entry |
+| AC.REL.7 | GREEN | `docs/release-roadmap.md` §2 seal-row (final seal reachable from HEAD) + §3 SHIPPED-LOCAL entry |
+| AC.REL.8 | GREEN | `docs/state-migrations/v1-11-0-memory-substrate-and-model-extractor.migration.yaml` (`operation: no-op`) |
+| AC.REL.9 | GREEN | "No grouping discretion" clause verbatim in `docs/release-versioning-policy.md` + `docs/release-process.md` (`979e9341`) |
+| AC.REL.S | GREEN | HARD smoke §4 (real spawn-isolated `claude -p` → `SMOKE_OK_V1110`, rc 0) + §5 (AC.RVL.7 production retrieve, floor over count) + `loam release v1.11.0 --dry-run` all structural gates GREEN (clean-tree RED excepted, dispatcher-handled) |
+
+**Cross-component collision (surfaced by the HARD smoke, resolved this cut):** recall's required AC.RVL.8 cap-bias checklist grew `odd-methodology.md` 360→373, colliding with dev-sdlc's `AC.KDOC.1` ≤360 guard. Dispatcher-ruled resolution: a **4th dev-sdlc fence** (`docs/plans/dev-sdlc-kdoc-methodology-line-budget-raise.md`, **AC.MSLB.1**) raising the guard 360→380 per `feedback_loose_AC_text_fix_AC_not_implementation`. Its own §status is GREEN in that sub-plan; it joins this cut as required-to-ship-recall.
 
 ## §14 — reconciled SHA register (backfilled at cycle close)
 
-Recorded after each seal lands so all SHAs are known:
+Release plan-doc commit: `7eb8f982`. Reconciled cycles (dependency order):
 
-- capability-refresh (model-extractor): plan+manifest `TBD` · source `TBD` · apply `TBD` · seal `TBD`
-- write-side (facts-discipline): plan+manifest `TBD` · source `TBD` · apply `TBD` · seal `TBD`
-- recall-volume (cycle 1): plan+manifest `TBD` · source `TBD` · apply `TBD` · seal `TBD`
-- lockstep bump `TBD` · doc-fix `TBD` · migration `TBD` · STATE/roadmap `TBD` · final content-tip seal (gate-6) `TBD`
+- capability-refresh (model-extractor, AC.CLP-MDLR.1-5): plan+manifest `ef8e4cd5` · source `927639ac` · apply `4cd0b821` · seal `f2d88060` (BASELINE `7eb8f982`)
+- write-side (facts-discipline, AC.WFD.1-9): plan+manifest+source `6d0e20a5` (combined — branch checkout pre-staged source; fence window clean, no history surgery) · apply `fb0cf1f2` · seal `c9c94f0d` (BASELINE `f2d88060`)
+- recall-volume (cycle 1, AC.RVL.1-9): plan+manifest `0f19525a` · source `ec9dd982` · apply `c17fb90` · seal `2cd8b714` (BASELINE `c9c94f0d`)
+- dev-sdlc KDOC line-budget raise (AC.MSLB.1, 4th fence — collision resolution): plan+manifest `8919a713` · tests `4094467b` · apply `20700c2` · seal `badd2d6f` (BASELINE `dd25353a`)
+- release-prep: lockstep bump `4a86b816` · migration + doc-fix `979e9341` · STATE/roadmap `dd25353a` · HARD smoke + §status backfill (this commit).
+- **final content-tip seal (gate-6 reads a reachable seal from roadmap §2):** `badd2d6f` (dev-sdlc) is the latest; `2cd8b714` / `c9c94f0d` / `f2d88060` are all HEAD-reachable.

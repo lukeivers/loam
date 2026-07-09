@@ -115,8 +115,11 @@ Commit ladder: `fix(dev-sdlc): ...` (source), `chore(amend): ...`
   exactly this contract; (4) git timeline — the smoke's last touch
   (2026-06-12) predates the redesign (2026-06-28). Both search paths
   hard-exclude identically, ruling out a grep-vs-FTS regression.
-  - Apply SHA: _(backfilled at seal)_
-  - Seal SHA: _(backfilled at seal)_
+  - Source SHA: `ae461621` (`fix(dev-sdlc): ...`)
+  - Plan+manifest SHA: `a1adbef7` (`docs(plans): ...`)
+  - Apply SHA: `53c73f16` (`chore(amend): ...`; dev-sdlc BASELINE + sidecar → `53c73f16`)
+  - Seal SHA: `69a345ba` (`chore(seals): ...`)
+  - BASELINE: `08da4e68`. `main` LOCAL only — sealed-local, NOT pushed.
 
 ## §15 Backwards-compat verification
 

@@ -43,7 +43,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BASELINE = "c53458da5cf207ee828b388285978e0967b6bd1e"
+BASELINE = "a4c08928cddb0cb268e779f31ebfdf60620253e6"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

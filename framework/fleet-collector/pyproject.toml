@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loam-fleet-collector"
+version = "0.0.0"
+description = "Fleet collector bridge for loam (WS-A2) — reads handsoff-loop run records + subloam-driver cost summaries and emits one fleet-state JSON (live + recent agent runs) for the WS-A3 static page. Read-only over stable contracts; reuses probe_liveness for artifact-probe liveness."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+package-dir = {"loam.fleet_collector" = "src/loam/fleet_collector"}
+packages = ["loam.fleet_collector"]

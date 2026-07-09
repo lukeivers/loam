@@ -33,6 +33,7 @@ v0.1.6 AC.PSAFE.3 — production-stake floor:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -66,6 +67,45 @@ class RollingCeiling(BaseModel):
     money_cents: int | None = Field(default=None, ge=0)
 
 
+# ---- subscription cap ceiling (WS-A4) ------------------------------
+
+
+class CapCeiling(BaseModel):
+    """Account-wide Claude weekly-cap ceiling (WS-A4, AC.CAPC.1).
+
+    Unlike the session/rolling ceilings — which cap what *this* ledger
+    dispatches — this ceiling reads the REAL account-wide `seven_day`
+    utilization from the sealed usage-window-guard probe and gates
+    dispatch on it. Three regions, expressed as fractions of the
+    enforced cap in `[0, 1]` (the probe reports `[0, 100]`; the ledger
+    normalizes before comparing):
+
+      * utilization < `warn_fraction`                → proceed silently
+      * `warn_fraction` ≤ utilization < `refuse_fraction` → proceed + warn
+      * utilization ≥ `refuse_fraction`             → `action` decides:
+            `"refuse"` → typed refusal (IPC_COST_CAP_CEILING_EXCEEDED)
+            `"warn"`   → proceed + warn (never refuses)
+
+    `action` defaults to `"refuse"` — the objective's default posture;
+    `"warn"` is the softer "(or warned, per configured action)" option.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    refuse_fraction: float = Field(gt=0.0, le=1.0)
+    warn_fraction: float = Field(gt=0.0, le=1.0)
+    action: Literal["refuse", "warn"] = "refuse"
+
+    @model_validator(mode="after")
+    def _validate_ordering(self) -> "CapCeiling":
+        if self.warn_fraction > self.refuse_fraction:
+            raise ValueError(
+                "cap_ceiling.warn_fraction must be <= refuse_fraction; "
+                f"got warn={self.warn_fraction!r} refuse={self.refuse_fraction!r}"
+            )
+        return self
+
+
 # ---- top-level config ----------------------------------------------
 
 
@@ -81,6 +121,11 @@ class CostConfig(BaseModel):
     session: SessionCeiling = Field(default_factory=SessionCeiling)
     rolling: list[RollingCeiling] = Field(default_factory=list)
     warning_fraction: float = 0.8
+    # WS-A4 (AC.CAPC.1): account-wide subscription cap ceiling. `None`
+    # (the default) = OFF — the ledger never probes and behaves exactly
+    # as before (AC.CAPC.3, no regression). A workspace opts in by
+    # setting `cap_ceiling` in ceilings.yaml.
+    cap_ceiling: CapCeiling | None = None
 
     @model_validator(mode="after")
     def _validate_warning_fraction(self) -> "CostConfig":
@@ -184,13 +229,29 @@ def apply_safety_profile_floor(
     floor non-tunable).
 
     `dev` and `research` profiles are no-op pass-throughs.
+
+    WS-A4 (AC.CAPC.4): the same production-stake floor governs the
+    subscription cap ceiling's `warn_fraction` — under production-stake a
+    cap warn fraction above 0.6 is clamped to 0.6 so the account-wide
+    guard warns no later than the session/rolling guards. The cap's
+    `refuse_fraction` and `action` are left untouched (the floor tightens
+    *when the operator is warned*, not *whether dispatch is refused*).
     """
     if safety_profile != "production-stake":
         return config
-    if config.warning_fraction <= PRODUCTION_STAKE_WARNING_FRACTION_FLOOR:
+
+    floor = PRODUCTION_STAKE_WARNING_FRACTION_FLOOR
+    update: dict[str, object] = {}
+
+    if config.warning_fraction > floor:
+        update["warning_fraction"] = floor
+
+    cap = config.cap_ceiling
+    if cap is not None and cap.warn_fraction > floor:
+        update["cap_ceiling"] = cap.model_copy(update={"warn_fraction": floor})
+
+    if not update:
         return config
-    # model_copy preserves session + rolling references; only
-    # warning_fraction is replaced.
-    return config.model_copy(
-        update={"warning_fraction": PRODUCTION_STAKE_WARNING_FRACTION_FLOOR}
-    )
+    # model_copy preserves untouched references; only the clamped
+    # field(s) are replaced.
+    return config.model_copy(update=update)

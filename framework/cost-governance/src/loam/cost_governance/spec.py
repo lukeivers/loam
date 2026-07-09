@@ -38,7 +38,12 @@ from pydantic import BaseModel, ConfigDict, Field
 IPC_COST_SCOPE_BUDGET_EXCEEDED = -32060
 IPC_COST_SESSION_CEILING_EXCEEDED = -32061
 IPC_COST_ROLLING_CEILING_EXCEEDED = -32062
-# -32063..-32069 reserved for future (ceiling-adjustment validation,
+# WS-A4 (AC.CAPC.1): account-wide subscription weekly-cap ceiling. A
+# dispatch above the configured refuse fraction of the Claude seven_day
+# window is refused with this typed code, joining the existing
+# session/rolling ceiling family.
+IPC_COST_CAP_CEILING_EXCEEDED = -32063
+# -32064..-32069 reserved for future (ceiling-adjustment validation,
 # reservation-reconcile errors).
 
 

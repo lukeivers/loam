@@ -1,0 +1,56 @@
+# WS-D1 — model-role registry (adversarial-review amendment)
+
+Per `docs/plans/ws-d1-model-role-registry.md`. Generalises the one-off
+injectable `ModelFn` critic seam (`critic.py:55`) into a
+`{role: [model_leg]}` registry so writer/critic/judge roles resolve to
+named model legs from config at dispatch time — any role can point at
+any backend (Claude default, `codex exec`, local) as a CONFIG entry,
+not a code change. It is the seam WS-D2's Codex critic lands its first
+non-default entry on.
+
+A dict + resolver, never a gateway (no HTTP / proxy / provider SDK —
+the buy-vs-build §3 verdict stands). New surface, all additive:
+
+  - AC.MRR.1 (outcome-altitude) — with NO registry configured, a review
+    through the production entry (`review_text`) is byte-identical to
+    pre-amendment. `run_critic` stays a 2-tuple (unchanged); the new
+    multi-leg loop lives in a `run_critic_registry` wrapper that reuses
+    `run_critic` once per leg. The default path builds a single
+    `ModelLeg("claude", <caller model_fn>)` registry ⇒ exactly the
+    pre-amendment two model calls. Findings are tagged `leg="claude"`
+    internally but `render_report` suppresses the annotation when only
+    the default leg is present, so the rendered bytes do not move.
+    Proven by a pre-edit render-golden + the unchanged AC.AR.{1-13}+AR.S
+    suite.
+  - AC.MRR.2 (outcome-altitude) — a non-default `CRITIC` leg
+    (`ModelLeg("stub-critic", fn)`) is called for both critic phases and
+    every produced `Finding` carries `leg="stub-critic"`; `render_report`
+    surfaces the producing leg per finding. Verified at STANDARD and
+    DEEP (DEEP forwards the registry per axis). Lens-0: the review says
+    which model produced which finding.
+  - AC.MRR.3 (outcome-altitude) — a `CRITIC` role configured with two
+    legs, one available + one unavailable (`fn` returns `None`, the
+    Codex-absent shape), proceeds on the available leg and NAMES the
+    missing one; never an unmarked clean bill. All legs unavailable ⇒
+    SUSPECT / REVIEW INCONCLUSIVE (the existing floor). The registry
+    resolves all three named roles (writer/critic/judge).
+
+`Finding` gains `leg`; `ReviewResult` gains `legs_used` + `missing_legs`
+(sourced from the run, not post-validation survivors). Render gating is
+on a non-default leg NAME in `legs_used ∪ missing_legs`, NOT on
+`bool(missing_legs)` — the default-unavailable path (`missing=("claude",)`)
+stays byte-identical. `WRITER`/`JUDGE` are resolvable config data with no
+dispatch branch (only `CRITIC` is wired; a writer/judge call site would be
+untested ⇒ ODD violation), deferred to their real call sites. The
+judge-should-not-be-the-writer's-family guidance is docs (docstring +
+README), not a runtime guard.
+
+Method-level choices are the builder's call per ODD §1.1; the plan fixed
+the ACs (§4), the named decisions (§2 D-MRR set), the fence (§3 —
+adversarial-review only; spawn-isolation read/named; gate.py + loam-skills
+untouched), and the halt triggers (§6). Single-component amendment; the
+sidecar advances (not a first-seal). The sealed loam-spawn-isolation
+surface is composed-on (imported), never edited.
+
+Predecessor: c53458da — the clean canonical main tip at build-dispatch,
+isolated in its own worktree off the contended shared dir.

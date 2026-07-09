@@ -40,6 +40,13 @@ from .insession import (
 )
 from .manual import render_report, review_file, review_text
 from .pipeline import ReviewResult, run_standard_review
+from .registry import (
+    DEFAULT_LEG_NAME,
+    DEFAULT_REGISTRY,
+    ModelLeg,
+    ModelRoleRegistry,
+    Role,
+)
 from .tiers import Tier, run_deep_review
 from .verdict import Disposition, Verdict
 
@@ -59,6 +66,11 @@ __all__ = [
     "emit_diff_prompt",
     "replay_model_fn",
     "ReviewResult",
+    "Role",
+    "ModelLeg",
+    "ModelRoleRegistry",
+    "DEFAULT_REGISTRY",
+    "DEFAULT_LEG_NAME",
     "Tier",
     "Verdict",
     "Disposition",

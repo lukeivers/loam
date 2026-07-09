@@ -48,6 +48,7 @@ from typing import Optional
 from .critic import ModelFn
 from .findings import Finding
 from .manual import review_text
+from .registry import ModelRoleRegistry
 from .validation import ValidatorFn
 
 
@@ -154,6 +155,7 @@ def calibrate(
     domain: Optional[str] = None,
     model_fn: ModelFn | None = None,
     validator_fn: ValidatorFn | None = None,
+    registry: ModelRoleRegistry | None = None,
 ) -> CalibrationResult:
     """Run the review over a seeded artifact + read back the catch rate.
 
@@ -163,6 +165,12 @@ def calibrate(
     finding surfaced by the review against the seeded flaws. This is the
     proof that the reviewer actually catches planted flaws — the
     build-time proof and the periodic-cadence measurement both call this.
+
+    ``registry`` (AC.CDX.1) routes the critic role at named model legs — e.g.
+    the Codex leg (``codex.codex_critic_registry``) — so calibration can prove
+    a non-default leg (WS-D2) catches a planted defect through the production
+    pipeline. ``None`` reproduces the default single-Claude pass; a passed
+    ``registry`` takes precedence over ``model_fn`` (the multi-leg path).
     """
     result = review_text(
         artifact,
@@ -171,5 +179,6 @@ def calibrate(
         domain=domain,
         model_fn=model_fn,
         validator_fn=validator_fn,
+        registry=registry,
     )
     return score(flaws, result.verdict.findings, ran=result.ran)

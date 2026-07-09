@@ -120,6 +120,7 @@ class Finding:
     state: "ValidationState" = ValidationState.HYPOTHESIZED
     evidence: str = ""
     axis: str = ""
+    leg: str = ""  # producing model leg's name (AC.MRR.2); "" = default Claude path
     generic: bool = False
 
     def effective_severity(self) -> Severity:

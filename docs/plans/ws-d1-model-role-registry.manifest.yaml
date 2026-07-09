@@ -1,0 +1,102 @@
+schema_version: 3
+amendment:
+  # number OMITTED — schema v3 identifies by slug (feedback_version_numbers_at_release_time).
+  slug: ws-d1-model-role-registry
+  title: "WS-D1: generalise the one-off ModelFn critic seam in the SEALED adversarial-review component into a {role: [model_leg]} registry. Writer/critic/judge roles resolve to named model legs from config at dispatch time (dict+resolver, NOT a gateway); the default config maps all roles to one leg `claude` and reproduces pre-amendment behaviour byte-identically (AC.MRR.1, outcome-altitude); a non-default critic leg tags every finding with its producing leg name (AC.MRR.2, outcome-altitude); a configured-but-unavailable leg is named and the review proceeds on the remaining legs, never an unmarked clean bill (AC.MRR.3, outcome-altitude). The Codex critic (WS-D2) becomes the first non-default entry. The sealed loam-spawn-isolation surface is imported/named only; gate.py + the loam-skills SKILL are untouched."
+
+# BASELINE: c53458da — the clean canonical main tip at build-dispatch (contains
+# origin/main 6ca68259: git rev-list --left-right --count c53458da...origin/main = 27 0,
+# so NOT behind remote). WS-D1 builds in an isolated worktree off this commit to avoid
+# the live serialize-amendment-builds race in the shared dir (concurrent sibling
+# backplane builds). Every path this cycle touches (framework/adversarial-review/, the
+# plan-doc + this manifest under docs/plans/) is inside the fence, so the BASELINE..seal
+# window is clean. The prior adversarial-review seal (485fb4d8) is NOT the baseline — it
+# would drag the 27 intervening main commits into the diff window.
+baseline: c53458da5cf207ee828b388285978e0967b6bd1e
+
+plan: docs/plans/ws-d1-model-role-registry.md
+plan_doc_ref: docs/plans/ws-d1-model-role-registry.md
+
+# Single-component amendment: adversarial-review only (EXISTING sealed component; the
+# sidecar advances, not a first-seal). No surface change to loam-spawn-isolation,
+# loam-skills, or any other sealed component.
+components:
+  - name: adversarial-review
+    new_component: false
+    seal_test: framework/adversarial-review/tests/test_no_sealed_amendments.py
+    sidecar: framework/adversarial-review/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+universal_paths:
+  prefixes:
+    - docs/plans/
+    - docs/design/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+    - docs/release-roadmap.md
+    - docs/FUTURE_IDEAS_DRAFT.md
+
+ac_count: 3
+smoke_outcome: "AC.MRR.{1-3} GREEN + pre-existing AC.AR.{1-13}+AR.S unchanged (byte-identity). All 3 outcome-altitude via review_text. Default render-golden 613B SHA256 533e4d90 unchanged."
+
+narrative:
+  target: framework/adversarial-review/seals/SEAL_COMMIT.model-role-registry
+  body: |
+    # WS-D1 — model-role registry (adversarial-review amendment)
+
+    Per `docs/plans/ws-d1-model-role-registry.md`. Generalises the one-off
+    injectable `ModelFn` critic seam (`critic.py:55`) into a
+    `{role: [model_leg]}` registry so writer/critic/judge roles resolve to
+    named model legs from config at dispatch time — any role can point at
+    any backend (Claude default, `codex exec`, local) as a CONFIG entry,
+    not a code change. It is the seam WS-D2's Codex critic lands its first
+    non-default entry on.
+
+    A dict + resolver, never a gateway (no HTTP / proxy / provider SDK —
+    the buy-vs-build §3 verdict stands). New surface, all additive:
+
+      - AC.MRR.1 (outcome-altitude) — with NO registry configured, a review
+        through the production entry (`review_text`) is byte-identical to
+        pre-amendment. `run_critic` stays a 2-tuple (unchanged); the new
+        multi-leg loop lives in a `run_critic_registry` wrapper that reuses
+        `run_critic` once per leg. The default path builds a single
+        `ModelLeg("claude", <caller model_fn>)` registry ⇒ exactly the
+        pre-amendment two model calls. Findings are tagged `leg="claude"`
+        internally but `render_report` suppresses the annotation when only
+        the default leg is present, so the rendered bytes do not move.
+        Proven by a pre-edit render-golden + the unchanged AC.AR.{1-13}+AR.S
+        suite.
+      - AC.MRR.2 (outcome-altitude) — a non-default `CRITIC` leg
+        (`ModelLeg("stub-critic", fn)`) is called for both critic phases and
+        every produced `Finding` carries `leg="stub-critic"`; `render_report`
+        surfaces the producing leg per finding. Verified at STANDARD and
+        DEEP (DEEP forwards the registry per axis). Lens-0: the review says
+        which model produced which finding.
+      - AC.MRR.3 (outcome-altitude) — a `CRITIC` role configured with two
+        legs, one available + one unavailable (`fn` returns `None`, the
+        Codex-absent shape), proceeds on the available leg and NAMES the
+        missing one; never an unmarked clean bill. All legs unavailable ⇒
+        SUSPECT / REVIEW INCONCLUSIVE (the existing floor). The registry
+        resolves all three named roles (writer/critic/judge).
+
+    `Finding` gains `leg`; `ReviewResult` gains `legs_used` + `missing_legs`
+    (sourced from the run, not post-validation survivors). Render gating is
+    on a non-default leg NAME in `legs_used ∪ missing_legs`, NOT on
+    `bool(missing_legs)` — the default-unavailable path (`missing=("claude",)`)
+    stays byte-identical. `WRITER`/`JUDGE` are resolvable config data with no
+    dispatch branch (only `CRITIC` is wired; a writer/judge call site would be
+    untested ⇒ ODD violation), deferred to their real call sites. The
+    judge-should-not-be-the-writer's-family guidance is docs (docstring +
+    README), not a runtime guard.
+
+    Method-level choices are the builder's call per ODD §1.1; the plan fixed
+    the ACs (§4), the named decisions (§2 D-MRR set), the fence (§3 —
+    adversarial-review only; spawn-isolation read/named; gate.py + loam-skills
+    untouched), and the halt triggers (§6). Single-component amendment; the
+    sidecar advances (not a first-seal). The sealed loam-spawn-isolation
+    surface is composed-on (imported), never edited.
+
+    Predecessor: c53458da — the clean canonical main tip at build-dispatch,
+    isolated in its own worktree off the contended shared dir.

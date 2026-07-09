@@ -45,8 +45,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .corpus import CorpusStore
-from .critic import ModelFn, run_critic
+from .critic import ModelFn, run_critic_registry
 from .findings import Finding, apply_generic_lint
+from .registry import ModelRoleRegistry
 from .seed import ReviewInputs
 from .validation import ValidatorFn, validate_all
 from .verdict import Verdict, decide
@@ -71,13 +72,20 @@ class ReviewResult:
     ``verdict`` is the gate-facing decision; ``methodology_domain`` /
     ``methodology_stale`` record which corpus doc seeded the critic (or
     that the domain-agnostic floor was used); ``ran`` is False when the
-    critic could not run (REVIEW INCONCLUSIVE).
+    critic could not run (REVIEW INCONCLUSIVE). ``legs_used`` names the
+    distinct model legs that produced findings and ``missing_legs`` names
+    the configured legs that were unavailable (AC.MRR.2/3) — both default
+    empty, and the render layer only annotates when a NON-default leg name
+    appears (so the default single-Claude review is byte-identical,
+    AC.MRR.1).
     """
 
     verdict: Verdict
     methodology_domain: str
     methodology_stale: bool
     ran: bool
+    legs_used: tuple[str, ...] = ()
+    missing_legs: tuple[str, ...] = ()
 
 
 def build_inputs(
@@ -128,6 +136,7 @@ def run_standard_review(
     corpus: Optional[CorpusStore] = None,
     model_fn: ModelFn | None = None,
     validator_fn: ValidatorFn | None = None,
+    registry: ModelRoleRegistry | None = None,
     strongest_objection: str = "",
     uncheckable: str = "",
     strip_provenance: bool = True,
@@ -150,13 +159,24 @@ def run_standard_review(
         strip_provenance=strip_provenance,
     )
 
-    findings, ran = run_critic(inputs, axis=axis, model_fn=model_fn)
+    # Build the single-default-leg registry when none is configured: the
+    # lone leg carries the caller's model_fn under DEFAULT_LEG_NAME, so the
+    # critic pass is byte-identical to the pre-amendment single-leg call
+    # (AC.MRR.1). A configured registry drives the multi-leg critic path
+    # (AC.MRR.2/3).
+    reg = registry if registry is not None else ModelRoleRegistry.single_default(model_fn)
+    findings, ran, missing_legs = run_critic_registry(inputs, axis=axis, registry=reg)
+    # legs_used is sourced from the run (findings' producing-leg tags before
+    # validation drops REFUTED), not from post-validation survivors.
+    legs_used = tuple(dict.fromkeys(f.leg for f in findings if f.leg))
     if not ran:
         return ReviewResult(
             verdict=decide([], artifact, ran=False),
             methodology_domain=methodology_domain,
             methodology_stale=stale,
             ran=False,
+            legs_used=legs_used,
+            missing_legs=missing_legs,
         )
 
     apply_generic_lint(findings)
@@ -181,6 +201,8 @@ def run_standard_review(
         methodology_domain=methodology_domain,
         methodology_stale=stale,
         ran=True,
+        legs_used=legs_used,
+        missing_legs=missing_legs,
     )
 
 

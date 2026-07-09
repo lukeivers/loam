@@ -47,6 +47,7 @@ from typing import Optional
 from .critic import ModelFn
 from .findings import ValidationState
 from .pipeline import ReviewResult, run_standard_review
+from .registry import DEFAULT_LEG_NAME, ModelRoleRegistry
 from .tiers import Tier, run_deep_review
 from .validation import ValidatorFn
 from .verdict import Disposition
@@ -60,13 +61,15 @@ def review_file(
     domain: Optional[str] = None,
     model_fn: ModelFn | None = None,
     validator_fn: ValidatorFn | None = None,
+    registry: ModelRoleRegistry | None = None,
 ) -> ReviewResult:
     """Run a manual review of one artifact file (AC.AR.1) — no gate.
 
     Reads the artifact from disk, runs the STANDARD (default) or DEEP
     pipeline, and returns the review result. Never consults the
     activation switch and never blocks anything — a manual run is pure
-    on-demand review.
+    on-demand review. ``registry`` (AC.MRR.*) routes the critic role at
+    named model legs; None reproduces the default single-Claude pass.
     """
     text = Path(artifact_path).read_text(encoding="utf-8")
     return review_text(
@@ -76,6 +79,7 @@ def review_file(
         domain=domain,
         model_fn=model_fn,
         validator_fn=validator_fn,
+        registry=registry,
     )
 
 
@@ -87,8 +91,13 @@ def review_text(
     domain: Optional[str] = None,
     model_fn: ModelFn | None = None,
     validator_fn: ValidatorFn | None = None,
+    registry: ModelRoleRegistry | None = None,
 ) -> ReviewResult:
-    """Manual review of an in-memory artifact string (AC.AR.1)."""
+    """Manual review of an in-memory artifact string (AC.AR.1).
+
+    ``registry`` (AC.MRR.*) resolves the critic role to named model legs;
+    None reproduces the pre-amendment single-Claude pass byte-identically.
+    """
     t = Tier(tier.upper()) if isinstance(tier, str) else tier
     if t is Tier.DEEP:
         return run_deep_review(
@@ -97,6 +106,7 @@ def review_text(
             domain=domain,
             model_fn=model_fn,
             validator_fn=validator_fn,
+            registry=registry,
         )
     return run_standard_review(
         artifact,
@@ -104,6 +114,7 @@ def review_text(
         domain=domain,
         model_fn=model_fn,
         validator_fn=validator_fn,
+        registry=registry,
     )
 
 
@@ -116,6 +127,17 @@ def render_report(result: ReviewResult, artifact_label: str) -> str:
     stakeholder-reaction framing (P10).
     """
     v = result.verdict
+    # AC.MRR.1/2/3 — annotate model legs ONLY when a NON-default leg name
+    # appears (in legs_used ∪ missing_legs). The default single-Claude path
+    # — whether it ran or was unavailable (missing_legs == ("claude",)) —
+    # carries no non-default name, so ZERO new bytes are emitted and the
+    # rendered report is byte-identical to pre-amendment (AC.MRR.1). Gating
+    # on the NAME (not on bool(missing_legs)) is what preserves the
+    # default-unavailable path.
+    show_legs = any(
+        name != DEFAULT_LEG_NAME
+        for name in (*result.legs_used, *result.missing_legs)
+    )
     lines: list[str] = []
     lines.append(f"# Adversarial review — {artifact_label}")
     lines.append("")
@@ -131,6 +153,12 @@ def render_report(result: ReviewResult, artifact_label: str) -> str:
             "  REVIEW INCONCLUSIVE — the critic could not run; this is NOT a "
             "clean bill."
         )
+        if show_legs and result.missing_legs:
+            lines.append(
+                "  MISSING LEGS: "
+                + ", ".join(result.missing_legs)
+                + " — configured model leg(s) unavailable; not a clean bill."
+            )
         lines.append(
             "  USABLE FALLBACK: if you are invoking this from INSIDE a running "
             "Claude session, the nested `claude -p` critic spawn can hang on "
@@ -151,6 +179,22 @@ def render_report(result: ReviewResult, artifact_label: str) -> str:
     generic = [f for f in v.findings if f.generic]
 
     blocking = [f for f in validated if f.blocks()]
+
+    # AC.MRR.2/3 — model-leg provenance block (only when a non-default leg
+    # is present; the default single-Claude review adds nothing here).
+    if show_legs:
+        lines.append("")
+        lines.append("## Model legs")
+        lines.append(
+            "  produced findings: "
+            + (", ".join(result.legs_used) if result.legs_used else "(none)")
+        )
+        if result.missing_legs:
+            lines.append(
+                "  MISSING (configured but unavailable, not a clean bill): "
+                + ", ".join(result.missing_legs)
+            )
+
     lines.append("")
     lines.append(f"## Validated findings ({len(validated)}) — "
                  f"{len(blocking)} blocking")
@@ -160,6 +204,8 @@ def render_report(result: ReviewResult, artifact_label: str) -> str:
             f"  [{mark}] {f.effective_severity().name:8} {f.location}"
         )
         lines.append(f"          {f.scenario}")
+        if show_legs and f.leg:
+            lines.append(f"          model leg: {f.leg}")
         if f.evidence:
             lines.append(f"          evidence: {f.evidence}")
 
@@ -172,6 +218,8 @@ def render_report(result: ReviewResult, artifact_label: str) -> str:
         for f in quarantined:
             lines.append(f"  [HYPOTH] {f.severity.name:8} {f.location}")
             lines.append(f"          {f.scenario}")
+            if show_legs and f.leg:
+                lines.append(f"          model leg: {f.leg}")
 
     if generic:
         lines.append("")

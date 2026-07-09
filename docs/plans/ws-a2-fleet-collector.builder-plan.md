@@ -59,6 +59,17 @@ OUT (halt-and-surface if the work would touch these):
   not pipeline progress); fall back to last stage if every event is a heartbeat.
 - **D-A2-4 workspace = `run_dir.parent.parent`** when the dir sits under `runs/`
   (`<workspace>/runs/<ts>`), else `run_dir.parent`.
+- **D-A2-5 `~/.claude/projects` (session-transcript / session-report read) is EXCLUDED
+  from WS-A2 — surfaced, not silently dropped (F2).** The dispatch prose named three
+  sources (handsoff run-records, subloam `/cost`, and `~/.claude/projects`). The binding
+  WS-A2 ACs (§5) name only the first two, and BACKPLANE-PLAN §4 build-table lines 285–286
+  assign the session-transcript HISTORICAL read to Build 3 (WS-A3, the page's historical
+  strip: `observability-aggregator` + `per-project-pm` + session data), not Build 2. It is
+  also per-session-keyed, not per-handsoff-run-keyed, so it does not fold into this
+  collector's per-run rows. **Call: build to the two AC-named per-run sources; exclude the
+  session-transcript leg as A3's historical surface.** If the dispatcher intended the
+  broader prose to override the plan table, adding it is a bounded second leg globbing
+  `~/.claude/projects` appended to the same JSON — surfaced for the dispatcher's ruling.
 
 ## 5. Acceptance criteria (from BACKPLANE-PLAN §5 WS-A2; outcome-shape)
 

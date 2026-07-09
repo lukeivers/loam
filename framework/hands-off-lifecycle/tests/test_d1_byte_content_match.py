@@ -12,37 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""HC#4 / AC.D.1.5 — byte-content-match regression for D-migration D.1.
+"""HC#4 / AC.D.1.5 — module-survival regression for the D-migration D.1.
 
 The bug-class that triggered the D-migration architectural review was
-test-shape-only verification: tests asserted "files are at the right
-paths" but never verified file *content* survived the move byte-
-identically. This test closes that gap structurally.
+test-shape-only verification: tests asserted "files are at the right paths"
+but never verified file *content* survived the move. This test closes that
+gap for a representative sample spanning three components (5 each from
+primary-persona, workspace-bootstrap, scope-of-work — leaf, mid-graph,
+high-fan-in per AC.D.1.5).
 
-Method (per builder-plan D-build.D.1.H):
-1. Pre-move (during build), SHA-256 hashes were computed for 15
-   representative files spanning three components (5 each from
-   primary-persona, workspace-bootstrap, scope-of-work — leaf,
-   mid-graph, high-fan-in per AC.D.1.5).
-2. The hashes are hardcoded below.
-3. The test reads each file at its post-D.1 framework/<comp>/<...>
-   path and asserts the SHA-256 matches.
+Converted, amendment #197 / AC.BVG.2 (2026-07-09, Class E of the 2026-07-08
+release-seal near-miss audit). The original guard pinned a whole-file SHA-256
+per sample. That was a brittle exact-value pin: ``git mv`` preserves bytes,
+but every LEGITIMATE later edit — an Apache license header, an import rebrand,
+a new re-export, an added kwarg — changed the bytes and forced a manual
+"rebaseline the hash to match reality" every cycle (STATE.md logs 6+ such
+recurrences with "root-cause fix OWED"; the pyproject sub-instance was already
+root-caused 2026-06-11). A whole-file hash cannot tell a git-mv corruption from
+a legitimate edit, so as a corruption guard it was already toothless — each
+rebaseline blessed whatever the current bytes were.
 
-A builder-side accidental edit during git-mv would break the test
-because git mv preserves bytes by default (rename without content
-edit gives byte-identical content). This is the structural binding
-of HC#4 — pure-rename moves cannot silently corrupt content.
+The intent — "the moved file survived as the right, uncorrupted module" — is
+now asserted structurally, following the proven STATE.md L143 "stable
+module-body replacements" pattern: each sample must (1) still exist, (2) parse
+as valid Python (``ast.parse`` — catches truncation / mangling / a rename
+window that corrupted the file), and (3) carry its expected stable public
+top-level surface (the module's characteristic def / class / re-export names —
+catches a wrong-file swap or a public-surface deletion). This survives
+legitimate edits (headers, kwargs, new re-exports) and REDs on the corruption
+the guard exists to catch.
 
-Note: files that ARE intentionally edited as part of D.1
-(``first_run_helper.py``, ``first_run_scaffold.py``, ``seal.py``,
-the seal-diff tests, and the renamed ``settings.dev-template.json``)
-are deliberately EXCLUDED from this list — their content changes
-are the amendment's intent, not regressions.
+Honest limit (D-EG.SIGLIMIT): the surface signature does NOT catch a surgical
+edit buried inside a function body that leaves the public surface intact — the
+same residual as the STATE.md L143 fix it follows. Behavioral regressions in a
+module body are caught by that module's own tests, not by this migration guard.
 """
 
 from __future__ import annotations
 
-import hashlib
+import ast
 from pathlib import Path
 
 import pytest
@@ -51,263 +59,165 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-# Pre-move SHA-256 hashes captured during the D.1 build.
-# Each tuple: (repo-relative path post-D.1, expected SHA-256).
-_SAMPLE_FILES = (
-    # primary-persona — leaf component (no dependents in framework graph
-    # for these files specifically; D-mig plan §4 names primary-persona
-    # as mid-graph but the named files are pure module bodies).
-    #
-    # M1e (amendment #80, sub-plan oss-v0-1-0-publish-rename-1e.md):
-    # path entries updated for the per-component framework/<comp>/src/
-    # loam/<comp>/ namespace pivot per D-RNM.2 ruling. Where the file's
-    # content was preserved by `git mv` (content-preserving rename),
-    # the original SHA-256 is preserved verbatim. Where content was
-    # also touched by Phase C import rebrand (`from <pkg>` →
-    # `from loam.<pkg>`) or Phase D entry-point group rebrand
-    # (`pos.bootstrap.contributions` → `loam.bootstrap.contributions`)
-    # or pyproject restructure, SHAs are bumped. ODD §4 in-band
-    # retire-and-rebaseline applied per M1e sub-plan §5 hard-constraint
-    # + §11 finding #3 + dispatch's named carve-out.
-    ("framework/primary-persona/src/loam/primary_persona/cli.py",
-     # M1c launchd-label rebrand SHA preserved (content unchanged by
-     # M1e — pure rename via git mv).
-     # M8-corrective (2026-05-01) SHA bump: M8 commit `6bef03b`
-     # ("feat(public): M8 license-governance — Apache headers on
-     # runtime .py + SECURITY.md tightening") inserted a 14-line
-     # Apache-2.0 license header at the top of this file per AC.OSS.4.
-     # ODD §4 in-band retire-and-rebaseline per
-     # `feedback_loose_AC_text_fix_AC_not_implementation` analog —
-     # implementation matches AC.OSS.4 intent; the byte-content sample
-     # SHA updates to reflect the legitimate header addition.
-     # Amendment #144 SHA bump (closed-loop engagement canonical
-     # promotion — Scope A): added the `intent-classifier` subcommand
-     # entry alongside the existing `user-prompt-submit` /
-     # `session-start` / `stop` / `memory-write` / `memory-worker` /
-     # `trait-reflection-stop` subparsers; new import of
-     # `cli_intent_classifier` from the new `intent_classifier`
-     # module + new `_cmd_intent_classifier` handler. ODD §4 in-band
-     # retire-and-rebaseline per
-     # `feedback_loose_AC_text_fix_AC_not_implementation`.
-     # Amendment #154 SHA bump (FBM Cycle 1 — fix-write-path + unify
-     # retrieval surface, sealed at `fd5fe6a`): cli.py was legitimately
-     # content-edited by #154's write-path fix. #154 sealed on the
-     # primary-persona fence and never ran this D.1 byte-content test
-     # (it lives in hands-off-lifecycle), so the frozen hash went stale-
-     # RED at HEAD `f23deda` — surfaced during the #155 first-run-
-     # message-retired-deps-sweep seal sweep (the seal sweep IS the
-     # discovery mechanism). NOT introduced by #155. Blast radius = 1
-     # of 16 samples; the git-mv-corruption guard stays intact for the
-     # other 15. ODD §4 in-band retire-and-rebaseline per
-     # `feedback_loose_AC_text_fix_AC_not_implementation` — the test's
-     # own docstring (lines 36-40) directs re-baselining intentionally-
-     # edited files; #154's edit is exactly that. F2 surfaced in the
-     # dispatcher report.
-     "260c580308bc0a3bc4a53e2608d88b8912e607c696e8e2105e131f2df5920ac0"),
-    ("framework/primary-persona/src/loam/primary_persona/__init__.py",
-     # M4 (amendment #85) SHA bump: re-export of NEW public function
-     # ``write_dispatcher_stub`` (and ``NewACSpec`` made public for
-     # caller convenience) added per plan §4 AC.OSS-M4.4 + AC.OSS-M4.7.
-     # ODD §4 in-band retire-and-rebaseline. Plan §11 finding #6
-     # predicted no HC#4 impact; the prediction was wrong but the
-     # amendment's intent is preserved (see §14 D-build.M4.* for the
-     # post-build surfacing of this finding).
-     # M-FBM (memory-substrate pivot, 2026-05-01) SHA bump: re-exports
-     # of the file-based memory primitives (``FileMemoryStore``,
-     # ``FileMemoryRetrievalConfig``, ``MemoryProvider``,
-     # ``build_file_memory_retrieval_contributor``,
-     # ``memory_dir_for_workspace``,
-     # ``register_file_memory_retrieval``) added; MCP-backed
-     # ``LiveMCPMemoryClient`` + ``build_live_mcp_memory_client``
-     # re-exports retired from package surface per AC.MFBM.5. ODD
-     # §4 in-band retire-and-rebaseline per `feedback_loose_AC_text_
-     # fix_AC_not_implementation`.
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "f3119c49c2b0037081448cc7d72f7752b863a08710142987387a3e013f21cb39"),
-    ("framework/primary-persona/src/loam/primary_persona/onboarding.py",
-     # M1e SHA bump: Phase C import rebrand
-     # (`from workspace_bootstrap.workspace_paths` →
-     # `from loam.workspace_bootstrap.workspace_paths`).
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "996a439815e867000f5600b70f1e9735e91899cc2a9c0f20a4d5f8e3374e7ac9"),
-    ("framework/primary-persona/src/loam/primary_persona/session_start_emitter.py",
-     # M1e SHA bump: Phase E internal-decoration rebrand (legacy
-     # `loam_root` predecessor identifier callsites) plus Phase C `-m`
-     # shell-command shape rebrand for primary_persona.cli emission
-     # helper.
-     # MPF (amendment #95) SHA bump: AC.MPF.3 propagates
-     # ``workspace_root`` through ``register_memory_retrieval`` so
-     # boundary exceptions surface to ``<workspace>/.pos/memory-
-     # reads.log``. Two-line edit at the call site (kwarg added).
-     # ODD §4 in-band retire-and-rebaseline per `feedback_loose_AC_
-     # text_fix_AC_not_implementation` — implementation matches
-     # AC.MPF.3 intent; the byte-content sample SHA updates to
-     # reflect the new contract.
-     # M-FBM (memory-substrate pivot, 2026-05-01) SHA bump:
-     # ``_default_memory_client_factory`` retires the
-     # ``mcp_memory_client.build_live_mcp_memory_client`` import +
-     # the file-based contributor registers in
-     # ``build_session_composer`` when the factory returns ``None``
-     # (production path). Per AC.MFBM.5: zero MCP instantiation in
-     # the runtime retrieval path.
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     # C2-prime (2026-05-02) SHA bump: ``loam-mode`` cosmetic-
-     # prose references in two docstring locations rewritten to
-     # "dev-mode session-start emit timeout" / "dev-mode session-
-     # start emit + persona session-start + user-prompt-submit
-     # timeouts" per C2-prime amendment §5.4 file 17 (RW shape;
-     # AC.OSS.3 banned-literal removal). ODD §4 in-band rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144 edits) — surfaced when amendment
-     # #144's hands-off-lifecycle full-suite ran at seal; the prior
-     # snapshot lagged a legitimate post-C2-prime edit to this file.
-     # ODD §4 in-band retire-and-rebaseline per
-     # `feedback_loose_AC_text_fix_AC_not_implementation`. Discovery-
-     # driven (the seal sweep IS the discovery mechanism).
-     # N4 (amendment #159, 2026-05-31) rebaseline: pre-existing drift
-     # NOT caused by N4 — `session_start_emitter.py` is byte-identical
-     # to the N4 BASELINE f1f6116 (N4 does not touch it; verified via
-     # `git diff f1f6116 HEAD`). The prior snapshot lagged a legitimate
-     # N3-onboarding edit to this file (sealed at f1f6116 without a D-1
-     # rebaseline). Surfaced by N4's hands-off-lifecycle full-suite at
-     # seal; fails IDENTICALLY on the stashed clean baseline tree. ODD
-     # §4 in-band retire-and-rebaseline (same established pattern as the
-     # amendment #144 §16 + v0.13.0/v0.14.0 rebaselines above).
-     # FBM correctness cycle (2026-06-09) rebaseline, two folds:
-     # (1) pre-existing drift NOT caused by this cycle — the file at
-     # the cycle's plan commit 7f647161 already hashed a8932360… (a
-     # post-v1.0.0 amendment edited it without rebaselining; verified
-     # via `git show 7f647161:<path> | shasum -a 256`); (2) this
-     # cycle's own AC.PSI.2 edit (the plans-block contributor
-     # registration in `build_session_composer`) — the amendment's
-     # intent, not a regression. ODD §4 in-band retire-and-rebaseline
-     # per the established pattern; F2-surfaced in the cycle report.
-     # Memory recall cycle (2026-06-09) rebaseline: this cycle's own
-     # AC.DLG.2 edit — the decision-ledger catch-up-sweep contributor
-     # registration at TriggerKind.session in `build_session_composer`
-     # (plan: memory-decision-ledger-surfacing-dispatch-packs, Slice
-     # 3) — the amendment's intent, not a regression. ODD §4 in-band
-     # retire-and-rebaseline per the established pattern; F2-surfaced
-     # in the cycle report.
-     "ce4dd0b33ea836dfd8699556db0c77e38a775a259e2a1cf62810769078cfbf44"),
-    # Replacement samples (2026-06-11, with the pyproject root-cause
-    # fix above): one stable module body per affected component keeps
-    # the AC.D.1.5 floor (>=5 per component x 3 components). SHAs
-    # captured from the tree at capture time (module bodies stable
-    # since the M8 license-governance pass).
-    ("framework/primary-persona/src/loam/primary_persona/contract.py",
-     "1a8cbbe0c38f848e2ca8a7c3eff6646ea90e975192d4771b79b2faffafc6abe5"),
-    ("framework/scope-of-work/src/loam/scope_of_work/store.py",
-     "d1160de54e903dcde05b02b24be642be60c933e4b488a79247b441f04babc84f"),
-    # ROOT-CAUSE FIX (2026-06-11, benchmark-retirement cycle, laddered
-    # to its AC.PBRET.2 default-run-green bar): pyproject.toml
-    # entries REMOVED from the byte-content sample. Pyprojects MUST
-    # mutate every MINOR by design (per-component version lockstep),
-    # so pinning their bytes enforced an invariant contradicting the
-    # lockstep discipline — SEVEN consecutive rebaseline recurrences
-    # (Wave 1.4 -> v1.5.0). The owed structural fix named in this
-    # file since v0.13.0 is hereby executed: byte-content sampling
-    # keeps module bodies only; pyproject version-lockstep is
-    # enforced by its own dedicated test (AC.PCVR.3,
-    # plugins/dev-sdlc/tests/test_AC_PCVR_pyproject_version_lockstep.py).
-    # workspace-bootstrap — high-fan-in component.
-    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
-     # M1e SHA bump: Phase D entry-point group rebrand in docstring
-     # (`pos.bootstrap.contributions` → `loam.bootstrap.contributions`).
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — workspace-bootstrap's
-     # __init__.py drifted in a later amendment that did not
-     # rebaseline. Discovery-driven rebaseline.
-     "df013a63a75dacd661c6123a45814ea9b7abbfb2f64e535fa9209850bb343960"),
-    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — discovery-driven rebaseline.
-     "e341d5f346258805af9917916d86eede8389e537a9432fa5f906b1127b86f1bd"),
-    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
-     # M1f SHA bump: workspace-bootstrap host.py field rename
-     # (self.graceful_degradation → self.dormancy + docstring entry)
-     # per AC.RNM-1f.6. ODD §4 in-band retire-and-rebaseline.
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "04b01405e218a518e18c873de25e448851404c864078aac16c64e26cccb899fa"),
-    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/errors.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "85215ebbc0eb622f44630694430fc76239f9e53f513ac04c75ac3f99f76c2ffc"),
-    ("framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py",
-     # M1e SHA bump: Phase D `_ENTRYPOINT_GROUP` value rebrand.
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — discovery-driven rebaseline.
-     "bbf1fa90ed86264c0ce60c5d45e5f9f7954053b2dc49ceed0318a9f2c5a60c41"),
-    # scope-of-work — leaf component (no test_no_sealed sidecar; the
-    # leaf shape is the cleanest regression target for HC#4).
-    ("framework/scope-of-work/src/loam/scope_of_work/spec.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "209d7390db93c5d36ad68e6cbe9470cf3e21ed7fbacfeac5089eff627e7bff43"),
-    ("framework/scope-of-work/src/loam/scope_of_work/events.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "c029a95070b1df5389f25a323e76145630bb2698e3b22fe3ea6b5a8f7262442e"),
-    ("framework/scope-of-work/src/loam/scope_of_work/projection.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     "ff212437fa1b168b998f13212f7a8d4f351c497acbdf0cb8c9f0d4fbe2b1532b"),
-    ("framework/scope-of-work/src/loam/scope_of_work/triggers.py",
-     # M8-corrective (2026-05-01) SHA bump: Apache-2.0 license header
-     # inserted by M8 (`6bef03b`) per AC.OSS.4. ODD §4 in-band
-     # retire-and-rebaseline.
-     # Amendment #144 §16 finding rebaseline: pre-existing drift
-     # (NOT caused by amendment #144) — discovery-driven rebaseline.
-     "98d9d8f21b754c6ba99cce90426ac2a0d6c37d76d19de6ed56f8b5575f781ed0"),
+def _module_surface(src: str) -> set[str]:
+    """The module's public top-level surface: names of top-level functions,
+    classes, ``from x import`` aliases, plain ``import`` bindings, and
+    module-level ``NAME = ...`` assignments. Raises ``SyntaxError`` if *src*
+    is not valid Python (the truncation / corruption signal)."""
+    tree = ast.parse(src)
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.ImportFrom):
+            for alias in node.names:
+                names.add(alias.asname or alias.name)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                names.add(alias.asname or alias.name.split(".")[0])
+        elif isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+    return names
+
+
+def _module_survived(src: str, expected: tuple[str, ...]) -> bool:
+    """True iff *src* is valid Python whose public top-level surface contains
+    every name in *expected*. False on a SyntaxError (truncation / corruption)
+    or a missing expected symbol (wrong-file swap / surface deletion)."""
+    try:
+        surface = _module_surface(src)
+    except SyntaxError:
+        return False
+    return set(expected).issubset(surface)
+
+
+# Each tuple: (repo-relative path post-D.1, expected stable public surface).
+# The expected surface is a small set of characteristic top-level names per
+# file. Code modules use their def/class names; the two ``__init__.py``
+# re-export modules use their re-exported public aliases.
+_SAMPLE_FILES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    # primary-persona — 5 samples.
+    (
+        "framework/primary-persona/src/loam/primary_persona/cli.py",
+        ("_cmd_session_start", "_cmd_stop", "_cmd_memory_write"),
+    ),
+    (
+        "framework/primary-persona/src/loam/primary_persona/__init__.py",
+        ("PersonaContract", "PersonaTier", "load_contract", "PersonaLoader"),
+    ),
+    (
+        "framework/primary-persona/src/loam/primary_persona/onboarding.py",
+        (
+            "OnboardingGroundingError",
+            "GroundingCapture",
+            "build_starter_pending_contributor",
+            "persist_grounding",
+        ),
+    ),
+    (
+        "framework/primary-persona/src/loam/primary_persona/session_start_emitter.py",
+        (
+            "build_session_composer",
+            "emit_session_start_context",
+            "emit_user_prompt_submit_context",
+        ),
+    ),
+    (
+        "framework/primary-persona/src/loam/primary_persona/contract.py",
+        (
+            "PersonaContract",
+            "PersonaTier",
+            "EscalationTaxonomy",
+            "AuthorityBoundary",
+        ),
+    ),
+    # workspace-bootstrap — 5 samples (high-fan-in component).
+    (
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/__init__.py",
+        ("read_metadata", "resolve_ref", "BootstrapError", "ContributionNotFoundError"),
+    ),
+    (
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/spec.py",
+        ("Contribution", "BaseContribution", "BootstrapHostProtocol", "Phase"),
+    ),
+    (
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/host.py",
+        ("BootstrapHost", "HostAttributeNotYetAvailable"),
+    ),
+    (
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/errors.py",
+        (
+            "BootstrapError",
+            "MissingConfigError",
+            "NameCollisionError",
+            "UnknownReferenceError",
+        ),
+    ),
+    (
+        "framework/workspace-bootstrap/src/loam/workspace_bootstrap/discovery.py",
+        ("resolve_ref", "read_metadata"),
+    ),
+    # scope-of-work — 5 samples (leaf component).
+    (
+        "framework/scope-of-work/src/loam/scope_of_work/store.py",
+        ("EventStore", "AppendedEvent", "rehydrate_events"),
+    ),
+    (
+        "framework/scope-of-work/src/loam/scope_of_work/spec.py",
+        ("ScopeState", "Budget", "SuccessCriterion", "Observer"),
+    ),
+    (
+        "framework/scope-of-work/src/loam/scope_of_work/events.py",
+        ("ScopeCreated", "StateTransitioned", "BudgetDebited", "ObserverAdded"),
+    ),
+    (
+        "framework/scope-of-work/src/loam/scope_of_work/projection.py",
+        ("apply_event", "project", "BudgetLedger"),
+    ),
+    (
+        "framework/scope-of-work/src/loam/scope_of_work/triggers.py",
+        ("evaluate_trigger", "is_stuck", "remaining_for_axis"),
+    ),
 )
 
 
-@pytest.mark.parametrize("relpath,expected_sha", _SAMPLE_FILES)
-def test_AC_D_1_5_byte_content_match_post_move(
-    relpath: str, expected_sha: str
+@pytest.mark.parametrize(
+    "relpath,expected", _SAMPLE_FILES, ids=[s[0] for s in _SAMPLE_FILES]
+)
+def test_AC_D_1_5_module_surface_survived_move(
+    relpath: str, expected: tuple[str, ...]
 ) -> None:
-    """The file at *relpath* (post-D.1 framework/<...> path) has the
-    expected SHA-256 captured pre-move. ``git mv`` preserves bytes
-    by default; any divergence indicates a builder-side content
-    edit slipped into the rename window.
-    """
+    """The file at *relpath* (post-D.1 framework/<...> path) survived the move
+    as a valid, correctly-surfaced module: it exists, parses as Python, and
+    carries its expected stable public top-level surface. Catches a rename
+    window that deleted / truncated / corrupted / swapped the file; tolerates
+    legitimate later edits (license headers, kwargs, new re-exports)."""
     path = REPO_ROOT / relpath
     assert path.exists(), (
-        f"D.1 byte-content regression: file missing post-move: {path}\n"
-        "Expected SHA: {expected_sha}\n"
-        "Possible causes: file was deleted during restructure, or the "
-        "framework/ directory layout differs from D.1's locked design."
+        f"D.1 module-survival regression: file missing post-move: {path}\n"
+        f"Expected surface: {expected}\n"
+        "Possible causes: file deleted during restructure, or the framework/ "
+        "layout differs from D.1's locked design."
     )
-    with open(path, "rb") as fh:
-        actual_sha = hashlib.sha256(fh.read()).hexdigest()
-    assert actual_sha == expected_sha, (
-        f"D.1 byte-content regression: {relpath}\n"
-        f"  expected SHA-256: {expected_sha}\n"
-        f"  actual SHA-256:   {actual_sha}\n"
-        "git mv was supposed to preserve bytes; a content-edit "
-        "slipped into the rename window. HC#4 binding."
+    src = path.read_text(encoding="utf-8")
+    assert _module_survived(src, expected), (
+        f"D.1 module-survival regression: {relpath}\n"
+        f"  expected public surface (subset): {expected}\n"
+        f"  actual public surface: {sorted(_module_surface(src)) if _valid(src) else 'INVALID PYTHON (parse failed)'}\n"
+        "The moved file is not valid Python or lost its expected public "
+        "surface — a corruption / wrong-file swap slipped into the move window. "
+        "HC#4 binding."
     )
+
+
+def _valid(src: str) -> bool:
+    try:
+        ast.parse(src)
+        return True
+    except SyntaxError:
+        return False
 
 
 def test_AC_D_1_5_test_carries_at_least_15_samples() -> None:
@@ -318,3 +228,48 @@ def test_AC_D_1_5_test_carries_at_least_15_samples() -> None:
         f"AC.D.1.5 names ≥3 components × ≥5 files each. "
         f"Sample list has {len(_SAMPLE_FILES)} entries."
     )
+
+
+# --- AC.BVG.S — outcome-altitude for the byte-hash conversion ---------------
+# outcome-altitude: true. Exercises the converted signature check on real-shaped
+# inputs with no pre-set state: a legitimately-edited module that must PASS and
+# corrupted / wrong-surface modules that must RED. This is the proof the guard
+# now tracks its intent (the file survived as the right module) rather than a
+# whole-file byte hash that fired on every legitimate edit.
+
+_FIXTURE_EXPECTED = (
+    "PersonaContract",
+    "PersonaTier",
+    "EscalationTaxonomy",
+    "AuthorityBoundary",
+)
+_LICENSE_HEADER = (
+    "# Copyright 2026 Luke Ivers and contributors\n"
+    "# Licensed under the Apache License, Version 2.0\n"
+)
+
+
+def _fixture_base_src() -> str:
+    return (
+        REPO_ROOT
+        / "framework/primary-persona/src/loam/primary_persona/contract.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_AC_BVG_S_signature_passes_legitimate_edit() -> None:
+    """A legitimately-edited module — real source + an inserted Apache license
+    header + an appended top-level helper (the exact edit shapes that forced
+    past rebaselines) — PASSES the converted signature check. The old whole-file
+    hash would have false-RED'd here."""
+    edited = _LICENSE_HEADER + _fixture_base_src() + "\n\ndef _new_helper(x, *, flag=False):\n    return x\n"
+    assert _module_survived(edited, _FIXTURE_EXPECTED)
+
+
+def test_AC_BVG_S_signature_reds_on_corruption() -> None:
+    """A corrupted (truncated mid-statement → invalid Python) module and a
+    valid-but-wrong-surface module both RED the converted signature check —
+    the corruption the guard exists to catch."""
+    truncated = "class PersonaContract:\n    def __init__(self, "  # syntactically broken
+    assert not _module_survived(truncated, _FIXTURE_EXPECTED)
+    wrong_surface = "x = 1\n"  # parses, but none of the expected symbols
+    assert not _module_survived(wrong_surface, _FIXTURE_EXPECTED)

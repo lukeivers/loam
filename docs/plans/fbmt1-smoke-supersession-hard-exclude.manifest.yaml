@@ -1,0 +1,123 @@
+schema_version: 3
+amendment:
+  # number intentionally OMITTED — schema v3 identifies amendments by slug
+  # (NOT pre-allocated, per feedback_version_numbers_at_release_time).
+  slug: fbmt1-smoke-supersession-hard-exclude
+  title: "FBMT1 end-to-end smoke supersession leg realigned to the sealed AC.SUP.1 hard-exclude contract — the default current view (as_of=None) FILTERS a superseded-by-marked episode OUT (removed, not merely ranked-lower); a stale-test correction lagging the memory-supersession redesign (e0eff95e + 779d306f), no production change; both _fts_search and _grep_search funnel through _compose_score -> _filter_by_interval so the exclude is uniform by construction (grep-vs-FTS regression branch cleared)"
+
+# BASELINE: current canonical HEAD (08da4e68), the pre-source tip immediately
+# before this cycle's fix commit. RETARGET to the actual pre-source tip
+# (typically HEAD~1) at apply time per the exemplar convention if intervening
+# commits land. Single-component amendment on the EXISTING plugins/dev-sdlc/
+# component (the FBMT1 smoke lives at plugins/dev-sdlc/tools/loam-amend/tests/,
+# inside the dev-sdlc sealed fence). Advances the dev-sdlc sidecar.
+#
+# One file changes: plugins/dev-sdlc/tools/loam-amend/tests/
+# test_AC_FBMT1_S_end_to_end_smoke.py sub-test (b) — three supersession
+# assertions + two describing comments re-pointed from the retired
+# "demoted-but-present" default-view expectation (amendment-134 AC.FBMT1.SUPM.3)
+# to the current AC.SUP.1 default-view HARD-EXCLUDE contract. No runtime source
+# change; the behavior under test is correct + sealed (canonical primary-persona
+# SUP suite passes on HEAD). Adds AC.SMKSUP.1.
+baseline: "08da4e68e80ec27bfc8a164138249bd2e9ffd272"
+
+plan: docs/plans/fbmt1-smoke-supersession-hard-exclude.md
+
+components:
+  - name: dev-sdlc
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: plugins/dev-sdlc/tests/test_no_sealed_amendments.py
+    sidecar: plugins/dev-sdlc/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/fbmt1-smoke-supersession-hard-exclude.md
+  body: |
+    # FBMT1 end-to-end smoke — supersession leg realigned to AC.SUP.1 hard-exclude
+
+    Per `docs/plans/fbmt1-smoke-supersession-hard-exclude.md`. Single-component
+    amendment on the EXISTING `plugins/dev-sdlc/` component; advances the sidecar.
+    Composes on the SEALED memory-supersession validity-interval machinery
+    (`e0eff95e`, AC.SUP.1/2/3) + the volatility read-disposition (`779d306f`).
+
+    ## The fork, resolved
+
+    A pre-existing failure on clean HEAD: `test_AC_FBMT1_S_end_to_end_smoke.py`
+    sub-test (b) asserts a `superseded-by`-marked episode is present-but-
+    ranked-lower in grep-fallback results; the current path returns the
+    unsuperseded episode and EXCLUDES the superseded one (`idx_second is None`).
+    Resolved to STALE TEST (not a papered-over regression) on four independent
+    signals:
+
+      1. Tier-0 code intent. `file_memory.py`'s `search()` docstring +
+         the AC.SUP.1 comment block state the default view (`as_of=None`)
+         FILTERS closed-interval (superseded) records out — "the marked record
+         is removed not merely demoted — this is the gap the old
+         SUPERSEDED_PENALTY left open." A `superseded-by` marker promotes the
+         record into a closed validity interval `[valid_from, valid_to)`;
+         `_supersession_interval` closes it (via `superseded-date`, or a
+         far-future sentinel when the date is absent — the marker's PRESENCE is
+         the close signal); `_filter_by_interval` drops closed intervals on the
+         default view.
+
+      2. Deliberate design, two sealed commits. `e0eff95e` (supersession via
+         validity intervals) + `779d306f` (volatility read-side hard-exclude)
+         establish the hard-exclude as the intended architecture, not a bug.
+
+      3. Passing canonical suite. `test_AC_SUP_1_default_view_filters_stale.py`,
+         `test_AC_SUP_2_as_of_history_reachable.py`, and
+         `test_AC_FBMT1_SUPM_3_not_filtered.py` all pass on HEAD. The last one
+         PINS the reconciliation: amendment-134's SUPM.3 "demote-not-filter on
+         the DEFAULT view" was PROMOTED into a real filter; the annotate-not-
+         delete property SUPM.3 protects now lives on the `as_of` HISTORY view
+         (marked-but-in-window record returned AND demoted by SUPERSEDED_PENALTY).
+
+      4. Git timeline. The smoke's last touch (`299b3a42`, 2026-06-12) predates
+         the redesign (`e0eff95e`/`779d306f`, 2026-06-28). The smoke was never
+         migrated when the contract moved.
+
+    Regression branch specifically probed + cleared: both `_fts_search`
+    (file_memory.py:1563) and `_grep_search` (file_memory.py:1681) funnel
+    through `_compose_score`, which applies `_filter_by_interval` FIRST — so the
+    hard-exclude is UNIFORM across the FTS and grep paths by construction. There
+    is no grep-vs-FTS over-exclusion asymmetry, which is the only shape that
+    would have made this a real defect.
+
+    ## The change
+
+    One file: `plugins/dev-sdlc/tools/loam-amend/tests/
+    test_AC_FBMT1_S_end_to_end_smoke.py` sub-test (b). Three assertions +
+    two describing comments re-pointed:
+
+      - `assert idx_second is not None` + `assert idx_first < idx_second`
+        (present-but-demoted) → `assert idx_second is None` (hard-excluded from
+        the default current view), with `assert idx_first is not None`
+        retained (the unsuperseded episode stays current).
+      - The file docstring line for (b) and the (b) section-header comment
+        updated from "demotes the second" / "ranks below the first" to the
+        hard-exclude contract.
+
+    No production source change. `AC.SMKSUP.1` (new): the FBMT1 smoke's
+    supersession leg asserts the current AC.SUP.1 default-view hard-exclude
+    contract. Ladders up to AC.SUP.1 → the prime-objective protection floor
+    (a stale operational-status claim is not served as current in a later
+    recall).
+
+    ## Out of scope
+
+      - Any runtime code (the behavior is correct + sealed).
+      - The `as_of` history-view demote assertion — already pinned by the
+        primary-persona `test_AC_FBMT1_SUPM_3_not_filtered.py`; re-testing it in
+        the loam-amend smoke would widen the smoke beyond the FBM T1 primitive
+        it exercises (scope discipline).
+
+    BASELINE `08da4e68` (current canonical HEAD). The dev-sdlc SEAL_COMMIT
+    sidecar lands at the seal SHA via `loam amend seal`.

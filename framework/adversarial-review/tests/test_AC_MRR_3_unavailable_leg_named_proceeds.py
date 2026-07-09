@@ -17,6 +17,7 @@ from conftest import finding_block, make_stub_critic
 from adversarial_review import (
     DEFAULT_LEG_NAME,
     DEFAULT_REGISTRY,
+    Disposition,
     ModelLeg,
     ModelRoleRegistry,
     Role,
@@ -57,6 +58,37 @@ def test_AC_MRR_3_proceeds_and_names_missing_leg(nontrivial_artifact, objective)
     report = render_report(result, "revenue-model.md")
     assert "codex" in report
     assert "MISSING" in report  # named as a configured-but-absent leg
+
+
+def test_AC_MRR_3_missing_leg_named_even_on_a_PASS(nontrivial_artifact, objective):
+    # The AC's literal target — "never an unmarked CLEAN BILL" — is the PASS
+    # disposition. A MEDIUM validated finding is substantive but non-blocking
+    # -> PASS; the missing leg must STILL be named (not just on a BLOCK). This
+    # pins the render's disposition-independence against a future regression
+    # that gated the model-legs block on `blocking`.
+    diff = finding_block(
+        location='SECTION 3: "the churn rate is assumed constant at 2%"',
+        severity="MEDIUM",
+        scenario='the churn rate "the churn rate is assumed constant at 2%" '
+        "carries no downside stress test — a material-but-non-blocking gap.",
+    )
+    registry = ModelRoleRegistry(
+        legs={
+            Role.CRITIC: (
+                ModelLeg("claude", make_stub_critic(diff)),  # available, MEDIUM
+                ModelLeg("codex", _unavailable),  # configured but unavailable
+            )
+        }
+    )
+    result = review_text(nontrivial_artifact, objective, registry=registry)
+
+    # A non-BLOCK verdict (the clean-bill shape the AC guards) that STILL runs.
+    assert result.ran is True
+    assert result.verdict.disposition is Disposition.PASS
+    assert result.missing_legs == ("codex",)
+    report = render_report(result, "revenue-model.md")
+    assert "codex" in report
+    assert "MISSING" in report  # a PASS is never an UNMARKED clean bill
 
 
 def test_AC_MRR_3_all_legs_unavailable_is_inconclusive_not_clean(

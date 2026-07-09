@@ -4,8 +4,10 @@ Marked ``outcome-altitude: true``. Exercises:
   (a) Write a memory file via the worker — verify ``context:`` block
       present (T1.2).
   (b) Write a second memory file with ``superseded-by:`` pointing at
-      the first — verify the retrieval ranker demotes the second
-      (T1.1).
+      the first — verify the DEFAULT current view (``as_of=None``)
+      HARD-EXCLUDES the superseded second (AC.SUP.1; the memory-
+      supersession redesign promoted the old T1.1/SUPM.3 demote-not-
+      filter into a validity-interval FILTER).
   (c) Seal a synthetic amendment in a tmpfs repo where the plan-doc
       slug overlaps a seeded FIDRAFT entry — verify the cleanup hook
       fires its surface (T1.3).
@@ -111,8 +113,15 @@ def test_AC_FBMT1_S_end_to_end_smoke(sealed_repo, capsys, tmp_path: Path):
     assert ctx["active_files"] == ["a.py"]
 
     # ------------------------------------------------------------------
-    # (b) T1.1 — second memory file with superseded-by ranks below
-    # the first.
+    # (b) AC.SMKSUP.1 / AC.SUP.1 — second memory file with superseded-by
+    # is HARD-EXCLUDED from the default current view (as_of=None), not
+    # merely ranked below the first. The memory-supersession redesign
+    # (e0eff95e + 779d306f) promoted amendment-134's demote-not-filter
+    # penalty (old T1.1/AC.FBMT1.SUPM.3) into a real validity-interval
+    # FILTER: a superseded-by marker closes the record's interval and the
+    # default view drops closed intervals (the annotate-not-delete
+    # property moved to the as_of history view, pinned by the
+    # primary-persona test_AC_FBMT1_SUPM_3_not_filtered.py).
     # ------------------------------------------------------------------
     # Write a second memory file using the FileMemoryStore directly
     # (the worker uses turn-id as filename; this exposes the path
@@ -202,11 +211,18 @@ def test_AC_FBMT1_S_end_to_end_smoke(sealed_repo, capsys, tmp_path: Path):
          if p.endswith(second_memory_path.name)),
         None,
     )
-    assert idx_first is not None
-    assert idx_second is not None
-    assert idx_first < idx_second, (
-        f"superseded (second) should rank below unsuperseded (first); "
-        f"got positions first={idx_first}, second={idx_second}"
+    # AC.SMKSUP.1 / AC.SUP.1 — the unsuperseded record stays current;
+    # the superseded record is HARD-EXCLUDED from the default view
+    # (as_of=None), removed entirely rather than ranked lower.
+    assert idx_first is not None, (
+        "unsuperseded (first) must remain in the default current view"
+    )
+    assert idx_second is None, (
+        f"superseded (second) must be HARD-EXCLUDED from the default "
+        f"current view (as_of=None) — AC.SUP.1 promoted the old "
+        f"demote-not-filter penalty into a validity-interval FILTER; the "
+        f"marked record is removed, not merely ranked-lower; got "
+        f"position second={idx_second}"
     )
 
     # ------------------------------------------------------------------

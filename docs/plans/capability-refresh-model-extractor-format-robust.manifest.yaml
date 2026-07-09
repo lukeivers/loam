@@ -1,0 +1,84 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: capability-refresh-model-extractor-format-robust
+  title: "capability-refresh-model-extractor-format-robust — model-lineup ID extractor keyed on backticks, so an upstream FORMATTING change (comparison-table Claude-API-ID row backtick -> plain) under-detects live models and fakes add/remove deltas"
+
+# BASELINE: 7eb8f982 — canonical loam HEAD (main) at v1.11.0 release-integration
+# re-baseline time. Retargeted from the original a1166b8d (stale: main advanced
+# 7 commits past it via PR #3, landing a separate capability-refresh seal #194).
+# Re-apply/re-seal reconciliation per the S1a precedent (STATE.md 2026-07-07);
+# original branch fix/capability-refresh-model-extractor-robust is source-of-record.
+# The plan + manifest commit lands INSIDE this window under docs/plans/
+# (universally admitted); the source + test commits follow. Builder confirms
+# the tip at apply time.
+baseline: "7eb8f98238537896503408a1433f47ee381ae6a1"
+
+plan: docs/plans/capability-refresh-model-extractor-format-robust.md
+
+components:
+  - name: capability-refresh
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/tools/capability-refresh/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/capability-refresh/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/capability-refresh-model-extractor-format-robust.md
+  body: |
+    # capability-refresh — format-robust model-ID extraction — apply ladder
+
+    Per docs/plans/capability-refresh-model-extractor-format-robust.md.
+
+    `models.py::extract_model_ids()` matched Claude model IDs ONLY when
+    backtick-wrapped (`` `(claude-[a-zA-Z0-9][a-zA-Z0-9.-]*)` ``). Anthropic
+    reformatted the "Latest models comparison" table so the Claude-API-ID
+    row renders most IDs as PLAIN text; the extractor stopped detecting
+    them. Verified Tier-0 against the committed snapshot
+    docs/capability-corpus/.refresh/snapshots/anthropic-models-overview.txt
+    (line 26: claude-fable-5 / claude-opus-4-8 / claude-haiku-4-5-20251001
+    plain, only claude-sonnet-5 still backticked) and the committed lineup
+    artifact, whose ids list is missing the live models claude-opus-4-8 and
+    claude-haiku-4-5-20251001. A cosmetic backtick->plain edit thereby fakes
+    a "removed" delta and permanently hides never-backticked models.
+
+    THE FIX: extract_model_ids now returns the UNION of two precise signals
+    — (1) a structural parse of Markdown table rows whose first cell
+    normalizes to "claude api id", taking each remaining cell (backticks
+    stripped) that whole-cell-matches ^claude-[...]$ (backtick-agnostic;
+    authoritative current+legacy model list); and (2) the original
+    backtick-quoted `(claude-…)` regex over the whole page, preserved so
+    prose-only backticked models (claude-mythos-5, claude-mythos-preview)
+    are not dropped. Neither half is a page-wide plain-text grep, so
+    incidental-prose / Bedrock (anthropic.claude-*) / Google-Cloud
+    (claude-*@date) IDs do not pollute the lineup. compute_model_delta,
+    load/save_model_lineup, and run_refresh are UNCHANGED — the fix is
+    localized to the one extraction function plus a private table-row helper.
+
+    ACs: AC.CLP-MDLR.1 ★ outcome-altitude (production extract on the REAL
+    committed snapshot detects claude-fable-5 + claude-opus-4-8 +
+    claude-sonnet-5 + claude-haiku-4-5-20251001 regardless of backticks),
+    AC.CLP-MDLR.2 (no phantom delta across a pure backtick->plain formatting
+    change, through production run_refresh), AC.CLP-MDLR.3 (a genuinely
+    removed model is still named in model_delta.removed — the real signal
+    survives), AC.CLP-MDLR.4 (no over-capture: incidental-prose / Bedrock /
+    Google-Cloud IDs excluded), AC.CLP-MDLR.5 (prose-only backticked model
+    preserved — no false removal). Existing AC.CLP-MDL.1-4 stay green (the
+    union is a strict superset of old behavior on those fixtures).
+
+    Fence: capability-refresh (source + tests only). The committed lineup
+    JSON is intentionally NOT hand-edited (runtime machine state with a
+    run_ts stamp); the next real refresh recomputes it and emits a one-time
+    TRUE "added" delta for the previously-hidden live models.
+
+    Predecessor: a1166b8d (memory-redesign S4 STATE change-log backfill).

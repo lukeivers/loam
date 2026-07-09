@@ -79,6 +79,31 @@ def test_AC_RUP_1_three_sections_top3_and_proxy_label(tmp_path):
     assert "gamma" not in message
     assert message.index("1. beta") < message.index("2. delta") < message.index("3. alpha")
 
+    # Stays under the ~15-line chat-channel budget (D-A5-7).
+    assert message.count("\n") + 1 <= 15
+
+
+def test_AC_RUP_1_token_source_absent_named_absence_label_survives(tmp_path):
+    # A projects root that exists but has no project dirs → no_transcripts.
+    empty = tmp_path / "projects"
+    empty.mkdir()
+
+    capturing = CapturingNotify()
+    message = run_rollup(
+        probe=probe_returning(windows_at(30.0)),
+        token_source=lambda: read_project_tokens(root=empty),
+        gateway_source=_gateway_absent,
+        notify_fn=capturing,
+    )
+
+    # The token section is PRESENT and names its absence — not dropped (D-A5-5)...
+    assert "Top Claude-token projects" in message
+    assert "no_transcripts" in message
+    # ...the proxy label survives even the empty-ranking path...
+    assert "proxy — ranks consumption, not billing-grade" in message
+    # ...and the other sections still render.
+    assert "Claude weekly cap (this machine): 30.0% of the enforced limit." in message
+
 
 def test_AC_RUP_1_dedup_counts_a_repeated_message_once(tmp_path):
     root = tmp_path / "projects"

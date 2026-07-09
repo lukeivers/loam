@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-odd-extractor"
-version = "1.10.0"
+version = "1.11.0"
 description = "loam odd-extractor — Cartographer-style ODD reverse-engineering scaffold for the dev-sdlc plugin. Cycle 1 (v0.1.8): four-stage workflow shape (init/analyze/generate/verify) + language-adapter registry (zero adapters) + dry-run cost estimate via cost-governance + foreign-codebase budget envelope. Cycles 2-4 ship confidence bands, ratification workflow, Ruby/Rails first-class adapter, Python first-class adapter."
 requires-python = ">=3.11"
 dependencies = [

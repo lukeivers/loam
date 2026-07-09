@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-self-upgrade"
-version = "1.10.0"
+version = "1.11.0"
 description = "loam self-upgrade framework — coordinates every sealed component's upgrade-fidelity surfaces into a single atomic operation enforcing the seven-clause acceptance (a–g)"
 requires-python = ">=3.13"
 dependencies = [

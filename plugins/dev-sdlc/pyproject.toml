@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-plugin-dev-sdlc"
-version = "1.10.0"
+version = "1.11.0"
 description = "Dev/SDLC plugin for loam — methodology-shaped 5-stage workflow (research → spec → plan → build → review/verify) with structural gate enforcement, scope-of-work + objective-tracker integration, methodology opt-out preserving an internal ODD mirror, and the loam project ... CLI subcommand surface. First plugin under loam's plugin contribution protocol; pattern-establishing for v0.2+ plugins."
 requires-python = ">=3.13"
 dependencies = [

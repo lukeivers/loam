@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-usage-window-guard"
-version = "1.10.0"
+version = "1.11.0"
 description = "loam usage-window guard (foundation) — reads the user's REAL Anthropic-side rolling-window utilization (rolling 5-hour + 7-day weekly) directly from GET /api/oauth/usage with a transiently-read OAuth keychain token, parses the per-window {utilization, resets_at} struct, and FAILS OPEN (reports usage-unavailable, never fabricates a percentage) on a missing/expired credential or an unreachable/non-200 endpoint. This is Anthropic's enforced cap utilization, NOT token-counting."
 requires-python = ">=3.11"
 dependencies = []

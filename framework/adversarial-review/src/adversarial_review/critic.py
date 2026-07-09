@@ -47,6 +47,7 @@ import re
 from typing import Callable, Optional
 
 from .findings import Finding, Severity
+from .registry import ModelRoleRegistry, Role
 from .seed import ReviewInputs, derive_seed, diff_seed
 from .spawn import run_isolated_critic
 
@@ -162,7 +163,7 @@ _FIELD = {
 }
 
 
-def parse_findings(raw: str, *, axis: str = "") -> list[Finding]:
+def parse_findings(raw: str, *, axis: str = "", leg: str = "") -> list[Finding]:
     """Parse the DIFF-phase model output into pinned findings (AC.AR.1).
 
     Reads the ``FINDING ... END`` block shape. A block missing a
@@ -170,6 +171,9 @@ def parse_findings(raw: str, *, axis: str = "") -> list[Finding]:
     the validation layer can quarantine it rather than the parser
     silently dropping a possible real flaw. Severity parses leniently.
     Findings are born HYPOTHESIZED (default) — validation advances them.
+
+    ``leg`` tags each finding with the producing model leg's name
+    (AC.MRR.2) — empty in the default single-Claude path.
     """
     findings: list[Finding] = []
     for m in _FINDING_BLOCK.finditer(raw or ""):
@@ -191,6 +195,7 @@ def parse_findings(raw: str, *, axis: str = "") -> list[Finding]:
                 scenario=scenario,
                 severity=severity,
                 axis=axis,
+                leg=leg,
             )
         )
     return findings
@@ -224,3 +229,50 @@ def run_critic(
         return [], False
 
     return parse_findings(diff_raw, axis=axis), True
+
+
+def run_critic_registry(
+    inputs: ReviewInputs,
+    *,
+    axis: str = "",
+    registry: ModelRoleRegistry,
+) -> tuple[list[Finding], bool, tuple[str, ...]]:
+    """Run the two-phase critic once PER configured critic leg (AC.MRR.2/3).
+
+    Resolves the CRITIC role's ordered legs from ``registry`` and runs the
+    UNCHANGED two-phase :func:`run_critic` for each — reusing the sealed
+    primitive rather than re-implementing it, so ``run_critic`` stays a
+    2-tuple (``test_AC_AR_3`` unpacks two values). Every finding a leg
+    produces is tagged with that leg's ``name`` (Lens 0 — the review says
+    which model produced which finding).
+
+    Returns ``(findings, ran, missing_legs)``:
+
+      * ``findings`` — all findings across every leg that ran, each tagged
+        with its producing leg's name.
+      * ``ran`` — True if AT LEAST ONE leg produced a review; False only
+        when EVERY configured leg was unavailable (the caller renders
+        REVIEW-INCONCLUSIVE — never a false clean bill).
+      * ``missing_legs`` — the NAMES of the configured legs that were
+        unavailable (their model returned ``None`` at a phase). The render
+        layer names these so a configured-but-absent leg (e.g. Codex not
+        installed) is surfaced, never silently dropped (AC.MRR.3).
+
+    ``missing_legs`` is sourced from the RUN (which legs spoke vs returned
+    ``None``), not from post-validation surviving findings — a leg that ran
+    but whose only finding was later refuted still counts as having spoken.
+    """
+    legs = registry.legs_for(Role.CRITIC)
+    all_findings: list[Finding] = []
+    missing: list[str] = []
+    any_ran = False
+    for leg in legs:
+        findings, ran = run_critic(inputs, axis=axis, model_fn=leg.fn)
+        if not ran:
+            missing.append(leg.name)
+            continue
+        for f in findings:
+            f.leg = leg.name
+        all_findings.extend(findings)
+        any_ran = True
+    return all_findings, any_ran, tuple(missing)

@@ -85,6 +85,36 @@ core failure mode this capability exists to prevent.
   separate merge judge that preserves disagreement. Symmetric free-form panel debate is
   never the mechanism.
 
+## Model-role registry (writer / critic / judge → named model legs)
+
+The critic model is injectable, and a `{role: [model_leg]}` registry (`registry.py`)
+makes every role's backend a **config entry, not a code change**. Each of `Role.WRITER`,
+`Role.CRITIC`, `Role.JUDGE` resolves to an ordered tuple of `ModelLeg(name, fn)` (a
+`fn=None` leg is the default isolated Claude spawn). It is a dict + resolver — **not a
+gateway** (no HTTP, no proxy, no provider SDK).
+
+```python
+from adversarial_review import ModelLeg, ModelRoleRegistry, Role, review_text
+
+# Point the critic at a second model family alongside Claude (WS-D2 lands the
+# Codex leg as the first non-default entry). A leg whose fn returns None is
+# treated as unavailable: the review proceeds on the remaining legs and NAMES
+# the missing one — never an unmarked clean bill.
+reg = ModelRoleRegistry(legs={Role.CRITIC: (ModelLeg("claude"), ModelLeg("codex", codex_fn))})
+result = review_text(artifact, objective, registry=reg)
+# result.legs_used / result.missing_legs carry the provenance; every finding
+# is tagged with its producing leg, and render_report surfaces it.
+```
+
+- **Default is byte-identical.** With no registry (or `DEFAULT_REGISTRY`, all roles →
+  `claude`), a review is unchanged from before the seam existed; the per-finding leg
+  annotation only renders when a non-default leg is present.
+- **Judge-role guidance:** when a JUDGE leg is wired (a future arbitration / merge-judge
+  step), it should **not** be the writer's model family — a same-family judge re-imports
+  model self-preference at arbitration. Cross-family judging is the de-correlation the
+  multi-model design exists for. Only `CRITIC` has a live call site today; `WRITER` /
+  `JUDGE` are resolvable config vocabulary for when theirs exist.
+
 ## Composition (does not duplicate existing loam machinery)
 
 - `loam-reviewer` stays the conformance gate; this checks *survivability*, a different axis.

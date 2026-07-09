@@ -47,6 +47,7 @@ from .corpus import CorpusStore
 from .critic import ModelFn
 from .findings import Finding
 from .pipeline import ReviewResult, run_standard_review
+from .registry import ModelRoleRegistry
 from .validation import ValidatorFn
 from .verdict import decide
 
@@ -116,6 +117,7 @@ def run_deep_review(
     corpus: Optional[CorpusStore] = None,
     model_fn: ModelFn | None = None,
     validator_fn: ValidatorFn | None = None,
+    registry: ModelRoleRegistry | None = None,
 ) -> ReviewResult:
     """Run a DEEP-tier review: parallel isolated per-axis + merge (AC.AR.11).
 
@@ -130,6 +132,11 @@ def run_deep_review(
     axis_list = axes or DEFAULT_DEEP_AXES
     axis_reviews: list[AxisReview] = []
     any_ran = False
+    # Aggregate the model-leg provenance across axes (AC.MRR.2/3): each axis
+    # runs the same registry, so the DEEP result names every leg that spoke
+    # on any axis and every leg that was unavailable on any axis.
+    legs_used: list[str] = []
+    missing_legs: list[str] = []
     for axis in axis_list:
         # Each axis review is a full independent STANDARD pass, its
         # objective narrowed to the axis so the critic derives that
@@ -145,12 +152,19 @@ def run_deep_review(
             corpus=corpus,
             model_fn=model_fn,
             validator_fn=validator_fn,
+            registry=registry,
             axis=axis,
         )
         axis_reviews.append(
             AxisReview(axis=axis, findings=result.verdict.findings, ran=result.ran)
         )
         any_ran = any_ran or result.ran
+        for name in result.legs_used:
+            if name not in legs_used:
+                legs_used.append(name)
+        for name in result.missing_legs:
+            if name not in missing_legs:
+                missing_legs.append(name)
 
     if not any_ran:
         return ReviewResult(
@@ -158,6 +172,8 @@ def run_deep_review(
             methodology_domain=domain or "domain-agnostic",
             methodology_stale=False,
             ran=False,
+            legs_used=tuple(legs_used),
+            missing_legs=tuple(missing_legs),
         )
 
     merged = merge_findings(axis_reviews)
@@ -177,4 +193,6 @@ def run_deep_review(
         methodology_domain=domain or "domain-agnostic",
         methodology_stale=False,
         ran=True,
+        legs_used=tuple(legs_used),
+        missing_legs=tuple(missing_legs),
     )

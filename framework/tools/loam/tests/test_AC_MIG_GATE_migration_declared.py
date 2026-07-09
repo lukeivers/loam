@@ -76,7 +76,7 @@ def test_AC_MIG_GATE_3_composes_in_all_gates(
     assert gates.check_migration_declared in gates.ALL_GATES
     # The substrate-audit gate (AC.SOL-GATE.*, N2) appended an 8th gate;
     # the boundary-respected gate (AC.BLOCK-ENFORCE.*, N1) appended a 9th.
-    assert len(gates.ALL_GATES) == 9
+    assert len(gates.ALL_GATES) == 11
 
     # run_all (against the canonical staged-release fixture, which declares a
     # migration) returns a verdict for every gate including the migration gate,
@@ -84,6 +84,6 @@ def test_AC_MIG_GATE_3_composes_in_all_gates(
     results = gates.run_all(staged_repo, fixture_version)
     names = [r.name for r in results]
     assert "migration-declared" in names
-    assert len(results) == 9
+    assert len(results) == 11
     by_name = {r.name: r for r in results}
     assert by_name["migration-declared"].ok is True

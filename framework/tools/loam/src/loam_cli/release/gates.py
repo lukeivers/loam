@@ -1,6 +1,6 @@
 """Per-gate pre-publish verification (AC.V060.2 + AC.MIG-GATE.*).
 
-Nine structural gates, each returning a :class:`GateResult` carrying
+Eleven structural gates, each returning a :class:`GateResult` carrying
 a verdict + a corrective hint on RED. The orchestrator
 (:mod:`loam_cli.release.runner`) runs every gate (does NOT short-
 circuit on first RED) so the operator sees the full state in one
@@ -39,6 +39,16 @@ Gates:
      allowlist ``docs/design/adr/user-state-homes.yaml`` — the same single
      source the ADR cites (no doc<->code drift) — exactly as gate 7 reads
      the declared migration contract.
+  10. ``check_seal_dominance`` — the version's roadmap §2 row resolves to
+     a single DOMINATING seal (the seal that has every other row-seal as
+     an ancestor). RED when no seal dominates (audit Class D, AC.DOM.5):
+     replaces the fragile last-in-row tag-target parse with ancestor-
+     dominance + makes the assertion mandatory at publish.
+  11. ``check_deterministic_cut`` — recomputes the release class + number
+     from repo state (conventional-commit scan over ``<published>..HEAD``
+     + the published-tag read) per ``docs/release-versioning-policy.md``
+     and REDs when the computed cut != the version being cut (audit Class
+     A, AC.CUT.1). MAJOR stays owner-gated (D-CUT.MAJOR).
 
 Each gate is independently testable; per-gate test pairs (one passing,
 one failing) live in
@@ -576,43 +586,163 @@ def check_branch_main(repo_root: Path, version: str) -> GateResult:
 # --------------------------------------------------------------------
 
 
-def _extract_seal_sha(roadmap_body: str, version: str) -> str | None:
-    """Pull the seal SHA from the §2-shipped table row for *version*.
+def _all_seal_shas(roadmap_body: str, version: str) -> list[str]:
+    """All seal-labelled SHAs in the §2-shipped table row for *version*,
+    in row order.
 
     §2 rows take the shape::
 
         | v0.4.3 | <objective sentence> | Single-cycle PATCH: ...
           seal `7bff3817`; ... |
 
-    The seal is a 7+ hex-char token following ``seal``. Prefer the
-    last seal in the row when multiple exist (the most-recent
-    cycle's seal anchors the version's HEAD).
+    A seal is a 7+ hex-char token following the literal ``seal`` (so a
+    post-seal bookkeeping SHA labelled ``bump``/``apply``/``source`` is
+    NOT captured). Returns ``[]`` when the row is absent or names no seal.
     """
-    # Find the row whose first cell starts with the version.
     row_pattern = re.compile(
         r"^\|\s*" + re.escape(version) + r"\s*\|.*$",
         re.MULTILINE,
     )
     match = row_pattern.search(roadmap_body)
     if match is None:
-        return None
-    row = match.group(0)
-    # All seal tokens in the row.
-    seals = re.findall(r"seal[s]?\s*[`']?([0-9a-f]{7,40})", row)
+        return []
+    return re.findall(r"seal[s]?\s*[`']?([0-9a-f]{7,40})", match.group(0))
+
+
+@dataclass(frozen=True)
+class TagTargetResolution:
+    """Result of resolving a version's tag target by ancestor-dominance
+    (AC.DOM.1-3).
+
+    ``sha`` is the dominating seal (or ``None`` on a halt condition).
+    ``reason`` is one of ``no-seal`` / ``single`` / ``dominates`` /
+    ``no-dominator``.
+    """
+
+    sha: str | None
+    seals: tuple[str, ...]
+    reason: str
+
+
+def _is_ancestor(repo_root: Path, ancestor: str, descendant: str) -> bool:
+    """``git merge-base --is-ancestor <ancestor> <descendant>`` rc==0.
+
+    A SHA absent from the object store (malformed row / fixture) yields
+    rc!=0 here — so it neither dominates nor is dominated, and the
+    resolver falls through to the ``no-dominator`` halt rather than
+    silently selecting a bad SHA.
+    """
+    proc = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    return proc.returncode == 0
+
+
+def resolve_tag_target(
+    repo_root: Path, roadmap_body: str, version: str
+) -> TagTargetResolution:
+    """Resolve a version's tag target as the DOMINATING seal (AC.DOM.1).
+
+    Among all seal SHAs named in the version's roadmap §2 row, the tag
+    target is the unique seal that has every other row-seal as an ancestor
+    (``merge-base --is-ancestor`` rc=0 for each). This REPLACES the fragile
+    last-in-row text-parse (audit Class D: reachability != correctness).
+
+    - No seal in the row -> ``no-seal`` halt (AC.DOM.2 sibling).
+    - Exactly one seal -> that seal (vacuous dominance; AC.DOM.3), resolved
+      WITHOUT a git call so well-formed single-seal rows never touch the
+      object store (the norm today; low regression risk).
+    - Multiple seals with a dominator -> the dominator (AC.DOM.1/.4).
+    - Multiple seals, none dominating -> ``no-dominator`` halt: the row
+      spans divergent history (AC.DOM.2).
+
+    Component ``SEAL_COMMIT.*`` sidecars are deliberately NOT in the
+    dominance set (D-DOM.SIDECAR): sidecars track each component's LATEST
+    seal regardless of version, so a component sealed after this version's
+    content tip is not an ancestor of the tag target and would false-RED.
+    """
+    seals = list(dict.fromkeys(_all_seal_shas(roadmap_body, version)))
     if not seals:
-        return None
-    return seals[-1]
+        return TagTargetResolution(None, (), "no-seal")
+    if len(seals) == 1:
+        return TagTargetResolution(seals[0], tuple(seals), "single")
+    for cand in seals:
+        others = [s for s in seals if s != cand]
+        if all(_is_ancestor(repo_root, o, cand) for o in others):
+            return TagTargetResolution(cand, tuple(seals), "dominates")
+    return TagTargetResolution(None, tuple(seals), "no-dominator")
+
+
+def check_seal_dominance(repo_root: Path, version: str) -> GateResult:
+    """Verify the version's roadmap §2 row resolves to a single DOMINATING
+    seal (AC.DOM.5 — the dominance assertion as a mandatory publish gate).
+
+    RED when no seal is named (``no-seal``) or no single seal dominates
+    (``no-dominator`` — the row spans divergent history / a mis-selected
+    early SHA). This is the structural backstop that makes the Class-D
+    fix mandatory at publish, not merely available in the resolver.
+    """
+    path = repo_root / "docs" / "release-roadmap.md"
+    if not path.exists():
+        return GateResult(
+            name="seal-dominance",
+            ok=False,
+            message=(
+                f"missing {path.relative_to(repo_root)}; canonical "
+                f"forward-looking roadmap. Restore."
+            ),
+        )
+    body = path.read_text(encoding="utf-8")
+    res = resolve_tag_target(repo_root, body, version)
+    if res.reason == "no-seal":
+        return GateResult(
+            name="seal-dominance",
+            ok=False,
+            message=(
+                f"docs/release-roadmap.md §2 row for {version} names no "
+                f"seal SHA. Append the seal anchor (cycle SHA after "
+                f"`seal `) and re-run."
+            ),
+        )
+    if res.reason == "no-dominator":
+        return GateResult(
+            name="seal-dominance",
+            ok=False,
+            message=(
+                f"the §2 row for {version} names {len(res.seals)} seals "
+                f"({', '.join(res.seals)}) but NONE dominates the others "
+                f"(no single seal has every other as an ancestor). The row "
+                f"spans divergent history — the tag target is ambiguous. "
+                f"Reconcile the cycle seals onto one lineage (re-apply/"
+                f"re-seal against the reconciled tip), then point the row "
+                f"at the single dominating content-tip seal. Re-run once "
+                f"one seal dominates."
+            ),
+        )
+    return GateResult(
+        name="seal-dominance",
+        ok=True,
+        message=(
+            f"tag target {res.sha} dominates {len(res.seals)} row-seal(s) "
+            f"({res.reason})"
+        ),
+    )
 
 
 def check_seal_commit_reachable(
     repo_root: Path, version: str
 ) -> GateResult:
-    """Verify ``docs/release-roadmap.md`` §2 row carries a seal SHA
-    for *version* + that SHA is reachable from HEAD.
+    """Verify ``docs/release-roadmap.md`` §2 row resolves to a tag target
+    that is reachable from HEAD.
 
-    Reachability means ``git merge-base --is-ancestor <seal> HEAD``
-    succeeds (rc=0). On RED, surface the seal SHA + the commit it
-    anchors so the operator can resolve.
+    The tag target is the DOMINATING seal (:func:`resolve_tag_target`),
+    not the last-in-row text-parse. Reachability means ``git merge-base --is-ancestor
+    <target> HEAD`` succeeds (rc=0). On RED, surface the seal SHA so the
+    operator can resolve. Ambiguous/absent tag target (no dominator) is
+    RED here too and reported in full by ``seal-dominance``.
     """
     path = repo_root / "docs" / "release-roadmap.md"
     if not path.exists():
@@ -625,15 +755,17 @@ def check_seal_commit_reachable(
             ),
         )
     body = path.read_text(encoding="utf-8")
-    seal = _extract_seal_sha(body, version)
+    res = resolve_tag_target(repo_root, body, version)
+    seal = res.sha
     if seal is None:
         return GateResult(
             name="seal-reachable",
             ok=False,
             message=(
-                f"docs/release-roadmap.md §2 row for {version} carries no "
-                f"seal SHA. Append the seal anchor to the row (cycle SHA "
-                f"after `seal `) and re-run."
+                f"docs/release-roadmap.md §2 row for {version} does not "
+                f"resolve to a single tag target ({res.reason}). See the "
+                f"`seal-dominance` gate hint; re-run once one seal "
+                f"dominates the row."
             ),
         )
     proc = subprocess.run(
@@ -647,7 +779,7 @@ def check_seal_commit_reachable(
             name="seal-reachable",
             ok=False,
             message=(
-                f"seal commit {seal} declared for {version} in "
+                f"tag target {seal} resolved for {version} in "
                 f"docs/release-roadmap.md is NOT reachable from HEAD. "
                 f"Either checkout the branch containing the seal, or "
                 f"correct the roadmap row to point at the actual seal "
@@ -657,7 +789,176 @@ def check_seal_commit_reachable(
     return GateResult(
         name="seal-reachable",
         ok=True,
-        message=f"seal {seal} reachable from HEAD",
+        message=f"tag target {seal} reachable from HEAD",
+    )
+
+
+def check_deterministic_cut(
+    repo_root: Path,
+    version: str,
+    *,
+    local_published: str | None = None,
+    origin_published: str | None = None,
+    commit_messages_override: list[str] | None = None,
+    _skip_disagreement: bool = False,
+) -> GateResult:
+    """Recompute the release cut from repo state + verify it matches the
+    version being cut (AC.CUT.1-6; audit Class A).
+
+    Recomputes class + expected number from (the current published tag on
+    origin, the conventional-commit prefixes of the unreleased commits)
+    per ``docs/release-versioning-policy.md`` and REDs when the recomputed
+    version != *version* — the policy's own "halt-and-surface, never
+    silent re-number" event, made a real chokepoint by riding
+    ``run_all``.
+
+    Owner-gating (D-CUT.MAJOR): a MAJOR *target* is an allowed owner
+    escalation (MAJOR is a quality-bar owner event, not auto-cut on a
+    breaking marker), so it never auto-REDs; breaking markers in the
+    content surface as a note.
+
+    Fail-safe: when the published state is indeterminate (no origin/local
+    version tag), the gate degrades to GREEN-with-caveat — never a false
+    RED that blocks a legitimate publish on the gate's own inability
+    (mirrors gates 8/9). ``local_published`` / ``origin_published`` /
+    ``commit_messages_override`` are injection hooks for tests.
+    """
+    from loam_cli.release import cut as _cut
+
+    origin = (
+        origin_published
+        if origin_published is not None
+        else _cut.highest_origin_tag(repo_root)
+    )
+    local = (
+        local_published
+        if local_published is not None
+        else _cut.highest_local_tag(repo_root)
+    )
+
+    # AC.CUT.5 HARD-HALT: a locally-sealed-but-unpushed higher version
+    # (local != origin) is the policy's disambiguation halt.
+    if (
+        not _skip_disagreement
+        and origin is not None
+        and local is not None
+        and origin != local
+    ):
+        return GateResult(
+            name="deterministic-cut",
+            ok=False,
+            message=(
+                f"published-tag disagreement: local highest tag {local!r} "
+                f"!= origin highest tag {origin!r}. Per "
+                f"docs/release-versioning-policy.md this is a HARD HALT "
+                f"(a locally-sealed-but-unpushed version makes the "
+                f"cut-number derivation ambiguous). Reconcile local vs "
+                f"origin tags (push the pending tag, or confirm the "
+                f"intended current_published) before publishing."
+            ),
+        )
+
+    published = origin or local
+    if published is None:
+        # AC.CUT.5 degrade — indeterminate, never a false RED.
+        return GateResult(
+            name="deterministic-cut",
+            ok=True,
+            message=(
+                "could not determine the current published version (no "
+                "origin/local version tag); degraded to pass-with-caveat "
+                "(fail-safe — the cut gate never blocks a publish on its "
+                "own inability to read published state)."
+            ),
+        )
+
+    # Idempotent re-run: the target is already the current published
+    # version (a re-invocation of `loam release <shipped-version>`). The
+    # cut already happened; the runner's downstream idempotency check
+    # handles the no-op. The cut gate must not RED here (the target is not
+    # a *bump* of published because it IS published).
+    if _cut.parse_version(version) == _cut.parse_version(published):
+        return GateResult(
+            name="deterministic-cut",
+            ok=True,
+            message=(
+                f"target {version} is already the current published "
+                f"version; idempotent re-run (cut shape already realized)."
+            ),
+        )
+
+    result = _cut.compute_cut(
+        repo_root,
+        published_override=published,
+        commit_messages_override=commit_messages_override,
+    )
+    if not result.determinate or result.expected_version is None:
+        return GateResult(
+            name="deterministic-cut",
+            ok=True,
+            message=(
+                f"cut indeterminate ({result.detail}); degraded to "
+                f"pass-with-caveat (fail-safe)."
+            ),
+        )
+
+    target_bump = _cut.bump_class_between(published, version)
+    note = (
+        " NOTE: breaking-change markers present in the unreleased content "
+        "— assess a MAJOR-eval per policy (MAJOR is owner-gated, not "
+        "auto-cut)."
+        if result.has_breaking
+        else ""
+    )
+
+    # AC.CUT.6 / D-CUT.MAJOR: a MAJOR target is an allowed owner escalation.
+    if target_bump == "MAJOR":
+        return GateResult(
+            name="deterministic-cut",
+            ok=True,
+            message=(
+                f"target {version} is a MAJOR bump of {published} "
+                f"(owner-gated escalation; computed content class="
+                f"{result.klass}).{note}"
+            ),
+        )
+
+    if target_bump is None:
+        return GateResult(
+            name="deterministic-cut",
+            ok=False,
+            message=(
+                f"target {version} is not a clean single bump of the "
+                f"current published {published}. The deterministic cut = "
+                f"{result.expected_version} (class {result.klass}; "
+                f"{result.detail}). Cut the computed version, or reconcile "
+                f"the target with the published tag.{note}"
+            ),
+        )
+
+    if version != result.expected_version:
+        return GateResult(
+            name="deterministic-cut",
+            ok=False,
+            message=(
+                f"cut shape mismatch: the unreleased content computes to "
+                f"{result.expected_version} (class {result.klass}; "
+                f"{result.detail}) but the version being cut is {version} "
+                f"(a {target_bump} bump). This is the policy's "
+                f"halt-and-surface event (never a silent re-number): cut "
+                f"{result.expected_version}, or reconcile the content/"
+                f"target. (`loam release preflight {version}` shows the "
+                f"computed cut + branch mergeability.){note}"
+            ),
+        )
+    return GateResult(
+        name="deterministic-cut",
+        ok=True,
+        message=(
+            f"deterministic cut confirmed: {version} == computed "
+            f"{result.expected_version} (class {result.klass}; "
+            f"{result.detail}).{note}"
+        ),
     )
 
 
@@ -1184,6 +1485,8 @@ ALL_GATES = (
     check_migration_declared,
     check_substrate_audit,
     check_boundary_respected,
+    check_seal_dominance,
+    check_deterministic_cut,
 )
 
 
@@ -1217,6 +1520,10 @@ def run_all(
         check_migration_declared(repo_root, version, plan_doc=plan_doc),
         check_substrate_audit(repo_root, version),
         check_boundary_respected(repo_root, version),
+        # Class D + Class A structural chokepoints (audit 2026-07-08):
+        # tag-target dominance (AC.DOM.5) + deterministic cut (AC.CUT.1).
+        check_seal_dominance(repo_root, version),
+        check_deterministic_cut(repo_root, version),
     ]
 
 

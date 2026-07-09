@@ -398,15 +398,20 @@ def run(
         )
 
     # 3. Resolve seal SHA + objective sentence (used by tag message
-    #    + GitHub Release notes body).
+    #    + GitHub Release notes body). The tag target is the DOMINATING
+    #    seal (AC.DOM.1/.6) — never the last-in-row parse; the seal-dominance +
+    #    seal-reachable gates have already validated it above.
     roadmap_body = (
         repo_root / "docs" / "release-roadmap.md"
     ).read_text(encoding="utf-8")
-    seal_sha = gates._extract_seal_sha(roadmap_body, version)
-    if seal_sha is None:  # defensive — should be caught by gate 6.
+    seal_sha = gates.resolve_tag_target(
+        repo_root, roadmap_body, version
+    ).sha
+    if seal_sha is None:  # defensive — caught by seal-dominance gate.
         print(
-            "FAIL: no seal SHA in docs/release-roadmap.md §2 for "
-            f"{version}; aborting."
+            "FAIL: docs/release-roadmap.md §2 row for "
+            f"{version} does not resolve to a single dominating seal; "
+            "aborting."
         )
         return PublishOutcome(
             rc=1,

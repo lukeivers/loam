@@ -923,7 +923,8 @@ def apply_backfill(
     True, edits_applied=0)`` + writes nothing.
 
     *seal_sha* is optional; when None the function falls back to
-    :func:`gates._extract_seal_sha` against the roadmap body. The
+    :func:`gates.resolve_tag_target` (the dominating-seal resolver)
+    against the roadmap body. The
     runner passes the seal SHA explicitly because it has already
     extracted it for tag creation (and the §2 row may carry a
     ``TBD-AT-SEAL`` placeholder that the extractor can't resolve).
@@ -949,9 +950,9 @@ def apply_backfill(
     discovery_seal_sha = seal_sha
     if discovery_seal_sha is None and roadmap_path.exists():
         roadmap_preview = roadmap_path.read_text(encoding="utf-8")
-        discovery_seal_sha = gates._extract_seal_sha(
-            roadmap_preview, version
-        )
+        discovery_seal_sha = gates.resolve_tag_target(
+            repo_root, roadmap_preview, version
+        ).sha
     source_edit_sha, apply_sha = _discover_source_edit_and_apply_shas(
         repo_root, discovery_seal_sha
     )
@@ -1032,7 +1033,9 @@ def apply_backfill(
     if roadmap_path.exists():
         body = roadmap_path.read_text(encoding="utf-8")
         if seal_sha is None:
-            seal_sha = gates._extract_seal_sha(body, version)
+            seal_sha = gates.resolve_tag_target(
+                repo_root, body, version
+            ).sha
         if seal_sha is None:
             hints.append(
                 f"roadmap §2 row for {version}: seal SHA not extractable; "

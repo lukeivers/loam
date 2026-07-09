@@ -20,7 +20,8 @@ import re
 import subprocess
 from pathlib import Path
 
-from loam_cli.release.gates import _find_plan_doc, _extract_seal_sha
+from loam_cli.release import gates
+from loam_cli.release.gates import _find_plan_doc
 
 
 _NOISY_PREFIX_PATTERN = re.compile(
@@ -47,34 +48,31 @@ def _extract_section(body: str, section_marker: str) -> str | None:
     return m.group(1).strip()
 
 
-def _previous_seal(roadmap_body: str, version: str) -> str | None:
-    """Find the seal SHA for the version *immediately preceding*
-    *version* in §2's shipped table.
+def _previous_seal(
+    repo_root: Path, roadmap_body: str, version: str
+) -> str | None:
+    """Find the tag target (dominating seal) for the version *immediately
+    preceding* *version* in §2's shipped table — the lower bound of the
+    ``git log <prev>..<this>`` commit range in the notes.
 
     Walks the table top-to-bottom; the row matching *version* is the
-    target; the previous row's seal is returned. When *version* is
-    the first row (no predecessor), returns ``None`` and the notes
+    target; the previous row's tag target is resolved via the DOMINATING
+    seal resolver (AC.DOM.6 — no last-in-row text-parse straggler). When *version*
+    is the first row (no predecessor), returns ``None`` and the notes
     omit the commit-log section.
     """
     # Parse all rows of the shipped table. Each row starts with
-    # ``| v0.X.Y |`` so the first capture is the version, and we
-    # also capture the row body for seal extraction.
+    # ``| v0.X.Y |`` so the first capture is the version.
     row_pattern = re.compile(
         r"^\|\s*(v[0-9][0-9.]*)\s*\|.*$",
         re.MULTILINE,
     )
-    versions: list[tuple[str, str]] = []
-    for m in row_pattern.finditer(roadmap_body):
-        v = m.group(1)
-        row_body = m.group(0)
-        versions.append((v, row_body))
-    for idx, (v, _row) in enumerate(versions):
+    versions = [m.group(1) for m in row_pattern.finditer(roadmap_body)]
+    for idx, v in enumerate(versions):
         if v == version and idx > 0:
-            prev_v, prev_row = versions[idx - 1]
-            seals = re.findall(
-                r"seal[s]?\s*[`']?([0-9a-f]{7,40})", prev_row
-            )
-            return seals[-1] if seals else None
+            return gates.resolve_tag_target(
+                repo_root, roadmap_body, versions[idx - 1]
+            ).sha
     return None
 
 
@@ -202,8 +200,10 @@ def generate_notes(
         )
     else:
         roadmap_body = roadmap_path.read_text(encoding="utf-8")
-        this_seal = _extract_seal_sha(roadmap_body, version)
-        prev_seal = _previous_seal(roadmap_body, version)
+        this_seal = gates.resolve_tag_target(
+            repo_root, roadmap_body, version
+        ).sha
+        prev_seal = _previous_seal(repo_root, roadmap_body, version)
         if this_seal is None:
             parts.append(
                 "(unavailable: no seal SHA in docs/release-roadmap.md "

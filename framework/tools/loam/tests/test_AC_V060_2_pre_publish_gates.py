@@ -342,7 +342,14 @@ def test_seal_reachable_red_when_roadmap_omits_seal(
     )
     r = gates.check_seal_commit_reachable(staged_repo, fixture_version)
     assert r.ok is False
-    assert "no seal SHA" in r.message
+    # Post-Class-D rewire: gate 6 resolves the tag target via ancestor-
+    # dominance and defers the no-seal DETAIL to the seal-dominance gate;
+    # the RED behavior on a seal-less row is preserved. The seal-dominance
+    # gate carries the "names no seal SHA" wording.
+    assert "does not resolve to a single tag target" in r.message
+    dom = gates.check_seal_dominance(staged_repo, fixture_version)
+    assert dom.ok is False
+    assert "no seal SHA" in dom.message
 
 
 def test_seal_reachable_red_when_seal_unreachable(
@@ -391,9 +398,11 @@ def test_run_all_returns_six_results_in_declaration_order(
     # The migration-declared gate (AC.MIG-GATE.*, P1.3) appended a seventh
     # gate; the substrate-audit gate (AC.SOL-GATE.*, N2) appended an eighth;
     # the boundary-respected gate (AC.BLOCK-ENFORCE.*, N1) appended a ninth.
-    # run_all now returns nine verdicts in declaration order.
+    # The 2026-07-08 release-seal near-miss audit appended a tenth
+    # (seal-dominance, AC.DOM.5) + an eleventh (deterministic-cut,
+    # AC.CUT.1). run_all now returns eleven verdicts in declaration order.
     rs = gates.run_all(staged_repo, fixture_version)
-    assert len(rs) == 9
+    assert len(rs) == 11
     names = [r.name for r in rs]
     assert names == [
         "hard-smoke",
@@ -405,6 +414,8 @@ def test_run_all_returns_six_results_in_declaration_order(
         "migration-declared",
         "substrate-audit",
         "boundary-respected",
+        "seal-dominance",
+        "deterministic-cut",
     ]
 
 

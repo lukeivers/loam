@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from loam_cli.release import runner
+from loam_cli.release import preflight, runner
 
 
 def build_release_subcommand(
@@ -50,7 +50,22 @@ def build_release_subcommand(
         "version",
         help=(
             "the version literal to publish (matches the tag name; "
-            "e.g., 'v0.6.0')"
+            "e.g., 'v0.6.0'), OR the literal 'preflight' followed by a "
+            "version to run the build-time mergeability + computed-cut "
+            "verb instead of publishing"
+        ),
+    )
+    # D-PRE.CLI: `loam release preflight <version>` is a leading sub-token
+    # on the existing parser — a second optional positional — so the
+    # `loam release <version>` publish surface is UNCHANGED (no public-CLI
+    # break). When args.version == "preflight", this carries the version.
+    p.add_argument(
+        "preflight_version",
+        nargs="?",
+        default=None,
+        help=(
+            "the version to preflight when the first argument is the "
+            "literal 'preflight' (e.g., 'loam release preflight v1.12.0')"
         ),
     )
     p.add_argument(
@@ -108,6 +123,13 @@ def dispatch(args: argparse.Namespace) -> int:
     drive the full ``loam release`` parser surface.
     """
     repo_root = (args.repo_root or Path.cwd()).resolve()
+    # D-PRE.CLI: dispatch the preflight verb when the first positional is
+    # the literal 'preflight'. AC.PRE.5 — a missing version is a clean
+    # usage error inside run_preflight; it NEVER falls through to publish.
+    if args.version == "preflight":
+        return preflight.run_preflight(
+            repo_root, args.preflight_version
+        )
     outcome = runner.run(
         repo_root,
         args.version,

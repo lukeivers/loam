@@ -135,12 +135,12 @@ def test_AC_BLOCK_ENFORCE_1_gate_in_all_gates_and_run_all() -> None:
     (the gate-7 shape — one report, no parallel CI)."""
     assert gates.check_boundary_respected in gates.ALL_GATES
     # gate 9: gate-7 migration + gate-8 substrate-audit precede it.
-    assert len(gates.ALL_GATES) == 9
+    assert len(gates.ALL_GATES) == 11
     # run_all returns a verdict for the boundary gate.
     results = gates.run_all(REPO_ROOT, "v0.0.0")
     names = [r.name for r in results]
     assert "boundary-respected" in names
-    assert len(results) == 9
+    assert len(results) == 11
 
 
 # --------------------------------------------------------------------

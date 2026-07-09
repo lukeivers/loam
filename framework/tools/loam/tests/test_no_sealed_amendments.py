@@ -40,13 +40,12 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-# Advanced to 890ac5e (the N1 boundary-lock plan-doc commit — this slice's
-# pre-build tip on n1-loam-boundary-lock-adr-and-enforcement-gate) at the N1
-# boundary-lock seal. The prior baseline (b234bfd, the N2 plan commit) sat
-# behind this slice's apply; advancing to the immediate pre-build tip bounds
-# the diff window to THIS slice's loam-cli changes (the standard "advance
-# sidecar + BASELINE" seal pattern).
-BASELINE = "1fe3c31a"
+# Advanced to 6ca68259 (v1.11.0 post-publish backfill — HEAD of main at the
+# release-cli-tag-target-and-cut-hardening pre-build tip, amendment #195).
+# Advancing to the immediate pre-build tip bounds the diff window to THIS
+# amendment's loam-cli changes (the standard "advance sidecar + BASELINE"
+# seal pattern). Prior baseline was 1fe3c31a.
+BASELINE = "6ca68259"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

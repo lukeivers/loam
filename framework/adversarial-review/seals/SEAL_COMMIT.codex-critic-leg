@@ -1,0 +1,64 @@
+# WS-D2 — Codex adversarial-critic leg + calibration (adversarial-review amendment)
+
+Per `docs/plans/ws-d2-codex-critic-leg.md`. Adds the Codex critic leg to the
+SEALED adversarial-review component as the WS-D1 model-role registry's FIRST
+non-default entry — a second critic on a DIFFERENT model family (OpenAI
+Codex) running in PARALLEL with the default Claude critic (author=Claude /
+adversary=Codex; error de-correlation across families, the objective's
+`model-rationale`).
+
+New `codex.py`, all additive:
+
+  - AC.CDX.1 (outcome-altitude) — n=1 calibration: a seeded-flaw artifact run
+    through the Codex leg via the production pipeline (`calibrate(...
+    registry=codex_critic_registry(include_claude=False))` and `review_text`)
+    surfaces the planted defect, tagged `leg="codex"`, and `calibrate` reads
+    back a nonzero catch rate. Deterministic, mirroring the sealed AC.AR.10
+    posture: only the `codex` process boundary (`shutil.which` +
+    `subprocess.run`) is stubbed — the real argv-build, env-scrub, `--json`
+    extraction, `parse_findings`, registry resolution, and calibration
+    scoring all execute. `run_codex_critic` is a plain text `ModelFn` routed
+    through the UNCHANGED two-phase `run_critic` (D-CDX.1: reuse the sealed
+    critic primitive, no parallel single-phase codex pass).
+  - AC.CDX.2 — with `codex` uninstalled (`shutil.which` -> None, the REAL
+    fail-soft path), a review whose CRITIC role is `(claude, codex)`
+    completes on the claude leg and NAMES the missing `codex` leg
+    (`missing_legs == ("codex",)`, surfaced in `render_report`); never an
+    unmarked clean bill. All legs down -> REVIEW INCONCLUSIVE (the existing
+    floor), never a false PASS.
+  - AC.CDX.3 — the leg's subprocess env (the `env=` handed to
+    `subprocess.run`) carries no `OPENAI_API_KEY` and no `ANTHROPIC_API_KEY`
+    under D2's ChatGPT-sign-in auth, while `HOME`/`PATH` survive (sign-in is
+    file-based). Scrub is by DELETION over `os.environ`, not a minimal
+    whitelist (D-CDX.3). An `allow_openai_key=True` escape hatch relaxes the
+    `OPENAI_API_KEY` scrub for THIS subprocess only (D2's metered-key clause),
+    never globally; default is sign-in-only.
+
+Named method decisions (builder's call per ODD §1.1, recorded in the plan):
+D-CDX.2 DROPS the plan hint's `--output-schema` (a fixed findings schema is
+incompatible with the two-phase `ModelFn` reuse — DERIVE must emit a
+free-form spec; no AC binds the schema and the downstream `FINDING…END`
+regex is format-agnostic); `--sandbox read-only` is KEPT and required (a
+critic reads, never mutates). D-CDX.4 keeps the leg a LIBRARY factory
+(`codex_critic_registry` + the existing `registry=` param), NOT a new CLI
+flag — an unnamed CLI branch would be non-objective code. D-CDX.5: the
+live-codex model-quality proof is owner-gated (codex not installed at build;
+the plan's own dependency line gates install + D2 sign-in on the owner) and
+ships as the opt-in `test_AR_S_real_codex_smoke` (`AR_REAL_CODEX=1`,
+auto-skipped when codex absent) — the exact posture the sealed component
+already uses for its live calibration smoke; NOT an AC downgrade (wiring,
+tagging, fail-soft, and env-scrub are all verified through the production
+pipeline).
+
+`calibration.calibrate` gains an additive `registry` kwarg threaded to
+`review_text` (default None ⇒ unchanged). The sealed default single-Claude
+path is byte-identical: `render_report`, `critic.py`, `registry.py`,
+`pipeline.py`, `manual.py`, `gate.py`, `spawn.py` are UNCHANGED, and the full
+AC.AR.{1-13}+AC.MRR.{1-3}+AR.S suite passes unmodified. The sealed
+loam-spawn-isolation surface is NOT imported — codex is a different binary
+spawned directly, reaching nothing sealed (the dispatch's probe_liveness /
+sys.path-reuse note is fleet/lease boilerplate, inapplicable here).
+`.claude/settings.json` (Track F single-writer) is UNTOUCHED — no hook.
+
+Predecessor: a4c08928 — the WS-D1 model-role-registry seal, isolated in its
+own worktree off the contended shared dir.

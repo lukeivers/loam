@@ -112,4 +112,42 @@ Per §3. Additionally: 5-hour wall-clock cycle ceiling; if the existing V060.2 g
 
 ## §status
 
-(backfilled at cycle close)
+Cycle 1 of 3 SEALED LOCAL — amendment #195. Apply `9e51a18`; seal `c074dc18`
+(loam-cli sidecar at `9e51a18`, BASELINE `6ca68259`). 221/221 loam-cli tests
+pass post-seal; post-seal `apply --dry-run` clean. NOT published — the single
+cut is the dispatcher's action after all three cycles seal.
+
+AC verdict matrix (all GREEN):
+
+- AC.DOM.1 — GREEN (`resolve_tag_target` dominance; test_AC_DOM_1).
+- AC.DOM.2 — GREEN (no-dominator halt + gate RED; test_AC_DOM_2).
+- AC.DOM.3 — GREEN (single-seal vacuous, no git call; test_AC_DOM_3).
+- AC.DOM.4 — GREEN (outcome-altitude: non-dominating-first row → dominating
+  seal; + real-row rev-list equality v1.10.0=99a1be9 / v1.11.0=badd2d6f;
+  test_AC_DOM_4_*).
+- AC.DOM.5 — GREEN (check_seal_dominance in run_all REDs on no-dominator;
+  test_AC_DOM_5).
+- AC.DOM.6 — GREEN (single-resolver invariant; `_extract_seal_sha` removed;
+  no last-in-row parse in release source; test_AC_DOM_6).
+- AC.CUT.1 — GREEN (compute_cut class+number from repo state; test_AC_CUT_1_*).
+- AC.CUT.2 — GREEN (RED on mismatch, hint names both; test_AC_CUT_2).
+- AC.CUT.3 — GREEN (match passes; test_AC_CUT_3).
+- AC.CUT.4 — GREEN (outcome-altitude both directions through run_all;
+  test_AC_CUT_4_*).
+- AC.CUT.5 — GREEN (local/origin HARD-HALT + indeterminate degrade;
+  test_AC_CUT_5_*).
+- AC.CUT.6 — GREEN (MAJOR owner-gated, breaking note; test_AC_CUT_6_*).
+- AC.PRE.1 — GREEN (per-branch verdict; test_AC_PRE_1).
+- AC.PRE.2 — GREEN (shared computed cut in output; test_AC_PRE_2).
+- AC.PRE.3 — GREEN (stable recordable block; test_AC_PRE_3).
+- AC.PRE.4 — GREEN (outcome-altitude: conflict→non-clean end-to-end via CLI;
+  test_AC_PRE_4_*).
+- AC.PRE.5 — GREEN (no-version clean error, never publishes; non-breaking
+  publish surface preserved; test_AC_PRE_5_*).
+
+Named decisions realized as specified: D-DOM.SIDECAR, D-CUT.CLASS,
+D-CUT.MAJOR, D-PRE.PARTIAL, D-PRE.CLI (see §6).
+
+F2 surfaces for the dispatcher (see final return): D-CUT.CLASS is a
+builder's-call operationalization the policy does not specify (conventional-
+commit prefixes as the class signal) — named + accepted, not silently built.

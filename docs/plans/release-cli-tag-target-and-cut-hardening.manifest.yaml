@@ -1,0 +1,99 @@
+schema_version: 1
+amendment:
+  number: 195  # Next sequential amendment. Highest manifest counter on disk
+               # is 194 (capability-refresh-run-cadence-bash-portability,
+               # sealed). 195 is the next free slot. The builder CONFIRMS the
+               # exact number at `loam amend apply` against the live counter
+               # (feedback_version_numbers_at_release_time — never pre-bake a
+               # number that drifts).
+  slug: release-cli-tag-target-and-cut-hardening
+  title: "Release-CLI hardening (cycle 1 of 3) — the release tool CANNOT tag a broken tree and CANNOT ship a mis-shaped/mis-numbered cut, plus a build-time mergeability verb. THREE distinct-but-composing outcomes in one loam-cli amendment, per the 2026-07-08 release-seal near-miss audit: (D) RIGHT TAG TARGET — resolve a version's tag target as the seal that DOMINATES every other seal in its roadmap §2 row (ancestor-dominance), replacing the fragile seals[-1] text-parse at ALL four tag-target sites (runner tag creation, seal-reachable gate, notes anchor, backfill marker) + a mandatory dominance gate in gates.run_all; HALT/RED when no seal dominates. (A) DETERMINISTIC CUT — a mandatory gates.run_all gate recomputes class+number from repo state (conventional-commit scan over <published>..HEAD + published-tag read) per docs/release-versioning-policy.md and REDs when content class != the version being cut (the policy's own halt-and-surface, never-silent-renumber event); MAJOR stays owner-gated (D-CUT.MAJOR). (B) MERGEABILITY VERB — `loam release preflight <version>` emits per-branch fast-forward/merge-tree verdicts + the computed cut, shaped for the ratification artefact; HONESTLY a tool-assisted PARTIAL (relies on being run), NOT the structural pre-dispatch hook (that is a SEPARATE scheduled item, out of scope). Real-row verified: the dominating-seal resolver's target == git rev-list -1 v1.10.0 (99a1be9) and v1.11.0 (badd2d6f). Outcome-altitude: AC.DOM.4 (non-dominating first-SHA row → dominating seal, never the early SHA), AC.CUT.4 (MINOR-content-under-PATCH-target → RED), AC.PRE.4 (conflicting branch → non-clean). STOP at sealed-local — no `loam release`, no tag, no push (the single published cut is the dispatcher's action after all 3 cycles seal)."
+
+# BASELINE: 6ca6825947747abc9f69d84d8003e5c308036cc4 — HEAD of main at
+# plan-authoring (v1.11.0 post-publish backfill — SHIPPED PUBLIC). The
+# builder CONFIRMS this against the actual predecessor tip at apply time.
+baseline: "6ca6825947747abc9f69d84d8003e5c308036cc4"
+
+plan: docs/plans/release-cli-tag-target-and-cut-hardening.md
+
+components:
+  # The unified CLI dispatcher + the `loam release` gate chain. All source
+  # (cut.py NEW, preflight.py NEW, gates.py, runner.py, cli.py, notes.py,
+  # post_publish_backfill.py) + tests (test_AC_DOM_*, test_AC_CUT_*,
+  # test_AC_PRE_*) land under framework/tools/loam/. Single-component fence.
+  # NO other component's runtime behavior changes.
+  - name: loam-cli
+    seal_test: framework/tools/loam/tests/test_no_sealed_amendments.py
+    sidecar: framework/tools/loam/tests/SEAL_COMMIT
+    extra_allowed_prefixes: []
+
+# Universal admissions — per amendment #22 ruling #3. This cycle's paper
+# trail (plan + manifest + sealed narrative) lands under docs/plans/.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - docs/STATE.md
+    - docs/release-roadmap.md
+
+narrative:
+  target: docs/plans/sealed/release-cli-tag-target-and-cut-hardening.md
+  body: |
+    # Release-CLI tag-target + deterministic-cut + mergeability hardening — apply ladder
+
+    Cycle 1 of a 3-cycle fix program off the 2026-07-08 release-seal
+    near-miss audit (`workspace/.scratch/claude-output/release-seal-near-miss-audit-2026-07-08.md`,
+    pos3). This cycle lands the release-CLI-resident half: Class D (right
+    tag target), Class A (deterministic cut), and the Class-B cheap partial
+    (mergeability verb). Classes C (guard-floor registry) and E (brittle-
+    guard conversion) are separate cycles, out of scope here.
+
+    This amendment (single loam-cli fence, NO public action):
+      1. (D) Replaces the fragile `seals[-1]` tag-target text-parse with an
+         ancestor-DOMINANCE resolver: a version's tag target is the seal in
+         its roadmap §2 row that has every other row-seal as an ancestor. If
+         no seal dominates → HALT/RED (the row spans divergent history). The
+         resolver replaces `seals[-1]` at ALL FOUR tag-target sites
+         (runner.py tag creation, gates.py seal-reachable gate, notes.py
+         anchor + prior-version range endpoint, post_publish_backfill.py
+         marker) — leaving any straggler would be a non-objective
+         inconsistency (ODD). A dedicated dominance gate rides gates.run_all
+         so it is mandatory at publish (AC.DOM.1-6). Real-row verified: the
+         resolver's target == `git rev-list -1 v1.10.0` (99a1be9) and
+         v1.11.0 (badd2d6f). Sidecars are NOT in the dominance set
+         (D-DOM.SIDECAR — they track each component's latest seal regardless
+         of version, so they would false-RED).
+      2. (A) Adds a deterministic-cut gate to gates.run_all that recomputes
+         class + expected number from repo state (conventional-commit prefix
+         scan over `<current-published-tag>..HEAD` + the published-tag read)
+         per docs/release-versioning-policy.md, and REDs when the recomputed
+         version != the version being cut — the policy's own "halt-and-
+         surface, never silent re-number" event made a real chokepoint
+         (AC.CUT.1-6). "Content class" mechanized as conventional-commit
+         prefixes (D-CUT.CLASS; feat→MINOR, else PATCH); MAJOR stays owner-
+         gated, breaking markers surface as a note, never auto-RED
+         (D-CUT.MAJOR). Fail-safe: indeterminate published state degrades to
+         pass-with-caveat, never a false RED (mirrors gates 8/9).
+      3. (B) Adds `loam release preflight <version>` (D-PRE.CLI: a leading
+         sub-token on the existing release parser; `loam release <version>`
+         is UNCHANGED — no public-CLI break) emitting per-branch
+         fast-forward/merge-tree verdicts against main + the computed cut,
+         in a stable block recordable into the ratification artefact
+         (AC.PRE.1-5). HONESTLY a tool-assisted PARTIAL (relies on being
+         run) — NOT the structural pre-dispatch hook, which is a SEPARATE
+         scheduled item out of this cycle (D-PRE.PARTIAL).
+
+    Outcome-altitude ACs: AC.DOM.4 (non-dominating first-SHA multi-seal row
+    → dominating seal, never the early SHA; + real-row rev-list equality),
+    AC.CUT.4 (MINOR content under a PATCH target, and the inverse → RED
+    through run_all), AC.PRE.4 (conflicting/non-ff branch → reported
+    non-clean, end-to-end through the CLI).
+
+    STOP at sealed-local. Does NOT run `loam release`, does NOT tag, does
+    NOT push — the eventual single published cut is the dispatcher's action
+    AFTER all three cycles seal.
+
+    BASELINE 6ca68259 — HEAD of main at plan-authoring (v1.11.0 post-publish
+    backfill); confirm at apply time. Counter 195 next free; confirm at
+    apply time. Single-component loam-cli fence; NO other component's
+    runtime behavior changes.

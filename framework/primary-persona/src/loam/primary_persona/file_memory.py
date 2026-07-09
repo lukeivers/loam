@@ -408,6 +408,237 @@ def classify_volatility(text: str) -> str:
         return VOLATILITY_DURABLE
 
 
+# --- AC.WFD.* — write-side epistemic-type classifier -------------------
+#
+# A SIBLING of :func:`classify_volatility` on an ORTHOGONAL axis. The
+# volatility axis answers "how fresh is this claim" (durable / soft /
+# hard); this axis answers "is this a PROVABLE FACT, or the model's bare
+# opinion / speculation / plan". Both apply to every store-(b) write and
+# neither modifies the other (halt trigger §6.3 — the volatility axis is
+# untouched).
+#
+# Store (b) is a store of PROVABLE FACTS — a record of something that
+# specifically happened (event / state-after-work / verified finding) or
+# an ATTRIBUTED expression ("X said/assessed/predicted Y on date Z",
+# provable because the utterance-event is provable) — never a bare
+# opinion / speculation / plan asserted AS ground truth. The read side
+# never serves a non-fact AS a verified fact (the confidently-wrong-recall
+# leak Lens-0's protection floor forbids); it ANNOTATES a non-fact record
+# so its substance is still exposed but marked not-a-verified-fact.
+#
+# LOAD-BEARING invariant (halt trigger §6.1): this classifier TAGS a
+# write; it NEVER rejects, drops, gates, or re-routes one away from disk.
+# The write SET is unchanged (AC.WFD.7); only an additive ``epistemic:``
+# frontmatter field is added. A reject-gate would break the owner's
+# LIBERAL fact-ingest and is explicitly OUT.
+#
+# Deterministic, stdlib-only (``re``) — NO LLM / NO ``claude -p`` / NO API
+# key (halt trigger §6.5; the write path must not spawn a per-write model
+# call). True verifiability is the PERSONA's judgment (D2); this is the
+# crude-tell BACKSTOP behind it, tag-only + fail-safe-toward-FACT.
+#
+#   * EPISTEMIC_FACT — the default. Event / state / verified finding, an
+#     ATTRIBUTED expression, an ambiguous body, OR any classifier error.
+#     The never-suppress direction (mirrors classify_volatility's DURABLE
+#     never-drop floor): a misfire only ever leaves a record served
+#     UNMARKED, never annotates-away a legitimate fact and never drops one.
+#   * EPISTEMIC_NON_FACT — an AFFIRMATIVE bare opinion / speculation /
+#     plan tell, ABSENT an attribution veto AND ABSENT a durable-fact
+#     signal. Surfaced on recall with the not-a-verified-fact annotation
+#     (substance exposed, marked, never withheld).
+EPISTEMIC_FACT = "fact"
+EPISTEMIC_NON_FACT = "non-fact"
+
+#: Frontmatter key for the stored epistemic tag (the additive AC-driven
+#: schema-field precedent set by ``volatility:`` / ``salience:``). Read
+#: back by the recall side; ABSENT on a legacy / lever-off record, which
+#: the read side treats as FACT (fail-safe; byte-identical to pre-stage).
+_EPISTEMIC_KEY = "epistemic"
+
+#: The MASTER reversibility lever (mirrors
+#: :data:`keep_pace.retrieval.RANK_CONSTITUTIONAL_FLOOR` /
+#: ``SITUATIONAL_RULES_ENABLED``). ``True`` (default): ``write_episode``
+#: emits the ``epistemic:`` tag and the read side annotates a non-fact.
+#: ``False`` reverts to a COMPLETE no-op — no tag emitted, no annotation
+#: applied, writes + recall byte-identical to pre-stage, nothing on disk
+#: migrated or deleted, and a tagless legacy record reads back as a FACT
+#: (AC.WFD.8). Flipping ``True`` re-applies typing to NEW writes only.
+EPISTEMIC_TYPING_ENABLED = True
+
+#: Read-side annotation prefix for a non-fact-typed surfaced pointer
+#: (AC.WFD.3). Mirrors :data:`VOLATILE_SOFT_ANNOTATION` — the substance is
+#: exposed; only the not-a-verified-fact caution is added, never withheld.
+EPISTEMIC_NON_FACT_ANNOTATION = "[NOT A VERIFIED FACT — a recorded thought, not ground truth]"
+
+# The AFFIRMATIVE opinion / speculation / plan tells (Fork F). A match
+# (ABSENT the attribution veto AND the durable-fact veto below) tags a
+# body non-fact. The exact set is crude by design — grammar-level, not
+# semantic — and is backstopped by the persona's judgment (D2) + the
+# never-drop floor, so a missed tell only UNDER-annotates (a thought
+# slips through unmarked) and an over-fire only mildly over-annotates
+# (substance still exposed); neither loses a fact.
+_NON_FACT_TELL_RES: tuple[re.Pattern[str], ...] = (
+    # Opinion — a hedged first-person stance lead.
+    re.compile(
+        r"\b(?:i\s+think|i\s+feel|i\s+believe|i\s+reckon|"
+        r"in\s+my\s+opinion|imo|my\s+(?:sense|take|feeling|view|gut)\s+is|"
+        r"personally|if\s+you\s+ask\s+me)\b",
+        re.IGNORECASE,
+    ),
+    # Opinion — a subjective-evaluation copula ("X is elegant / annoying").
+    re.compile(
+        r"\b(?:is|are|was|were|feels?|looks?|seems?|sounds?)\s+"
+        r"(?:really|very|quite|so|pretty|rather|somewhat|kind\s+of|kinda|"
+        r"super|incredibly|remarkably|genuinely|honestly|truly|"
+        r"a\s+(?:bit|little))?\s*"
+        r"(?:elegant|beautiful|gorgeous|stunning|lovely|delightful|slick|"
+        r"ugly|annoying|frustrating|tedious|painful|clunky|janky|gross|"
+        r"weird|great|terrible|awful|amazing|awesome|brilliant|wonderful|"
+        r"fantastic|impressive|clever|neat|cool|nice|good|bad|beautiful)\b",
+        re.IGNORECASE,
+    ),
+    # Speculation / prediction — an uncertainty or forecast hedge.
+    re.compile(
+        r"\b(?:probably|likely|maybe|perhaps|presumably|possibly|"
+        r"i\s+(?:suspect|guess|bet|expect|predict|anticipate|wonder|assume|reckon)|"
+        r"my\s+guess|might\s+be|could\s+be|may\s+be|should\s+be|would\s+be|"
+        r"will\s+probably|it\s+seems\s+(?:like|that)|seems\s+like)\b",
+        re.IGNORECASE,
+    ),
+    # Plan / intent — a stated future action (a directive belongs in a
+    # rule, store (c); the intent itself is not a fact about the world).
+    re.compile(
+        r"\b(?:the\s+plan\s+is|next\s+(?:i'?ll|i\s+will|step|up)|"
+        r"i'?m\s+(?:going\s+to|gonna|planning\s+to|about\s+to)|"
+        r"i\s+(?:plan|intend|aim|mean)\s+to|i'?ll\s+\w|"
+        r"we\s+should|we\s+need\s+to|i\s+need\s+to|let'?s\s+\w|"
+        r"to-?do\b|todo\b)\b",
+        re.IGNORECASE,
+    ),
+)
+
+# The ATTRIBUTION veto (Fork B — the tension-dissolving move). A thought
+# authored WITH an author + a time is FACT-eligible: the utterance-EVENT
+# is provable even when the content is an opinion ("Luke called the design
+# elegant on 2026-07-02" is a fact — he said it). Attribution requires
+# BOTH an attribution VERB and a TEMPORAL anchor (who + when); either
+# alone is not an attributed record. This de-escalates a non-fact tell
+# back to FACT — the structural partition that lets the classifier be
+# tag-only and never need to reject.
+_ATTRIBUTION_VERB_RE = re.compile(
+    r"\b(?:said|says|stated|asserted|assessed|called|described|"
+    r"predicted|forecast(?:ed)?|planned|proposed|felt|remarked|noted|"
+    r"claimed|reported|expressed|commented|mentioned|observed|"
+    r"complained|praised|ruled|decided)\b",
+    re.IGNORECASE,
+)
+_TEMPORAL_ANCHOR_RE = re.compile(
+    r"\b(?:\d{4}-\d{2}-\d{2}|"
+    r"on\s+\d{1,2}(?:st|nd|rd|th)?|"
+    r"today|yesterday|tonight|"
+    r"this\s+(?:morning|afternoon|evening|session|week|month|year)|"
+    r"last\s+(?:week|night|session|month|year)|"
+    r"at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.|utc|cdt|cst|est|pst)?|"
+    r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}|"
+    r"\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))\b",
+    re.IGNORECASE,
+)
+
+# The DURABLE-FACT veto (Fork F). An event / state / verified-finding
+# signal that co-occurs with a hedge de-escalates back to FACT — a hedged
+# FACT ("I think the test passed") is still a fact; the hedge is surface
+# grammar over a provable finding. Mirrors classify_volatility's
+# durable-signal veto that keeps a ruling out of the hard-exclude class.
+# CASE-INSENSITIVE arm: event/state verbs + a version literal + a
+# ``key = value`` assignment (all readable lowercase).
+_DURABLE_FACT_SIGNAL_RE = re.compile(
+    r"(?:"
+    # event / state-after-work verbs (past-tense, an action that occurred).
+    r"\b(?:shipped|landed|sealed|committed|merged|deployed|released|"
+    r"completed|finished|fixed|created|wrote|ran|tested|verified|"
+    r"confirmed|found|discovered|measured|observed|returned|passed|"
+    r"failed|crashed|errored|resolved|closed|opened|added|removed|"
+    r"renamed|refactored|built|installed|configured|reverted|reproduced)\b"
+    # a version literal.
+    r"|\bv?\d+\.\d+(?:\.\d+)?\b"
+    # a ``key = value`` assignment (a verified finding).
+    r"|\b\w+\s*=\s*\S"
+    r")",
+    re.IGNORECASE,
+)
+
+# CASE-SENSITIVE arm of the durable-fact veto: a commit SHA (7-40 lower-hex,
+# containing at least one digit so a lowercase hex-only English word does
+# not read as a SHA) or an ALL-CAPS named constant (e.g. ``DEFAULT_TOP_N``,
+# ``HEAD``). Kept case-sensitive so a lowercase prose word is NOT mistaken
+# for a constant (the bug an IGNORECASE ``[A-Z_]+`` would introduce).
+_NAMED_CONSTANT_OR_SHA_RE = re.compile(
+    r"(?:\b[0-9a-f]{7,40}\b|\b[A-Z][A-Z0-9_]{2,}\b)"
+)
+
+
+def _has_durable_fact_signal(t: str) -> bool:
+    """True when a body carries an event / state / verified-finding signal
+    (the durable-fact veto). A SHA match must contain a digit so a
+    lowercase hex-only English word ("defaced") is not read as a SHA."""
+    if _DURABLE_FACT_SIGNAL_RE.search(t):
+        return True
+    for m in _NAMED_CONSTANT_OR_SHA_RE.finditer(t):
+        tok = m.group(0)
+        # An all-caps constant qualifies outright; a lower-hex run only
+        # when it actually contains a digit (else it is likely prose).
+        if tok.isupper():
+            return True
+        if any(ch.isdigit() for ch in tok):
+            return True
+    return False
+
+
+def classify_epistemic_type(text: str) -> str:
+    """Classify ``text`` as :data:`EPISTEMIC_FACT` / :data:`EPISTEMIC_NON_FACT`
+    (AC.WFD.1 / AC.WFD.2 / AC.WFD.4).
+
+    Deterministic + stdlib-only; no LLM / API call. Fail-safe TOWARD FACT
+    (the never-suppress direction, halt trigger §6.2): a body is tagged
+    non-fact ONLY when it carries an affirmative opinion / speculation /
+    plan tell AND is NOT attributed (author + time — Fork B) AND carries
+    no durable-fact signal. Ambiguity → fact; any error → fact.
+    """
+    try:
+        t = text or ""
+        non_fact_tell = any(rx.search(t) for rx in _NON_FACT_TELL_RES)
+        if not non_fact_tell:
+            return EPISTEMIC_FACT
+        # Fork B — the attribution veto: an author + a time make even an
+        # opinion a provable utterance-event.
+        attributed = bool(_ATTRIBUTION_VERB_RE.search(t)) and bool(
+            _TEMPORAL_ANCHOR_RE.search(t)
+        )
+        if attributed:
+            return EPISTEMIC_FACT
+        # Fork F — the durable-fact veto: a hedged finding is still a fact.
+        if _has_durable_fact_signal(t):
+            return EPISTEMIC_FACT
+        return EPISTEMIC_NON_FACT
+    except Exception:  # noqa: BLE001 — protection floor: never suppress a fact
+        return EPISTEMIC_FACT
+
+
+def read_epistemic_tag(path: Path | str) -> str:
+    """Return the STORED ``epistemic:`` tag for an episode file, or ``""``
+    when absent (AC.WFD.8 — a legacy / lever-off record has no tag and the
+    read side treats an absent tag as FACT, byte-identical to pre-stage;
+    no re-classification, no migration). Fail-open: any read / parse error
+    yields ``""`` (⇒ treated as fact), the never-suppress direction.
+    """
+    try:
+        content = Path(path).read_text(encoding="utf-8")
+        front, _ = _split_frontmatter(content)
+        return str(front.get(_EPISTEMIC_KEY, "") or "").strip()
+    except Exception:  # noqa: BLE001 — fail-open: absent ⇒ fact
+        return ""
+
+
 def memory_dir_for_workspace(workspace_root: Path | str) -> Path:
     """Resolve the file-based memory dir for ``workspace_root``.
 
@@ -723,6 +954,22 @@ class FileMemoryStore:
         if volatility == VOLATILITY_HARD:
             volatile_until = (ref_utc + VOLATILE_WINDOW).isoformat()
             volatile_block += f"volatile_until: {volatile_until}\n"
+        # AC.WFD.2 — type the write's EPISTEMIC kind AT INGEST on the axis
+        # orthogonal to volatility (provable-fact vs opinion/speculation/
+        # plan). Deterministic, no LLM/API (halt trigger §6.5). Fail-safe:
+        # classify_epistemic_type returns FACT on ambiguity or any error, so
+        # a misfire never annotates-away a legitimate fact on recall. The
+        # tag is ADDITIVE (AC.WFD.7 — the write SET is unchanged; body +
+        # path + tier + index are all as before; only this frontmatter field
+        # is added); it never rejects, drops, gates, or re-routes the write
+        # (halt trigger §6.1 — the owner's LIBERAL fact-ingest is preserved
+        # by construction). Behind the master lever (AC.WFD.8): lever off ⇒
+        # no field emitted ⇒ byte-identical to pre-stage.
+        if EPISTEMIC_TYPING_ENABLED:
+            epistemic = classify_epistemic_type(body)
+            epistemic_block = f"{_EPISTEMIC_KEY}: {epistemic}\n"
+        else:
+            epistemic_block = ""
         front = (
             "---\n"
             f"name: {name}\n"
@@ -732,6 +979,7 @@ class FileMemoryStore:
             f"group_id: {group_id}\n"
             f"salience: {salience}\n"
             f"{volatile_block}"
+            f"{epistemic_block}"
             f"{context_block}"
             "---\n"
         )

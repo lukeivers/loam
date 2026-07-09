@@ -584,14 +584,22 @@ def _episode_pointer(ep: dict[str, object]) -> str:
         summary = name
     if not summary:
         return ""
-    # AC.VOL.4 / D1 — a SOFT-volatile episode survives recall (born open)
-    # but its surfaced pointer is annotated so the session re-verifies the
-    # claim before serving it as current rather than trusting stale recall.
-    # The classifier is single-sourced in file_memory (lazy import — the
-    # module convention keeps keep_pace importable without the full
-    # persona surface). HARD-volatile never reaches here (filtered from
-    # the current view upstream); DURABLE gets no annotation.
+    # Read-side annotations (substance always exposed; only a caution is
+    # prefixed, never a withhold). Two orthogonal axes compose here:
+    #   * AC.VOL.4 / D1 — a SOFT-volatile episode survives recall (born
+    #     open) but is annotated so the session re-verifies before serving
+    #     it as current. HARD-volatile never reaches here (filtered from the
+    #     current view upstream); DURABLE gets no annotation.
+    #   * AC.WFD.3 — a NON-FACT-typed episode is never served AS a verified
+    #     fact: it is annotated not-a-verified-fact. Keyed on the STORED
+    #     ``epistemic:`` tag (absent ⇒ FACT ⇒ unmarked — a legacy / lever-off
+    #     record reads byte-identical to pre-stage; no re-classification, no
+    #     migration, AC.WFD.8). Behind the master lever, fail-open.
+    # Classifiers/levers are single-sourced in file_memory (lazy import —
+    # the module convention keeps keep_pace importable without the full
+    # persona surface).
     content = str(ep.get("content", "") or "").strip()
+    annotations: list[str] = []
     if content:
         from ..file_memory import (  # noqa: WPS433
             VOLATILITY_SOFT,
@@ -600,7 +608,27 @@ def _episode_pointer(ep: dict[str, object]) -> str:
         )
 
         if classify_volatility(content) == VOLATILITY_SOFT:
-            return f"From an earlier turn: {VOLATILE_SOFT_ANNOTATION} {summary}"
+            annotations.append(VOLATILE_SOFT_ANNOTATION)
+    try:
+        from ..file_memory import (  # noqa: WPS433
+            EPISTEMIC_NON_FACT,
+            EPISTEMIC_NON_FACT_ANNOTATION,
+            EPISTEMIC_TYPING_ENABLED,
+            read_epistemic_tag,
+        )
+
+        if EPISTEMIC_TYPING_ENABLED:
+            tag = str(ep.get("epistemic", "") or "").strip()
+            if not tag:
+                path = ep.get("path")
+                if path:
+                    tag = read_epistemic_tag(str(path))
+            if tag == EPISTEMIC_NON_FACT:
+                annotations.append(EPISTEMIC_NON_FACT_ANNOTATION)
+    except Exception:  # noqa: BLE001 — fail-open: no annotation on any error
+        pass
+    if annotations:
+        return f"From an earlier turn: {' '.join(annotations)} {summary}"
     return f"From an earlier turn: {summary}"
 
 

@@ -44,7 +44,7 @@ import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BASELINE = "a1166b8df958b55aa8a42d9ee0b8b5b660ac7259"
+BASELINE = "7eb8f98238537896503408a1433f47ee381ae6a1"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Literal
 
 from loam.orchestrator.ipc import ApplicationError
 from loam.scope_of_work import ScopeRuntime, ScopeSpec
@@ -43,11 +43,14 @@ from loam.scope_of_work.events import (
     StateTransitioned,
 )
 from loam.scope_of_work.spec import ScopeState
+from loam.usage_window_guard import UsageUnavailable
 
 from . import observability as obs
-from .config import CostConfig, RollingCeiling
+from .cap_probe import CachedCapProbe
+from .config import CapCeiling, CostConfig, RollingCeiling
 from .notification import CostNotification, CostNotifier, render_ceiling_warning_text
 from .spec import (
+    IPC_COST_CAP_CEILING_EXCEEDED,
     IPC_COST_ROLLING_CEILING_EXCEEDED,
     IPC_COST_SESSION_CEILING_EXCEEDED,
     CeilingAdjustment,
@@ -77,6 +80,27 @@ TERMINAL_STATES = {
 }
 
 
+@dataclass(frozen=True)
+class CapCeilingStatus:
+    """The recorded outcome of the WS-A4 subscription-cap check for the
+    most recent reservation (AC.CAPC.2 — the honest ledger record).
+
+    `outcome`:
+      * ``"off"``          — no cap_ceiling configured; probe never called.
+      * ``"silent"``       — utilization below the warn fraction.
+      * ``"warn"``         — utilization in the warn band, or above the
+                             refuse fraction with ``action="warn"``.
+      * ``"refuse"``       — utilization ≥ refuse fraction, ``action="refuse"``.
+      * ``"unavailable"``  — probe failed open. `utilization_fraction` is
+                             ``None`` by construction (no fabricated number)
+                             and `reason` carries the categorical token.
+    """
+
+    outcome: Literal["off", "silent", "warn", "refuse", "unavailable"]
+    utilization_fraction: float | None = None
+    reason: str | None = None
+
+
 @dataclass
 class CeilingContext:
     """Computed once per activation — the math inputs."""
@@ -104,10 +128,17 @@ class CostLedger:
         notifier: CostNotifier | None = None,
         session_resolver: SessionResolver | None = None,
         dispatch_fn: DispatchFn | None = None,
+        cap_probe: CachedCapProbe | None = None,
     ) -> None:
         self.store = store
         self._config = config
         self.notifier = notifier
+        # WS-A4: the TTL-cached subscription-cap probe. Constructed lazily
+        # the first time a configured cap check fires (default-OFF configs
+        # never bind the real OAuth probe). Tests inject a stubbed instance.
+        self._cap_probe = cap_probe
+        # WS-A4 (AC.CAPC.2): the honest record of the most recent cap check.
+        self.last_cap_check: CapCeilingStatus | None = None
         # Default session = orchestrator process lifecycle (inference #3).
         self._default_session_id = f"session-{int(unix_now())}"
         self._session_resolver = session_resolver or (
@@ -234,6 +265,13 @@ class CostLedger:
                 refusal_code=IPC_COST_ROLLING_CEILING_EXCEEDED,
             )
 
+        # --- account-wide subscription cap ceiling (WS-A4) ---
+        # The outermost ring: after this ledger's own session/rolling
+        # ceilings, gate on the REAL account-wide weekly-cap utilization.
+        # Raises on refuse (no reservation inserted); returns on
+        # warn/silent/off/unavailable so flow continues to the insert.
+        self._check_cap_ceiling(scope_id=scope_id)
+
         # --- gate passed: insert reservation ---
         reservation = Reservation(
             scope_id=scope_id,
@@ -251,6 +289,103 @@ class CostLedger:
             reserved_money_cents=declared_money,
         )
         return reservation
+
+    # -- subscription cap ceiling (WS-A4) -----------------------------
+
+    def _check_cap_ceiling(self, *, scope_id: str) -> None:
+        """Gate on the REAL account-wide Claude weekly-cap utilization.
+
+        Default-OFF (AC.CAPC.3): with no `cap_ceiling` configured the
+        probe is never consulted and this is a no-op record. Otherwise it
+        reads the TTL-cached probe (AC.CAPC.5) and applies the three-region
+        policy (AC.CAPC.1). On `UsageUnavailable` it fails OPEN and records
+        the categorical reason with NO utilization number (AC.CAPC.2).
+
+        Raises `ApplicationError(IPC_COST_CAP_CEILING_EXCEEDED)` only in the
+        refuse case; every other outcome returns so the reservation lands.
+        """
+        cap = self._config.cap_ceiling
+        if cap is None:
+            self.last_cap_check = CapCeilingStatus(outcome="off")
+            return
+
+        if self._cap_probe is None:
+            # Lazy bind — a configured cap with no injected probe uses the
+            # real sealed usage-window-guard reader (import-only compose).
+            self._cap_probe = CachedCapProbe()
+
+        result = self._cap_probe.read()
+
+        if isinstance(result, UsageUnavailable):
+            # Fail OPEN: a cap guard that failed closed on a network blip
+            # would freeze all authorized work. The WS-A1 alert covers the
+            # blind window; here dispatch proceeds and the record carries
+            # the categorical reason and no fabricated number.
+            self.last_cap_check = CapCeilingStatus(
+                outcome="unavailable",
+                utilization_fraction=None,
+                reason=result.reason.value,
+            )
+            obs.cap_ceiling_unavailable(
+                scope_id=scope_id, reason=result.reason.value
+            )
+            return
+
+        # Probe normalizes the endpoint's [0, 100] percentage to a [0, 1]
+        # fraction so it compares against the config fractions directly.
+        util_fraction = result.seven_day.utilization / 100.0
+
+        if util_fraction >= cap.refuse_fraction:
+            if cap.action == "refuse":
+                self.last_cap_check = CapCeilingStatus(
+                    outcome="refuse", utilization_fraction=util_fraction
+                )
+                obs.cap_ceiling_refused(
+                    scope_id=scope_id,
+                    utilization_fraction=util_fraction,
+                    refuse_fraction=cap.refuse_fraction,
+                )
+                raise ApplicationError(
+                    IPC_COST_CAP_CEILING_EXCEEDED,
+                    (
+                        "subscription weekly-cap ceiling exceeded: "
+                        f"utilization {util_fraction:.3f} >= refuse "
+                        f"fraction {cap.refuse_fraction}"
+                    ),
+                    data={
+                        "scope_id": scope_id,
+                        "ceiling_kind": "cap",
+                        "axis": "seven_day",
+                        "utilization_fraction": util_fraction,
+                        "refuse_fraction": cap.refuse_fraction,
+                    },
+                )
+            # action == "warn": above the refuse fraction but configured to
+            # warn only — dispatch proceeds.
+            self._record_cap_warn(scope_id=scope_id, util_fraction=util_fraction, cap=cap)
+            return
+
+        if util_fraction >= cap.warn_fraction:
+            self._record_cap_warn(scope_id=scope_id, util_fraction=util_fraction, cap=cap)
+            return
+
+        # Below the warn fraction — proceed silently.
+        self.last_cap_check = CapCeilingStatus(
+            outcome="silent", utilization_fraction=util_fraction
+        )
+
+    def _record_cap_warn(
+        self, *, scope_id: str, util_fraction: float, cap: CapCeiling
+    ) -> None:
+        self.last_cap_check = CapCeilingStatus(
+            outcome="warn", utilization_fraction=util_fraction
+        )
+        obs.cap_ceiling_warning(
+            scope_id=scope_id,
+            utilization_fraction=util_fraction,
+            warn_fraction=cap.warn_fraction,
+            refuse_fraction=cap.refuse_fraction,
+        )
 
     # -- gate helper --------------------------------------------------
 

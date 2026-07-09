@@ -128,6 +128,62 @@ def ceiling_warning(
         )
 
 
+def cap_ceiling_warning(
+    *,
+    scope_id: str,
+    utilization_fraction: float,
+    warn_fraction: float,
+    refuse_fraction: float,
+) -> None:
+    """WS-A4 (AC.CAPC.1): weekly cap in the warn band — dispatch proceeds."""
+    with _TRACER.start_as_current_span("loam.cost.cap_ceiling_warning") as span:
+        _set(
+            span,
+            {
+                "loam.cost.scope_id": scope_id,
+                "loam.cost.cap_utilization_fraction": utilization_fraction,
+                "loam.cost.cap_warn_fraction": warn_fraction,
+                "loam.cost.cap_refuse_fraction": refuse_fraction,
+            },
+        )
+
+
+def cap_ceiling_refused(
+    *,
+    scope_id: str,
+    utilization_fraction: float,
+    refuse_fraction: float,
+) -> None:
+    """WS-A4 (AC.CAPC.1): weekly cap above the refuse fraction — refused."""
+    with _TRACER.start_as_current_span("loam.cost.cap_ceiling_refused") as span:
+        _set(
+            span,
+            {
+                "loam.cost.scope_id": scope_id,
+                "loam.cost.cap_utilization_fraction": utilization_fraction,
+                "loam.cost.cap_refuse_fraction": refuse_fraction,
+                "loam.cost.refusal_code": -32063,
+            },
+        )
+
+
+def cap_ceiling_unavailable(*, scope_id: str, reason: str) -> None:
+    """WS-A4 (AC.CAPC.2): probe failed open — categorical reason, NO number.
+
+    By construction this span carries only the categorical reason: there
+    is no utilization attribute to set because a fail-open never yields a
+    percentage.
+    """
+    with _TRACER.start_as_current_span("loam.cost.cap_ceiling_unavailable") as span:
+        _set(
+            span,
+            {
+                "loam.cost.scope_id": scope_id,
+                "loam.cost.cap_unavailable_reason": reason,
+            },
+        )
+
+
 def ceiling_adjusted(
     *,
     ceiling_kind: str,

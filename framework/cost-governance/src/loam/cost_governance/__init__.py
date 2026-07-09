@@ -47,8 +47,10 @@ Dispatch chain: safety → reversibility → cost → orig_activate.
 
 from __future__ import annotations
 
+from .cap_probe import CachedCapProbe
 from .config import (
     PRODUCTION_STAKE_WARNING_FRACTION_FLOOR,
+    CapCeiling,
     CostConfig,
     RollingCeiling,
     SessionCeiling,
@@ -65,7 +67,7 @@ from .dry_run import (
     dry_run_estimate,
 )
 from .ipc_wiring import register_cost_governance_ipc
-from .ledger import CostLedger
+from .ledger import CapCeilingStatus, CostLedger
 from .notification import (
     CostChannel,
     CostNotification,
@@ -74,6 +76,7 @@ from .notification import (
 )
 from .rollup import RollupRunResult, RollupTask
 from .spec import (
+    IPC_COST_CAP_CEILING_EXCEEDED,
     IPC_COST_ROLLING_CEILING_EXCEEDED,
     IPC_COST_SCOPE_BUDGET_EXCEEDED,
     IPC_COST_SESSION_CEILING_EXCEEDED,
@@ -89,6 +92,9 @@ from .store import CostStore
 
 __all__ = [
     "BudgetEnvelope",
+    "CachedCapProbe",
+    "CapCeiling",
+    "CapCeilingStatus",
     "CeilingAdjustment",
     "ConfidenceBand",
     "CostChannel",
@@ -99,6 +105,7 @@ __all__ = [
     "CostNotifier",
     "CostStore",
     "EstimateResult",
+    "IPC_COST_CAP_CEILING_EXCEEDED",
     "IPC_COST_ROLLING_CEILING_EXCEEDED",
     "IPC_COST_SCOPE_BUDGET_EXCEEDED",
     "IPC_COST_SESSION_CEILING_EXCEEDED",

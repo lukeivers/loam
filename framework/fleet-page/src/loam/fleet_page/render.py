@@ -118,7 +118,7 @@ def _split_runs(fleet: dict) -> tuple[list[dict], list[dict]]:
 
 
 def _live_panel(fleet: dict | None) -> str:
-    if fleet is MISSING:
+    if fleet is None:
         return _panel_missing("Live agents")
     live, _ = _split_runs(fleet)
     if not live:
@@ -151,7 +151,7 @@ def _live_panel(fleet: dict | None) -> str:
 
 
 def _outcomes_panel(fleet: dict | None) -> str:
-    if fleet is MISSING:
+    if fleet is None:
         return _panel_missing("Recent outcomes")
     _, finished = _split_runs(fleet)
     if not finished:
@@ -188,7 +188,7 @@ def _outcomes_panel(fleet: dict | None) -> str:
 
 
 def _cost_panel(cost_rows: list[dict] | None) -> str:
-    if cost_rows is MISSING:
+    if cost_rows is None:
         return _panel_missing("This week's cost")
     if not cost_rows:
         return (
@@ -226,7 +226,7 @@ def _cost_panel(cost_rows: list[dict] | None) -> str:
 
 
 def _decisions_panel(decisions: list[dict] | None) -> str:
-    if decisions is MISSING:
+    if decisions is None:
         return _panel_missing("Needs a human")
     if not decisions:
         return (

@@ -31,6 +31,7 @@ artifact to a target dir (default ``~/Library/LaunchAgents``).
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -41,7 +42,7 @@ DEFAULT_INTERVAL_S = 300
 def render_program_args(
     *,
     out_path: Path | str,
-    roots: list[Path | str],
+    roots: Sequence[Path | str],
     python: str | None = None,
 ) -> list[str]:
     """The argv the scheduled job runs: this interpreter, ``-m
@@ -59,7 +60,7 @@ def render_program_args(
 def render_plist(
     *,
     out_path: Path | str,
-    roots: list[Path | str],
+    roots: Sequence[Path | str],
     label: str = DEFAULT_LABEL,
     interval_s: int = DEFAULT_INTERVAL_S,
     python: str | None = None,
@@ -96,7 +97,7 @@ def render_plist(
 def install_launchd_job(
     *,
     out_path: Path | str,
-    roots: list[Path | str],
+    roots: Sequence[Path | str],
     launch_agents_dir: Path | str | None = None,
     label: str = DEFAULT_LABEL,
     interval_s: int = DEFAULT_INTERVAL_S,
@@ -124,7 +125,7 @@ def install_launchd_job(
 def render_cron_line(
     *,
     out_path: Path | str,
-    roots: list[Path | str],
+    roots: Sequence[Path | str],
     minutes: int = 5,
     python: str | None = None,
 ) -> str:

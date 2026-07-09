@@ -32,19 +32,23 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Callable
+from typing import Callable, TypeVar
 
 from .render import render_page
 
+_T = TypeVar("_T")
 
-def _safe(source: Callable[[], object]):
+
+def _safe(source: Callable[[], _T]) -> _T | None:
     """Call a source; on ANY exception return ``None`` (MISSING).
 
     The breadth is deliberate: an unavailable source can surface as
     ImportError (uninstalled), OSError (store/file gone), or a
     component's own typed error (corrupted state).  All of them mean the
     same thing to the page — this panel cannot be drawn — and none of
-    them may take the whole page down (AC.PAGE.3)."""
+    them may take the whole page down (AC.PAGE.3).  Preserves the
+    source's return type so the renderer's ``dict|None`` / ``list|None``
+    parameters stay type-checked."""
     try:
         return source()
     except Exception:

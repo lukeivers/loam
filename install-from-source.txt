@@ -217,3 +217,15 @@ pytest-asyncio>=0.23
 -e ./framework/fleet-page
 -e ./framework/weekly-cap-alert
 -e ./framework/weekly-cost-rollup
+
+# adversarial-review (D1 model-role registry + D2 Codex critic leg,
+# one of the eight backplane workstreams). PRE-EXISTING registration
+# gap surfaced by this integration's clean-cwd import check: the
+# component has shipped on `main` since before this cut but was never
+# registered in install-from-source.txt, so a cold source install
+# never editable-installed it and `import adversarial_review` failed
+# from a clean cwd. Leaf (no inter-component deps), top-level import
+# name `adversarial_review`, console script `adversarial-review`.
+# Registered here so the D1/D2 registry + Codex leg resolve on a cold
+# install (AC.BPI.2 / AC.BPI.6). Root file under no component fence.
+-e ./framework/adversarial-review

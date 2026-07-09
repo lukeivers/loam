@@ -1,0 +1,46 @@
+# User-state migration — v1.12.0 (per-session episodic resume + release-CLI /
+# guard-floor / brittle-guard hardening + memory-smoke supersession stale-test
+# correction)
+#
+# Declared per the migration release-gate convention: EVERY release declares a
+# user-state migration; a NO-OP is a valid declared migration. v1.12.0 is a
+# MIXED MINOR integrating five sealed cycles that landed linearly on main; it
+# re-schemas, moves, or removes NO pre-existing stored .loam/ user state.
+
+version: v1.12.0
+slug: v1-12-0-per-session-resume-and-release-machinery-hardening
+slice: "v1.12.0 MIXED MINOR — per-session episodic resume (AC.PSR.1-8) on the sealed primary-persona component + release-CLI tag-target/cut/preflight hardening (AC.DOM/CUT/PRE) + shared-doc guard-floor coverage (AC.SDG/SDC) + brittle-guard intent conversion (AC.BVG) + FBM Tier-1 smoke supersession hard-exclude stale-test correction (AC.SMKSUP.1)"
+date: 2026-07-09
+disposition: leave
+
+operation: no-op
+rationale: >
+  A user upgrading v1.11.0 -> v1.12.0 needs no state transformation. Verified
+  Tier-0 against the five cycles' source:
+
+  (1) PER-SESSION EPISODIC RESUME (AC.PSR.1-8) scopes the resume READ path by
+  the channel-session key (CLAUDE_PERSONA / workspace-slug) and writes a
+  SECONDARY, human-readable handoff to `workspace/.loam/handoffs/<persona>.md`
+  (a workspace user-state home; atomic write). It adds NO schema change to the
+  episodic corpus, does NOT re-key or move any existing stored episode, and
+  fails soft to workspace-global when no session key is present (AC.PSR.3 /
+  AC.PSR.5) — so pre-v1.12.0 workspaces with no per-persona handoff read back
+  safely and unchanged. The handoff file is regenerated at write time; its
+  absence pre-upgrade is not a defect.
+
+  (2) The RELEASE-CLI hardening (AC.DOM/CUT/PRE), SHARED-DOC GUARD-FLOOR
+  coverage (AC.SDG/SDC), BRITTLE-GUARD intent conversion (AC.BVG), and FBM
+  Tier-1 SMOKE-SUPERSESSION stale-test correction (AC.SMKSUP.1) are all
+  META-FRAMEWORK build-discipline changes (release gates, guard registries,
+  test assertions). None reads, writes, re-schemas, or removes stored .loam/
+  user state; they touch loam's own build/release machinery only.
+
+  Net: additive + read-back-safe; no rewrite of existing records; no index /
+  schema / on-disk-format change to any user-state store.
+
+reversibility: >
+  Downgrading v1.12.0 -> v1.11.0 is safe with no state rollback. The only new
+  on-disk artifact is the optional per-persona handoff file under
+  workspace/.loam/handoffs/; a v1.11.0 runtime simply does not read it (the
+  pre-v1.12.0 resume path is unaffected). No stored episode, corpus index, or
+  rules-store record was rewritten, so there is nothing to reverse.

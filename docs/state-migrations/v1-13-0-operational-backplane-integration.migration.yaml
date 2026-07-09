@@ -1,0 +1,50 @@
+# User-state migration — v1.13.0 (Tilth operational-backplane integration)
+#
+# Declared per the migration release-gate convention: EVERY release declares a
+# user-state migration; a NO-OP is a valid declared migration. v1.13.0 is a
+# MINOR assembling eight already-sealed backplane workstreams (five new runtime
+# components + two additive sealed-component amendments) onto one integration
+# branch; it re-schemas, moves, or removes NO pre-existing stored .loam/ user
+# state.
+
+version: v1.13.0
+slug: v1-13-0-operational-backplane-integration
+slice: "v1.13.0 MINOR — Tilth operational-backplane integration: five NEW runtime components (file-lease-registry, fleet-collector, fleet-page, weekly-cap-alert, weekly-cost-rollup) + two additive sealed-component amendments (cost-governance cap-% ceiling AC.CAPC; adversarial-review model-role registry + Codex critic leg AC.MRR)"
+date: 2026-07-09
+disposition: leave
+
+operation: no-op
+rationale: >
+  A user upgrading v1.12.0 -> v1.13.0 needs no state transformation. Verified
+  Tier-0 against the eight workstreams' content:
+
+  (1) The FIVE NEW runtime components are all ADDITIVE and read-only over
+  EXISTING on-disk artifacts. fleet-collector globs the handsoff-loop run
+  records (run_record.jsonl / run_summary.json) agents already produce — it
+  READS them, writes nothing back. fleet-page RENDERS an HTML file from the
+  collector + observability-aggregator query API + per-project-pm decision
+  queue — output-only, no state mutation. weekly-cap-alert / weekly-cost-rollup
+  read the usage-window-guard OAuth probe + aggregator and emit an artifact.
+  file-lease-registry ships a registry component whose dispatch-path wiring is
+  OWNER-HELD (not activated this cut). None re-schemas, moves, or removes any
+  stored .loam/ record.
+
+  (2) The TWO SEALED-COMPONENT AMENDMENTS are additive. cost-governance's
+  cap-% ceiling (AC.CAPC) adds a TTL-cached read wrapper over the sealed
+  usage-window-guard probe — no new stored state. adversarial-review's
+  model-role registry + Codex critic leg (AC.MRR) add a model-selection
+  registry + an optional critic leg; the default path stays byte-identical
+  (AC.MRR.1) and no stored user-state schema changes.
+
+  Net: additive + read-back-safe; no rewrite of existing records; no index /
+  schema / on-disk-format change to any user-state store. A pre-v1.13.0
+  workspace reads back unchanged.
+
+reversibility: >
+  Downgrading v1.13.0 -> v1.12.0 is safe with no state rollback. The new
+  components only ADD read-only collectors + output artifacts (an emitted
+  fleet-page HTML, a weekly rollup/alert artifact); a v1.12.0 runtime simply
+  does not run them. No stored episode, corpus index, decision-queue, or
+  rules-store record was rewritten, so there is nothing to reverse. The two
+  sealed amendments are additive over their components' prior sealed state;
+  removing them restores the prior behavior with no on-disk residue.

@@ -1,0 +1,81 @@
+schema_version: 3
+amendment:
+  # slug-identified (schema v3); number NOT pre-allocated
+  # (feedback_version_numbers_at_release_time).
+  slug: ws-a4-cost-ceiling
+  title: "WS-A4 — subscription cap-% into the cost-governance ledger"
+
+# BASELINE: c53458da — canonical loam HEAD (main) at plan-authoring time
+# (docs(state): v1.12.0 canonical SHIPPED-LOCAL trailing-claim). This is
+# the pre-amendment tip; advancing the seal-test BASELINE to it narrows
+# the seal-diff window to just this amendment's cost-governance touches.
+baseline: "c53458da"
+
+plan: docs/plans/ws-a4-cost-ceiling.md
+
+components:
+  - name: cost-governance
+    new_component: false           # follow-on; advances the existing sidecar
+    seal_test: framework/cost-governance/tests/test_no_sealed_amendments.py
+    sidecar: framework/cost-governance/tests/SEAL_COMMIT
+    frozen_baseline: false
+    extra_allowed_prefixes: []
+
+# Universal admissions — the standard cross-cycle set.
+universal_paths:
+  prefixes:
+    - docs/plans/
+  files:
+    - CLAUDE.md
+    - docs/STATE.md
+
+narrative:
+  target: docs/plans/sealed/ws-a4-cost-ceiling.md
+  body: |
+    # WS-A4 — subscription cap-% into the cost-governance ledger
+
+    Per docs/plans/ws-a4-cost-ceiling.md. Closes the inventory-named gap
+    (BACKPLANE-PLAN §5, Track A): the cost-governance ledger enforced its
+    own session/rolling/session-money ceilings but had no knowledge of the
+    account-wide Claude weekly-cap utilization. A dispatch could pass every
+    local ceiling while the real seven_day subscription cap was near
+    exhaustion.
+
+    THE FIX: the sealed usage-window-guard probe (import-only compose; the
+    component is untouched) becomes a fourth ceiling source inside
+    CostLedger.reserve_or_refuse, after the session + rolling checks. A new
+    optional CapCeiling config (refuse_fraction + warn_fraction + action)
+    drives a three-region gate on the normalized seven_day utilization:
+    below warn → silent; warn..refuse → proceed with a recorded warning;
+    at/above refuse → typed refusal (IPC_COST_CAP_CEILING_EXCEEDED, -32063)
+    when action="refuse", or a warning when action="warn".
+
+    Two asymmetries the design commits to deliberately. (1) Default-OFF:
+    with no cap_ceiling configured the probe is never consulted and the
+    ledger behaves exactly as before — no regression to the existing
+    time/token/money ceilings. (2) Fail-OPEN: on UsageUnavailable the
+    dispatch proceeds and the ledger records the categorical reason with NO
+    fabricated utilization number — a cap guard that failed closed on a
+    network blip would freeze all authorized work, and the WS-A1 weekly-cap
+    alert covers the blind window. The probe reading is TTL-cached so N
+    parallel dispatches share one OAuth read and the sync gate stays
+    deterministic. The production-stake safety floor clamps the cap's warn
+    fraction to 0.6 at runtime without mutating the config file, mirroring
+    the existing AC.PSAFE.3 warning-fraction floor.
+
+    ACs: AC.CAPC.1 ★ outcome-altitude (three-region gate through the real
+    reserve_or_refuse entry point — refuse/warn/silent, plus action="warn"),
+    AC.CAPC.2 (UsageUnavailable fails open; record carries the categorical
+    reason and no number), AC.CAPC.3 (default-OFF; unconfigured cap never
+    probes — no regression, full existing suite green), AC.CAPC.4
+    (production-stake clamps the cap warn fraction to 0.6 without mutating
+    source), AC.CAPC.5 (TTL cache — N reserves within the window trigger one
+    probe).
+
+    Fence: cost-governance (source: spec.py IPC code, config.py CapCeiling +
+    floor, cap_probe.py TTL cache, ledger.py cap check, observability.py cap
+    spans, __init__ exports, pyproject usage-window-guard dep; tests:
+    test_AC_CAPC_cap_ceiling.py). Derivation line: INSTANCE of the existing
+    ceiling-source pattern extended to an account-wide reading; composes
+    with feedback_token_pacing_is_owner_call (the weekly cap is the real
+    limit; the ledger now gates on it).

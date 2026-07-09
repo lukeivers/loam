@@ -1,0 +1,93 @@
+# Per-session resume handoff — episodic resume scoped by channel-session
+
+Per `docs/plans/per-session-resume-handoff.md` (build-ready; single-owner
+build gate per plan §3) and the ratified design
+`workspace/.scratch/claude-output/per-session-resume-handoff-design.md`
+(root-caused + advisor-hardened; named decisions D1–D5). Single-component
+amendment on the EXISTING `framework/primary-persona/` component; advances
+the sidecar. Composes on the SEALED SessionStart contributor registry (#45)
++ emitter (#46) + the memory-write queue/worker (amendment J / #48) +
+encoding-context capture (AC.FBMT1.ENCC.1) + active-thread (AC.MSC.2) +
+the consolidated keep-pace turn contributor (AC-FBM-CON-1).
+
+Root cause (Tier-0, pinned at plan-authoring): episodic resume is keyed on
+the workspace (`group_id=workspace_slug`, `pos3`), but multiple concurrent
+channel-sessions (master-control / loam-dev / tilth-dev) share one
+workspace — so a session at session-start pulls another session's newest
+episodes. There is no per-session dimension in either the write (group_id)
+or the read (retrieval filter). The anchor that solves it: `CLAUDE_PERSONA`
+is exported into every hook process and is restart-stable
+(`CLAUDE_CODE_SESSION_ID` is not — fresh per process, breaks the very
+resume being fixed).
+
+Plan-authoring refinements + the rebase re-verification (surfaced, not smoothed):
+  - The design's per-turn file pointer (`memory_consumer.py`) is the DORMANT
+    MCP twin; the LIVE per-turn episodic read is `keep_pace/retrieval.py`
+    (`_episode_hits` scoped by `episode_group_ids` at `retrieval.py:1734`).
+    Plan re-points to the live surface; the dormant twin is scoped
+    consistently so re-enabling the MCP path can't reintroduce the leak.
+    (D3 already delegated live-vs-dormant tagging to the builder.)
+  - The obvious filter method (global top-N THEN filter by session_key)
+    silently starves persona P's window; the filter must engage DURING
+    candidate selection, upstream of every volume cut. Post-RVL there are
+    THREE cuts (plan §2A): the FTS candidate window (1600), the num_results
+    cut (200), and the INJECTION_CHAR_CAP byte budget (5000). The session-start
+    recency walk has its OWN cut — a limit*4=32 all-persona collection at
+    file_memory.py:1151 BEFORE frontmatter is read — which starves
+    resume-after-idle (the primary scenario); the fix is a persona-aware
+    bounded walk, not a filter after the collection. AC.PSR.1/.7/.8 fixtures
+    interleave personas so a post-filter method fails; AC.PSR.8 specifically
+    forces the byte-cap exhaustion the RVL caps introduced.
+
+The shape:
+  - WRITE: `session_key` captured at the Stop-hook enqueue
+    (`stop_emitter._spawn_memory_write` → `memory_write_queue.enqueue`),
+    threaded through the detached worker's `_build_episode_args` FROM THE
+    RECORD (never the worker's own env) into episode frontmatter via
+    `file_memory.write_episode`. `group_id=workspace_slug` untouched.
+  - READ: an optional in-scan `session_key` filter on ALL THREE
+    `file_memory` read surfaces — `recent_episodes` (session-start;
+    persona-aware bounded walk), `_fts_search` (per-turn LIVE; fts5 column
+    via the D-MSC.5 rebuild), `_grep_search` (FTS-rebuild-window fallback;
+    group-loop fence) — each upstream of every volume cut, threaded through
+    `active_thread.py` (session-start) and `keep_pace/retrieval.py`'s
+    EPISODE branch only (per-turn), plus `session_start_emitter.py` wiring.
+    Corpus + decision branches + the decision-ledger catch-up sweep stay
+    workspace-global (D2 — semantic knowledge is shared).
+  - FALLBACK: a SECONDARY human-readable `workspace/.loam/handoffs/<persona>.md`
+    (turn-close write, session-start persona-filtered read) — convenience,
+    not correctness; crash-robust filtered episodes are PRIMARY.
+  - BACK-COMPAT: single-session workspaces (no `CLAUDE_PERSONA`) resume
+    byte-identical to today; pre-migration untagged episodes age out of the
+    8-episode recency window (no content-parsing backfill — D5).
+
+  - AC.PSR.1 — session-start resumes persona P's thread only (interleaved
+    store; fails a post-filter-after-top-N method).
+  - AC.PSR.2 — a persona with no episodes but a `handoffs/P.md` resumes from it.
+  - AC.PSR.3 — single-session (no CLAUDE_PERSONA) resumes as today; old
+    untagged episodes still surface (age-out, not hidden).
+  - AC.PSR.4 — decision-ledger / semantic retrieval stays workspace-global
+    (a P-session still sees another workstream's ruling).
+  - AC.PSR.5 — fail-soft: the reader failing to resolve ITS OWN session_key
+    degrades to workspace-global, never a blank resume (distinct from an
+    old untagged episode).
+  - AC.PSR.6 (outcome-altitude) — a real enqueue→worker turn-close write in
+    persona P stamps frontmatter `session_key=P` even with the worker's own
+    `CLAUDE_PERSONA` unset/wrong — the AC that catches a worker reading env
+    instead of the record.
+  - AC.PSR.7 — the per-turn keep-pace block in P shows P's episodic snippets
+    only (interleaved store) while cross-workstream rulings still surface
+    (the D2 split on the LIVE per-turn path).
+  - AC.PSR.8 — the session filter engages upstream of the RVL byte-budget cap:
+    with other-persona episodes both higher-BM25 than P's AND collectively
+    exceeding INJECTION_CHAR_CAP, P's episodes still render (a post-cap filter
+    would empty P's block). The falsifier the RVL volume caps introduced.
+
+Single-owner build gate (plan §3 / §8 Halt-trigger 1): master-control owns
+this build; loam-dev stays scoped to its own manual handoff. No group_id
+schema change, no session-END hook (turn-close write only), no SOURCE data
+migration (a recommended fts5 session_key INDEX column rides the existing
+D-MSC.5 derived-cache rebuild + only new writes gain the frontmatter field —
+Halt-trigger 4 evaluated + cleared, plan §2A). No ODD violation in surrounding
+code; the change is a named filter dimension + one frontmatter field consumed
+on the existing paths.

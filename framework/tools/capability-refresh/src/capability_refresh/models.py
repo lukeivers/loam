@@ -12,17 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Model-lineup tracking (AC.CLP-MDL.1/2).
+"""Model-lineup tracking (AC.CLP-MDL.1/2, AC.CLP-MDLR.1-5).
 
 Extracts Claude API model IDs from a fetched model-overview page,
 persists the current lineup as a machine-derivable artifact under
 ``.refresh/model-lineup/<source-id>.json``, and computes the delta
 (added / removed) vs the prior run.
 
-The extract step uses a deterministic regex over the raw fetched text
+The extract step uses deterministic parsing over the raw fetched text
 (no LLM call — consistent with D-CUR.4's no-hallucination-entry guard).
 The lineup artifact is machine state (same class as snapshots): it is a
 baseline for delta computation, NOT a reference doc.
+
+Format-robustness (AC.CLP-MDLR.*): detection must not key on a *presentation*
+detail. Upstream reformatted the "Latest models comparison" table so the
+Claude-API-ID row renders IDs as PLAIN text rather than backticked; a
+backtick-only extractor under-detected live models and faked add/remove
+deltas from a purely cosmetic edit. Extraction therefore unions two precise
+signals: (1) a STRUCTURAL parse of the comparison table's Claude-API-ID row
+(backtick-agnostic — the authoritative model list); (2) the original
+backtick-quoted regex over the whole page (preserved so prose-only
+backticked models with no table row are not dropped). Neither half is a
+page-wide plain-text grep, so incidental-prose / Bedrock / Google-Cloud IDs
+do not pollute the lineup.
 
 Uses ``corpus.resolve_state_path`` for all writes so the containment
 guard (AC.CLP-CUR.7) covers model-lineup paths automatically.
@@ -36,19 +48,76 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
-# Matches backtick-quoted `claude-X` identifiers in Markdown text.
-# Claude API IDs in the models-overview page appear as `claude-fable-5`,
-# `claude-sonnet-5`, etc. The pattern accepts letters, digits, hyphens,
-# and dots (some IDs include a date suffix like claude-opus-4-1-20250805).
-_MODEL_ID_PATTERN = re.compile(r"`(claude-[a-zA-Z0-9][a-zA-Z0-9.-]*)`")
+# Signal (2): backtick-quoted `claude-X` identifiers anywhere in the text.
+# Preserved from the original extractor. Conservative (backtick-gated, so
+# no over-capture) and REQUIRED to keep prose-only models that have no table
+# row — e.g. `claude-mythos-5`, `claude-mythos-preview` (AC.CLP-MDLR.5).
+_BACKTICK_MODEL_ID_PATTERN = re.compile(r"`(claude-[a-zA-Z0-9][a-zA-Z0-9.-]*)`")
+
+# The label that identifies the authoritative model-ID row of a comparison
+# table, after normalization (bold markers / backticks / whitespace stripped,
+# lowercased). Matches both the real page (``**Claude API ID**``) and the
+# fixture form (``Claude API ID``).
+_MODEL_ID_ROW_LABEL = "claude api id"
+
+# A single table cell holding exactly one canonical Claude API ID. Anchored
+# whole-cell (after stripping surrounding backticks/whitespace) so it accepts
+# ``claude-sonnet-5`` and ``claude-opus-4-8`` but rejects Bedrock-style
+# ``anthropic.claude-*`` and Google-Cloud ``claude-*@date`` cells and any
+# prose (AC.CLP-MDLR.4).
+_MODEL_ID_CELL_PATTERN = re.compile(r"^claude-[a-zA-Z0-9][a-zA-Z0-9.-]*$")
+
+
+def _normalize_cell(cell: str) -> str:
+    """Strip Markdown bold markers, backticks, and surrounding whitespace
+    from a table cell."""
+    return cell.strip().strip("*").strip("`").strip()
+
+
+def _extract_table_id_row_ids(text: str) -> List[str]:
+    """Signal (1): structurally parse Markdown table rows and return the
+    Claude API IDs from any row whose first cell is the Claude-API-ID label.
+
+    Backtick-agnostic: an ID is detected whether or not it is wrapped in
+    backticks in the cell. Row-label gating + whole-cell anchoring keep this
+    from capturing Bedrock / Google-Cloud ID rows, header cells, or prose
+    (AC.CLP-MDLR.1 / .4). Handles both the wide real-page table (one ID row
+    with many model columns) and the narrow fixture table (one ID per row).
+    """
+    ids: List[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = stripped.split("|")
+        # Drop the empty leading/trailing fields produced by the outer pipes.
+        if cells and cells[0].strip() == "":
+            cells = cells[1:]
+        if cells and cells[-1].strip() == "":
+            cells = cells[:-1]
+        if not cells:
+            continue
+        if _normalize_cell(cells[0]).lower() != _MODEL_ID_ROW_LABEL:
+            continue
+        for cell in cells[1:]:
+            value = _normalize_cell(cell)
+            if _MODEL_ID_CELL_PATTERN.match(value):
+                ids.append(value)
+    return ids
 
 
 def extract_model_ids(text: str) -> List[str]:
     """Return the sorted, deduplicated set of Claude API model IDs found
-    in *text*.  Operates on raw fetched text (not the normalized form)
-    so that backticks are always present regardless of HTML stripping.
-    AC.CLP-MDL.1 / AC.CLP-MDL.2."""
-    return sorted(set(_MODEL_ID_PATTERN.findall(text)))
+    in *text*.  Operates on raw fetched text (not the normalized form).
+
+    Unions the structural comparison-table Claude-API-ID row parse
+    (backtick-agnostic) with the conservative backtick-quoted prose regex,
+    so a cosmetic upstream formatting change (backtick -> plain) cannot fake
+    an add/remove delta and prose-only backticked models are still detected.
+    AC.CLP-MDL.1 / AC.CLP-MDL.2 / AC.CLP-MDLR.1-5."""
+    table_ids = _extract_table_id_row_ids(text)
+    backtick_ids = _BACKTICK_MODEL_ID_PATTERN.findall(text)
+    return sorted(set(table_ids) | set(backtick_ids))
 
 
 def compute_model_delta(old_ids: List[str], new_ids: List[str]) -> Dict:

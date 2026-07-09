@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Weekly cost roll-up — launchd user agent (macOS), WEEKLY (not a daemon).
+
+  Variables (bare names below so Template does not expand them in this comment;
+  filled by src/loam/weekly_cost_rollup/install.py):
+    LABEL            service label (com.loam.weekly-cost-rollup)
+    PYTHON           absolute path to the venv Python interpreter
+    WORKING_DIR      cwd for the process (usually the loam repo root)
+    NOTIFY_CMD_ARGS  zero or more string ProgramArguments entries wiring the
+                     notify-cmd flag to the workspace poster (empty means the
+                     roll-up falls back to its stdout default, in STDOUT_LOG)
+    STDOUT_LOG       absolute path to stdout log (also the roll-up's default
+                     delivery sink when the notify-cmd flag is unwired)
+    STDERR_LOG       absolute path to stderr log
+    WEEKDAY          day-of-week for the weekly run (0/7=Sunday, 1=Monday, ...)
+    HOUR             hour of day (0-23) for the weekly run
+    MINUTE           minute (0-59) for the weekly run
+
+  This is a WEEKLY job: StartCalendarInterval fires it once per week at the given
+  weekday/hour/minute; RunAtLoad also fires it once on load so a fresh install
+  produces a message without waiting up to a week. There is deliberately NO
+  KeepAlive: the roll-up is a short read-and-exit tick, not a persistent process.
+  The agent is a LaunchAgent, so it survives any single Claude session ending.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${LABEL}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>${PYTHON}</string>
+        <string>-m</string>
+        <string>loam.weekly_cost_rollup</string>${NOTIFY_CMD_ARGS}
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>${WORKING_DIR}</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>${WEEKDAY}</integer>
+        <key>Hour</key>
+        <integer>${HOUR}</integer>
+        <key>Minute</key>
+        <integer>${MINUTE}</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>${STDOUT_LOG}</string>
+
+    <key>StandardErrorPath</key>
+    <string>${STDERR_LOG}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+</dict>
+</plist>

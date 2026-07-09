@@ -262,6 +262,14 @@ to challenge" — visible inheritance, not silent.
 **§7.5 Halt triggers are part of the brief.** Every brief names its
 halt-and-surface conditions; their absence lets a builder treat "almost
 done" as license to exceed scope.
+**§7.6 The numeric-limit resource check (cap-bias catch).** Every numeric
+limit in this plan names (a) the RESOURCE constraint it derives from and
+(b) why the relevance floor + byte budget don't already cover it. A
+quantity cap with no named resource is a defect. Named exceptions: a
+channel with no relevance signal (count as budget denomination), or
+temporary scaffolding carrying a written retirement criterion. (Seated by
+the recall-volume-limits reshape after a count cap silently decided a
+recall set the relevance floor was supposed to own.)
 
 ## 8. Catching violations (for reviewers)
 
@@ -278,7 +286,12 @@ tests asserting implementation detail instead of outcome; (12) criteria
 without tests; (13) advisory rules where structural checks would work;
 (14) verdict-shape-only verification on state-mutating diffs — ≥1 test must
 read the post-mutation artefact from disk and compare content; output
-strings and audit rows describe intent, not effect.
+strings and audit rows describe intent, not effect; (15) numeric limit
+with no named resource (cap-bias catch, §7.6) — a quantity cap that
+neither names the resource it derives from nor why the relevance floor +
+byte budget don't cover it; flag it unless it is a signal-less channel
+(count as budget denomination) or scaffolding carrying a written
+retirement criterion.
 **§8.3 The two quick rules.** "The test will use pytest" is a violation;
 "the component refuses malformed input" is an objective. Most violations
 look like the first; most well-formed objectives look like the second.

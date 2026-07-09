@@ -58,7 +58,7 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from .retrieval import (
-    DEFAULT_TOP_N,
+    P_AT_K_MEASUREMENT_WINDOW,
     SALIENCE_THRESHOLD,
     RetrievalConfig,
     rank,
@@ -162,7 +162,7 @@ def precision_at_k(
     probes: Iterable[Probe],
     config: RetrievalConfig,
     *,
-    k: int = DEFAULT_TOP_N,
+    k: int = P_AT_K_MEASUREMENT_WINDOW,
     salience_threshold: float = SALIENCE_THRESHOLD,
 ) -> P5Report:
     """Precision-at-k over the PRODUCTION retrieval for a labeled probe set.

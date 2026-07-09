@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""AC.RSR.5 (context-budget-bound) — a hard cap on rules per pull.
+"""AC.RSR.5 (context-budget-bound) + AC.RVL.5 (recall volume-limits reshape).
 
-On any single situational pull at most ``SITUATIONAL_RULE_CAP`` rules
-inject regardless of how many match; the block respects its byte
-sub-budget; the cap is a named, tunable lever (raising it admits more,
-lowering it fewer). Excess matches are dropped by a DETERMINISTIC priority
-(strength / recency / path), never half-emitted.
+The situational-rules block is bounded by its BYTE sub-budget
+(``SITUATIONAL_RULE_CHAR_CAP``), not by a count. ``SITUATIONAL_RULE_CAP`` is
+now a NO-OP overflow backstop (raised well above any byte-budget-fit set), so
+a matched behavioral directive is NEVER dropped by count — only the byte
+sub-budget bounds the block, dropping a rule WHOLE (never half-emitted) on
+overflow. The count backstop remains a named, tunable lever: lowering it to a
+value below the byte-fit set re-imposes a count cut (the AC.RSR.5
+reversibility path), and excess is dropped by a DETERMINISTIC priority
+(strength / recency / path).
 """
 
 from __future__ import annotations
@@ -58,19 +62,27 @@ def _seed_many(store: Path, n: int) -> None:
         )
 
 
-def test_AC_RSR_5_at_most_cap_rules_inject(
+def test_AC_RSR_5_block_bounded_by_byte_budget_not_count(
     tmp_path: Path, monkeypatch
 ) -> None:
+    # AC.RVL.5 — SITUATIONAL_RULE_CAP is now a NO-OP overflow backstop, not the
+    # set-determiner. Seed MORE matched rules than fit the byte sub-budget but
+    # FEWER than the backstop: the BYTE budget (not the count) bounds the block,
+    # and no matched rule is dropped by count.
     store = tmp_path / "store"
     store.mkdir()
-    _seed_many(store, n=R.SITUATIONAL_RULE_CAP + 3)
-    # All match the one situation...
+    n = R.SITUATIONAL_RULE_CAP - 5  # < backstop, > byte-budget-fit
+    _seed_many(store, n=n)
     matched = rs.rules_for_situation(store, [_SITUATION])
-    assert len(matched) == R.SITUATIONAL_RULE_CAP + 3
-    # ...but exactly `cap` inject through the production entry-point.
+    assert len(matched) == n
     block = retrieve(prompt=_TRIGGER_PROMPT, config=_cfg(tmp_path, store))
     n_lines = block.count("\n  - ")
-    assert n_lines == R.SITUATIONAL_RULE_CAP
+    # The count backstop is a NO-OP here (n < backstop); the BYTE sub-budget is
+    # what bounds the block — strictly fewer than the matched set, and the block
+    # respects its byte sub-budget (drop-whole on overflow).
+    assert 0 < n_lines < n
+    assert n_lines < R.SITUATIONAL_RULE_CAP, "count backstop must not have cut"
+    assert len(block) <= R.SITUATIONAL_RULE_CHAR_CAP
 
 
 def test_AC_RSR_5_cap_drops_lowest_priority_deterministically(

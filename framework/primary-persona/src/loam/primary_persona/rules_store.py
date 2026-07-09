@@ -386,6 +386,27 @@ SEEDED_RULES: tuple[dict, ...] = (
         "provenance": ("feedback_no_amend_in_agent_dispatches.md",),
         "trigger": "bad-outcome",
     },
+    {
+        # AC.RVL.9 — the cap-bias structural catch's in-context leg. Fires on an
+        # ``authoring-plan`` turn (the altitude where every numeric limit first
+        # enters a plan) directing floor+budget over count caps. The inaugural
+        # real situational rule (the S4 channel's first non-demo case).
+        "directive": (
+            "Authoring a plan-doc: every numeric limit must name (a) the "
+            "RESOURCE it derives from and (b) why the relevance floor + byte "
+            "budget don't already cover it. A quantity cap with no named "
+            "resource is a defect; prefer a relevance floor + byte budget over "
+            "a count cap. Named exceptions: a channel with no relevance signal "
+            "(count as budget denomination), or temporary scaffolding carrying "
+            "a written retirement criterion."
+        ),
+        "situation": ("authoring-plan",),
+        "provenance": (
+            "2026-07-08-memory-recall-volume-limits-fable-review-rulings.md",
+            "memory-recall-volume-limits-and-cap-bias-2026-07-08.md",
+        ),
+        "trigger": "bad-outcome",
+    },
 )
 
 

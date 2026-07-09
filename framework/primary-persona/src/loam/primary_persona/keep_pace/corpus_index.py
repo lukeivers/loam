@@ -539,7 +539,9 @@ class CorpusIndex:
         query_tokens: list[str],
         num_results: int,
     ) -> list[dict[str, object]]:
-        """BM25-rank the corpus for ``query_tokens``; top ``num_results``.
+        """BM25-rank the corpus for ``query_tokens``; the RELEVANCE FLOOR
+        (``MIN_RELEVANCE_SCORE``), not ``num_results``, determines the discovered
+        set (AC.RVL.1 — every matched row that clears the floor is returned).
 
         Re-syncs first (AC.KP1.5 fresh read). ``query_tokens`` is an
         already-sanitised OR-of-tokens (see :mod:`work_anchor`); an
@@ -565,21 +567,30 @@ class CorpusIndex:
             pass
         conn = self._connection()
         match = " OR ".join(query_tokens)
-        # AC.RQ80.2 — fetch the per-doc ``doclen`` (UNINDEXED) for the omnibus
-        # length penalty. Fetch a WIDER candidate window than ``num_results``
-        # (ORDER BY raw bm25) so that when the penalty demotes an omnibus doc the
-        # freed top-N slot can be filled by a focused doc that was just outside
-        # the raw-bm25 cut. The penalized re-rank + truncation to ``num_results``
-        # happens below.
-        candidate_limit = max(num_results * 5, num_results)
+        # AC.RVL.1 (recall volume-limits reshape, cycle 1) — the corpus
+        # discovered set is FLOOR-determined, not count-determined. The legacy
+        # ``candidate_limit = max(num_results * 5, num_results)`` SQL window is
+        # REMOVED: it was the FIRST of two count gates on the corpus path (the
+        # LIMIT bound the candidate pool at 5×5 = 25 BEFORE the Python relevance
+        # floor ever ran, so the S2 "threshold replaces the count" conversion
+        # only half-landed — RF-1). Fetch EVERY matching row (ORDER BY raw bm25)
+        # so the relevance floor (``MIN_RELEVANCE_SCORE`` below) + the omnibus
+        # length penalty are the only things that gate the corpus discovered
+        # set. The corpus is the BOUNDED feedback-rules store, so this
+        # unbounded-with-floor fetch is cheap; there is NO numeric window to name
+        # under AC.RVL.6 because there is no count at all. ``num_results`` is
+        # retained in the signature only for the caller's disable guard
+        # (``<= 0`` => ``[]``, above); it no longer truncates the discovered set
+        # (see the pinned + rest merge below). ``doclen`` (UNINDEXED) still
+        # rides for the AC.RQ80.2 omnibus length penalty applied per-row below.
         sql = (
             "SELECT path, title, pointer, weight, pinned, doclen, "
             "superseded, bm25(corpus) AS score "
             "FROM corpus WHERE corpus MATCH ? "
-            "ORDER BY score LIMIT ?"
+            "ORDER BY score"
         )
         try:
-            cur = conn.execute(sql, (match, candidate_limit))
+            cur = conn.execute(sql, (match,))
             rows = cur.fetchall()
         except sqlite3.Error:
             return []
@@ -642,18 +653,23 @@ class CorpusIndex:
                 continue
             _emit(path, title, pointer, weight, pinned, rel, superseded)
 
-        # AC.RQ80.2 — re-rank by the PENALIZED relevance (descending) and
-        # truncate the NON-PINNED matched hits to num_results: the wider
-        # candidate window was fetched in raw bm25 order, so the penalty's
-        # demotion of an omnibus only takes effect after this re-sort. Pinned
-        # matched hits are NEVER truncated (the hard floor survives at its real
-        # matched score — AC-FBM-W-2), so they are partitioned out and kept ahead
-        # of the truncation. Stable on a secondary path key so the order is
+        # AC.RQ80.2 / AC.RVL.1 — re-rank by the PENALIZED relevance (descending);
+        # the whole matched-and-floor-cleared set was fetched in raw bm25 order,
+        # so the penalty's demotion of an omnibus takes effect on this re-sort.
+        # The SECOND corpus count gate is REMOVED: previously this truncated the
+        # non-pinned hits to ``rest_out[:num_results]`` (RF-1's second half-land),
+        # which silently let the count — not the floor — decide the discovered
+        # set whenever more than ``num_results`` rules cleared the floor. Now
+        # EVERY non-pinned hit that cleared ``MIN_RELEVANCE_SCORE`` reaches the
+        # merge; the relevance floor + the downstream byte budget
+        # (``retrieval.INJECTION_CHAR_CAP``) are the only volume controls. Pinned
+        # matched hits still lead (the hard floor survives at its real matched
+        # score — AC-FBM-W-2). Stable on a secondary path key so the order is
         # deterministic for equal penalized scores (no clock / no randomness).
         pinned_out = [h for h in out if bool(h.get("pinned"))]
         rest_out = [h for h in out if not bool(h.get("pinned"))]
         rest_out.sort(key=lambda h: (-float(h["score"]), str(h["path"])))
-        out = pinned_out + rest_out[:num_results]
+        out = pinned_out + rest_out
         seen = {str(h["path"]) for h in out}
 
         # AC-FBM-W-2 — force-fetch every pinned doc the MATCH query did NOT

@@ -59,6 +59,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
+from ..context_composer import ADDITIONAL_CONTEXT_CAP
 from . import objectives as _objectives
 from .corpus_index import (
     BASELINE_WEIGHT,
@@ -69,16 +70,58 @@ from .corpus_index import (
 from .work_anchor import WorkAnchor, is_trivial_prompt
 
 
-# AC.KP1.3 — top-N injection cap. The design recipe is N <= 5.
+# AC.KP1.3 / AC.RDP.2 / AC.RDP.5 — the post-merge count.
 #
-# AC.RDP.2 / AC.RDP.5 (memory redesign S2 / design Stage 3) — this is now the
-# SAFETY COUNT CAP that sits ABOVE the relevance threshold, NOT the primary
-# set-determiner. The relevance threshold (:data:`RELEVANCE_THRESHOLD`) decides
-# WHICH records are discovered (empty-OK); this cap is cheap insurance against a
-# pathological over-injection turn where many records clear the threshold. A
-# NAMED tunable lever (per-call ``top_n``): raising it relaxes the cap; the
-# threshold remains the real gate.
-DEFAULT_TOP_N = 5
+# AC.RVL.4 (recall volume-limits reshape, cycle 1) — this is now a NAMED
+# OVERFLOW BACKSTOP, no longer a set-determiner. Pre-reshape it was 5 and
+# truncated the merged set (:func:`_merge_by_score` ``combined[:top_n]``), so on
+# any turn where MORE than 5 records cleared the relevance floor the COUNT — not
+# the floor and not the byte budget — silently decided which records injected
+# (the failure this cycle finishes closing; S2 converted the merge gate to the
+# threshold but left this count cutting the set). It is RAISED to sit comfortably
+# above any plausible floor-clearing set that also fits the
+# :data:`INJECTION_CHAR_CAP` byte budget, so on every NORMAL-volume turn the byte
+# budget (best-first, drop-whole in :func:`_render_injection`) makes the cut and
+# this backstop is a NO-OP; it bites only on a pathological over-injection turn
+# (a bug elsewhere flooding the merged set). A NAMED tunable lever (per-call
+# ``top_n``) and the reversibility anchor: restoring it to 5 reproduces the
+# pre-reshape count-capped recall BYTE-FOR-BYTE (AC.RVL.4 / §15).
+#
+# RETIREMENT TRIGGER (the written criterion this backstop carries until removal):
+# retire the count backstop entirely once the standing retrieval telemetry
+# (:mod:`retrieval_telemetry`) shows the p99 floor-clearing-set-size fits within
+# INJECTION_CHAR_CAP across a sustained window of turns — at that point the byte
+# budget provably always cuts first and the count ceiling is dead weight.
+DEFAULT_TOP_N = 50
+
+# AC.RVL.4 — the PRECISION-AT-K MEASUREMENT WINDOW, kept DISTINCT from the
+# overflow backstop above. :func:`retrieval_metric.precision_at_k` uses this as
+# its default ``k`` denominator: p@5 is a fixed-window quality MEASUREMENT (how
+# much of the top-5 is relevant), a different concept from the recall set-size
+# ceiling. Before the reshape both were the single ``DEFAULT_TOP_N = 5``; raising
+# the backstop must NOT silently turn the p@5 metric into p@50, so the measurement
+# window is separated here. Not a recall lever — changing it re-scopes the metric
+# only, never the injected set.
+P_AT_K_MEASUREMENT_WINDOW = 5
+
+# AC.RVL.2 (recall volume-limits reshape, cycle 1) — the episode-fetch CANDIDATE
+# WINDOW. Pre-reshape :func:`_episode_hits` fetched ``num_results = config.top_n``
+# (= 5), so the FETCH COUNT — not the relevance floor — bounded the episode
+# discovered set BEFORE the merge floor ever ran. The episode store is LARGE
+# (thousands of episodes), so unlike the BOUNDED corpus it cannot be fetched
+# whole on the every-turn hot path; the fetch instead requests a GENEROUS window
+# decoupled from the injected count, and the relevance floor + threshold at the
+# merge (:data:`EPISODE_MIN_RELEVANCE_SCORE` / :data:`RELEVANCE_THRESHOLD` in
+# :func:`_merge_by_score`) determine the actual set (empty-OK). Sized well above
+# any plausible floor-clearing episode count for a single work-anchored query, so
+# the window never cuts a floor-clearing episode in the live regime.
+#
+# NAMED EXCEPTION under the AC.RVL.6 / cap-bias structural catch: a fetch-
+# efficiency window on a channel whose store is too large to fetch whole, NOT a
+# set-determiner. RETIREMENT TRIGGER: retire this window once
+# ``FileMemoryStore.search`` exposes a native relevance-floor parameter so the
+# fetch itself is floor-bounded and no candidate count is needed at all.
+EPISODE_CANDIDATE_WINDOW = 200
 
 # AC.RDP.2 (memory redesign S2 / design Stage 3) — the ABSOLUTE RELEVANCE
 # THRESHOLD that decides the DISCOVERED SET (empty-OK), replacing the fixed
@@ -119,14 +162,23 @@ RELEVANCE_THRESHOLD = 0.5
 # ordering but relevance stays primary. Tuned offline like the threshold.
 RECENCY_PRIORITIZER_WEIGHT = 0.3
 
-# AC.SRF.3 (memory recall cycle, Slice 2) — the NAMED, tunable
-# ~5KB-class per-turn injection budget, sized to accommodate at least
-# THREE whole structured records (decision records and equivalents)
-# plus substantive pointer lines. The pre-cycle 1200-char cap was
-# tuned for a context-scarcity regime that 1M-token context windows
-# ended; the truncated, path-less pointer block it produced was one of
-# the three legs of the 2026-06-09 $750k recall failure.
-INJECTION_CHAR_CAP = 5000
+# AC.SRF.3 / AC.RVL.6 (recall volume-limits reshape, cycle 1) — the NAMED
+# per-turn fact-block byte budget, now ANCHORED to a real named resource instead
+# of a bare integer. It is derived as a fraction of :data:`ADDITIONAL_CONTEXT_CAP`
+# (= 10,000, ``context_composer``) — the ONE limit in the system backed by an
+# enforced resource boundary (context construction REFUSES additionalContext
+# above it). ``FACT_BLOCK_BUDGET_FRACTION = 0.5`` => 5000, preserving the sealed
+# AC.SRF.3 value exactly (no-regression) while making the derivation self-
+# documenting: a regime change to the enforced ceiling RE-DERIVES this budget
+# rather than leaving it as a stale integer (Fable's law — a limit not tied to a
+# named live resource drifts into harm; the 1200->5000 injection-cap history is
+# the proof). The fraction carries the "fit >=3 whole structured records + pointer
+# lines" sizing rationale (AC.SRF.3). RETIREMENT of the fraction to true per-turn
+# context headroom (§3 Option A) is deferred until a no-API-cost headroom signal
+# exists in the hook envelope (no hot-path token-count call — ``feedback_no_
+# anthropic_api_key``).
+FACT_BLOCK_BUDGET_FRACTION = 0.5
+INJECTION_CHAR_CAP = round(FACT_BLOCK_BUDGET_FRACTION * ADDITIONAL_CONTEXT_CAP)
 
 # AC.FBMU.1 — neutral merge score for an episode hit that arrived via
 # the store's grep-fallback path (no BM25 score). Placed at the corpus
@@ -239,21 +291,41 @@ RANK_CONSTITUTIONAL_FLOOR = False
 # store is populated (the S1b gated flip / S5 offline engine).
 SITUATIONAL_RULES_ENABLED = True
 
-# AC.RSR.5 (context-budget-bound) — the HARD cap on rules injected per pull, the
-# owner's governing context-budget dial ("if we condense too many things into
-# behavioral rules we overload the context window and none of this works"). At
-# most this many rules inject regardless of how many match the situation; excess
-# matches are dropped by the store's deterministic priority (strength / recency /
-# path), never half-emitted. ``0`` is a NO-OP that emits no rules block (the
-# second reversibility path, AC.RSR.6). Mirrors ``DECISION_TOP_N = 3``.
-SITUATIONAL_RULE_CAP = 3
+# AC.RSR.5 / AC.RVL.5 (recall volume-limits reshape, cycle 1) — the rules-block
+# count is now a NAMED NO-OP BACKSTOP, no longer a set-determiner. Pre-reshape it
+# was 3 and dropped matched behavioral directives by COUNT (a matched rule beyond
+# the 3rd was silently suppressed even when it fit the byte sub-budget) — the
+# silent suppression of a MATCHED directive this cycle removes. The byte
+# sub-budget (:data:`SITUATIONAL_RULE_CHAR_CAP`, drop-whole on overflow) is now
+# the only volume control on the rules block: every matched rule that fits the
+# byte budget injects. It is RAISED to sit above any plausible matched-rule set
+# that also fits the byte sub-budget, so on every normal turn the byte budget
+# makes the cut and this count is a NO-OP; it bites only on a pathological
+# over-match. ``0`` remains the NO-OP that emits no rules block (the master-off
+# reversibility path, AC.RSR.6); restoring it to 3 reproduces the pre-reshape
+# count-capped rules block BYTE-FOR-BYTE (AC.RVL.5 / §15).
+#
+# RETIREMENT TRIGGER: retire the count backstop once the standing situational
+# telemetry shows the matched-rule set reliably fits SITUATIONAL_RULE_CHAR_CAP,
+# at which point the byte sub-budget provably always cuts first.
+SITUATIONAL_RULE_CAP = 50
 
-# AC.RSR.5 — the rules block's byte SUB-BUDGET, sized WITHIN the 5000-char
-# INJECTION_CHAR_CAP regime but applied to the rules block SEPARATELY (Fork E:
-# rules never share the fact block's budget, so they physically cannot crowd out
-# a topical fact). A rule that would overflow the sub-budget is dropped whole,
-# never half-emitted.
-SITUATIONAL_RULE_CHAR_CAP = 1200
+# AC.RSR.5 / AC.RVL.6 — the rules block's byte SUB-BUDGET, now ANCHORED to the
+# same enforced resource as :data:`INJECTION_CHAR_CAP` rather than a bare integer
+# (pre-reshape it was a rationale-less ``1200`` — the un-anchored budget §3 flags
+# as the most dangerous drift surface, since a mis-anchored byte budget fails
+# silently AND expensively). Derived as a fraction of
+# :data:`ADDITIONAL_CONTEXT_CAP` (= 10,000, the enforced ceiling):
+# ``SITUATIONAL_RULE_BUDGET_FRACTION = 0.12`` => 1200, preserving the sealed
+# AC.RSR.5 value exactly (no-regression) while making the derivation self-
+# documenting — a regime change to the enforced ceiling re-derives it. Applied to
+# the rules block SEPARATELY (Fork E: rules never share the fact block's budget,
+# so they physically cannot crowd out a topical fact); a rule that would overflow
+# the sub-budget is dropped WHOLE, never half-emitted.
+SITUATIONAL_RULE_BUDGET_FRACTION = 0.12
+SITUATIONAL_RULE_CHAR_CAP = round(
+    SITUATIONAL_RULE_BUDGET_FRACTION * ADDITIONAL_CONTEXT_CAP
+)
 
 # AC.RSR.3 — the conservative SITUATION DETECTOR seam (Fork B2a). Each situation
 # tag maps to high-precision trigger patterns; :func:`detect_situation` emits a
@@ -298,6 +370,22 @@ SITUATION_TRIGGERS: dict[str, tuple[re.Pattern[str], ...]] = {
             re.IGNORECASE,
         ),
         re.compile(r"\bsealed component\b", re.IGNORECASE),
+    ),
+    # AC.RVL.9 — the turn is AUTHORING A PLAN-DOC (the plan-time altitude where
+    # every numeric cap first enters). High-precision, UNDER-fire biased
+    # (AC.RSR.3 parity): a bare "plan" never matches; only an unambiguous
+    # plan-AUTHORING phrasing fires, so an ambiguous turn stays silent and the
+    # cap-bias directive rides the always-on floor rather than mis-firing.
+    "authoring-plan": (
+        re.compile(r"\bplan-?docs?\b", re.IGNORECASE),
+        re.compile(
+            r"\b(?:author|writ|draft|compos)(?:e|ing)?\s+"
+            r"(?:a\s+|an\s+|the\s+|this\s+|its\s+|our\s+)?"
+            r"(?:sub-?)?plan\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\bplan-author(?:ing|ed|s)?\b", re.IGNORECASE),
+        re.compile(r"\bplan-before-code\b", re.IGNORECASE),
     ),
 }
 
@@ -741,8 +829,13 @@ def rank(
     # hits with the corpus hits by score. With no episode store
     # configured this returns [] and the merged set equals corpus_hits
     # exactly (AC.FBMU.2 byte-identical no-regression).
+    # AC.RVL.2 — fetch a GENEROUS floor-decoupled window (not ``config.top_n``);
+    # the merge's relevance floor + threshold determine the episode discovered
+    # set, and the byte budget makes the injected cut.
     episode_hits = _episode_hits(
-        query_tokens=query_tokens, config=config, num_results=config.top_n
+        query_tokens=query_tokens,
+        config=config,
+        num_results=EPISODE_CANDIDATE_WINDOW,
     )
     merged = _merge_by_score(
         corpus_hits,

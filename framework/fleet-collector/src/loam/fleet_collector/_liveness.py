@@ -1,0 +1,59 @@
+# Copyright 2026 Luke Ivers and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Single import site for the shared artifact-probe liveness reader.
+
+WS-A2 judges each run's liveness with the SAME reader WS-B1 reaps
+dead-holder leases with: ``probe_liveness()`` in
+``handsoff_loop/convergence.py``.  The collector must NOT hand-roll a
+second liveness reader (dispatch constraint: reuse, do not re-roll).
+This module is the one place the shared reader is imported; ``collector``
+imports it from here.  The ``__file__``-relative ``sys.path`` insert is
+loam's cross-package convention — the sibling is deliberately NOT a pip
+dependency — copied byte-for-byte from
+``framework/file-lease-registry/src/loam/file_lease_registry/_liveness.py``.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Static view: the shared reader is reached at runtime by a
+    # ``__file__``-relative ``sys.path`` insert (loam's cross-package
+    # convention — the sibling is deliberately NOT a pip dependency, so
+    # a type checker cannot follow the dynamic import).  Declaring the
+    # signature here binds ``probe_liveness`` as a known, typed symbol
+    # for the type checker; the ``else`` branch below is the real
+    # runtime import.  The signature mirrors
+    # ``handsoff_loop.convergence.probe_liveness``.
+    def probe_liveness(run_dir: Path, *, stale_after_s: float = 300.0) -> dict: ...
+
+else:
+    # framework/fleet-collector/src/loam/fleet_collector/_liveness.py
+    #   parents[4] == framework/
+    _HANDSOFF_SRC = (
+        Path(__file__).resolve().parents[4]
+        / "tools"
+        / "handsoff-loop"
+        / "src"
+    )
+    if _HANDSOFF_SRC.is_dir() and str(_HANDSOFF_SRC) not in sys.path:
+        sys.path.insert(0, str(_HANDSOFF_SRC))
+
+    from handsoff_loop.convergence import probe_liveness
+
+__all__ = ["probe_liveness"]

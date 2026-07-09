@@ -339,6 +339,18 @@ def test_H19_diff_scope_covers_only_approved_surfaces() -> None:
         # admitted when H/L's next SEAL_COMMIT advances past them).
         # This amendment itself does not touch `kernel/`.
         "kernel",
+        # brittle-value-guards-intent-conversion (amendment #197, Class E
+        # of the 2026-07-08 release-seal near-miss audit) is the first
+        # H/L amendment whose SEAL_COMMIT window crosses capability-refresh
+        # commit `6dcfb533` (`feat(capability-refresh): GitHub Actions
+        # cadence binding + retire cloud/launchd`), which introduced the
+        # top-level `.github/` prefix (`.github/workflows/
+        # capability-refresh.yml`). Admitted here at H/L's first
+        # opportunity per ODD §10's per-invariant-BASELINE convention (the
+        # H19 frozen BASELINE is project-start; interim top-level prefix
+        # changes are admitted when H/L's next SEAL_COMMIT advances past
+        # them). This amendment itself does not touch `.github/`.
+        ".github",
     }
     seal = _seal_commit()
     touched = _file_prefixes_between(BASELINE, seal)

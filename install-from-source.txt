@@ -199,3 +199,21 @@ pytest-asyncio>=0.23
 # ---------------------------------------------------------------
 -e ./framework/usage-window-guard
 -e ./framework/egress-consent
+
+# ---------------------------------------------------------------
+# Tier N — operational-backplane NEW shipped runtime components
+# (integration cut). Five packages assembled from the four backplane
+# stacks; each ships pyproject.toml + src/loam/<pkg>/__init__.py but
+# was registered on NO branch, so a cold install omitted them and
+# `import loam.<pkg>` failed from a clean cwd. Registered here in
+# dependency order so pip walks in-flight deps correctly:
+#   file-lease-registry, fleet-collector -> fleet-page (fleet-page
+#   composes the collector at runtime); weekly-cap-alert ->
+#   weekly-cost-rollup (rollup depends on cap-alert + usage-window-guard,
+#   the latter installed at Tier M above).
+# ---------------------------------------------------------------
+-e ./framework/file-lease-registry
+-e ./framework/fleet-collector
+-e ./framework/fleet-page
+-e ./framework/weekly-cap-alert
+-e ./framework/weekly-cost-rollup

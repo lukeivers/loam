@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-upgrade-merge-resolver"
-version = "1.11.0"
+version = "1.12.0"
 description = "Clause-(h) merge-resolver factory for `loam upgrade --merge-resolver-module` (post-M1g namespace pivot per M1e §11 finding #4)."
 requires-python = ">=3.11"
 dependencies = ["pydantic>=2"]

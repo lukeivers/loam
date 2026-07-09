@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loam-heavy-b-migrate"
-version = "1.11.0"
+version = "1.12.0"
 description = "Heavy-B Phase α/β/γ data-migration extractors + lazy-projection trigger (dev-discipline; post-M1g namespace pivot per M1e §11 finding #4)."
 requires-python = ">=3.11"
 

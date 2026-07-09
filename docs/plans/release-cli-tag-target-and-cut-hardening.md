@@ -26,11 +26,12 @@ This cycle implements `workspace/.scratch/claude-output/release-seal-near-miss-a
 - ODD violation in this work OR surrounding code → surface.
 - No stable ratification-artefact format to record the preflight verdict into → build the verb, surface the recording-integration gap (do not fake structural enforcement).
 
-## §4 — Fence
+## §4 — Acceptance criteria (outcome-shape; method is the builder's call)
 
-Single component: `framework/tools/loam/` (loam-cli). All source + test edits land under this prefix. Universal admissions: `docs/plans/` (this plan, the manifest, the sealed narrative). The fence test `framework/tools/loam/tests/test_no_sealed_amendments.py` gates the seal; its `BASELINE` advances to the pre-build tip at build-time and its `SEAL_COMMIT` sidecar advances at apply-time (standard pattern).
+> Note: Acceptance criteria are §4 so the release gate `check_acs_verified`
+> (which scopes its AC-ID scan to the `## §4` section) resolves this doc's
+> ACs when a future publish passes `--plan-doc <this>`.
 
-## §5 — Acceptance criteria (outcome-shape; method is the builder's call)
 
 ### Family DOM — right tag target (audit Class D)
 
@@ -88,6 +89,10 @@ Given a fixture repo containing a branch that conflicts with / does not fast-for
 
 #### AC.PRE.5
 `loam release preflight` invoked with no version (or a malformed sub-invocation) exits with a clear error and NEVER falls through into the publish/tag path.
+
+## §5 — Fence
+
+Single component: `framework/tools/loam/` (loam-cli). All source + test edits land under this prefix. Universal admissions: `docs/plans/` (this plan, the manifest, the sealed narrative). The fence test `framework/tools/loam/tests/test_no_sealed_amendments.py` gates the seal; its `BASELINE` advances to the pre-build tip at build-time and its `SEAL_COMMIT` sidecar advances at apply-time (standard pattern).
 
 ## §6 — Named decisions
 

@@ -182,7 +182,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 #              this amendment's source commit — the HEAD~1 pattern) so the
 #              seal-diff window shows ONLY this amendment's primary-persona +
 #              docs/plans/ surfaces.
-BASELINE = "f2d8806045207f17adbf5d9f8a9553a31ea889a7"
+BASELINE = "c9c94f0d8820183398f203f5f57c0f40fcc2ae4c"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 
@@ -298,6 +298,7 @@ def test_D8_S_only_primary_persona_surfaces_changed() -> None:
         "framework/primary-persona/hooks/",
         "framework/primary-persona/scripts/",
         "framework/frame-kernel/",
+        "plugins/dev-sdlc/docs/",
     )
     # Universal-file admissions per amendment #22 ruling #3. Written
     # by ``loam amend apply``; kept stable across amendments.

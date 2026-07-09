@@ -108,6 +108,7 @@ def enqueue(
     active_task_id: str | None = None,
     cwd: str | None = None,
     active_files: list[str] | None = None,
+    session_key: str | None = None,
 ) -> Path:
     """Write a queue entry to disk via atomic tmp+rename.
 
@@ -153,6 +154,11 @@ def enqueue(
         "active_task_id": active_task_id,
         "cwd": cwd,
         "active_files": list(active_files) if active_files else [],
+        # AC.PSR.6 (D3) — the channel-session identity captured AT ENQUEUE,
+        # where CLAUDE_PERSONA is live in the Stop hook's env. Stored on the
+        # record so the detached worker materializes it FROM THE RECORD, never
+        # from its own (post-session-end) env. group_id stays workspace_slug.
+        "session_key": session_key,
     }
     final = qdir / _safe_turn_filename(turn_id)
     tmp = final.with_suffix(final.suffix + ".tmp")

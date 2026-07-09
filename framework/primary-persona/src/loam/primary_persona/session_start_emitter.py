@@ -135,6 +135,21 @@ def build_session_composer(
     """
     composer = ComposedContextPayload(session_builder=compose_session_fields)
 
+    # AC.PSR.1/.7 — resolve THIS channel-session's key ONCE here and thread
+    # the same value into BOTH episodic read surfaces (the session-start
+    # active-thread contributor + the per-turn keep-pace episode branch) so
+    # they scope to the same session. CLAUDE_PERSONA is restart-stable and
+    # bound to the channel-session, so a single resolution at session-start
+    # holds for the session. None (no channel-session identity, or a garbled
+    # env) => both surfaces run workspace-global (AC.PSR.3 / AC.PSR.5).
+    # resolve_session_key is itself fail-soft (never raises).
+    try:
+        from .session_identity import resolve_session_key  # noqa: WPS433
+
+        session_key = resolve_session_key()
+    except Exception:  # noqa: BLE001 — fail-soft: no key => workspace-global
+        session_key = None
+
     if register_tracker:
         try:
             register_tracker_context(composer, workspace_root=workspace_root)
@@ -213,6 +228,7 @@ def build_session_composer(
                 composer,
                 workspace_root=workspace_root,
                 workspace_slug=slug,
+                session_key=session_key,
             )
         except Exception:  # noqa: BLE001 — AC46.2 graceful empty
             # Slug resolution / contributor registration failed; the turn
@@ -292,6 +308,7 @@ def build_session_composer(
             store,
             workspace_root=workspace_root,
             workspace_slug=slug,
+            session_key=session_key,
         )
         composer.register(
             name="active-thread",

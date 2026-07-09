@@ -440,6 +440,14 @@ class RetrievalConfig:
     # AC.FBMU.1 — episode group ids to scope the episode search; None
     # => the store searches every group (the live workspace slug).
     episode_group_ids: Optional[tuple[str, ...]] = None
+    # AC.PSR.7 — per-session episode scoping: the resolved channel-session
+    # key (CLAUDE_PERSONA → DISCORD_STATE_DIR basename). Threaded ONLY into
+    # the EPISODE branch's store.search (corpus + decision branches stay
+    # workspace-global — the D2 split). ``None`` => no session filter
+    # (single-session / unresolvable identity → workspace-global, AC.PSR.3 /
+    # AC.PSR.5). The store applies it in-scan, upstream of every RVL volume
+    # cut (candidate window / num_results / INJECTION_CHAR_CAP — AC.PSR.8).
+    episode_session_key: Optional[str] = None
     # AC.RTEL.* — standing retrieval-telemetry sink. When set, ``rank``
     # appends one PURE-OBSERVATION per-turn record (query vs discovered
     # candidates + scores + event-time + injected subset) to the daily
@@ -570,11 +578,17 @@ def _episode_hits(
             else None
         )
         # The episode FTS index is term-OR ranked the same way the
-        # corpus index OR-joins the work-anchored tokens.
+        # corpus index OR-joins the work-anchored tokens. AC.PSR.7 — the
+        # session_key scopes THIS branch (episodes) to the channel-session;
+        # it is applied in-scan by the store (SQL WHERE / grep frontmatter
+        # fence), upstream of every volume cut, so persona P's window is
+        # never starved by a post-filter (AC.PSR.8). Corpus + decision
+        # branches (separate call sites) stay workspace-global.
         result = store.search(
             query=" ".join(query_tokens),
             group_ids=group_ids,
             num_results=num_results,
+            session_key=config.episode_session_key,
         )
     except Exception:  # noqa: BLE001 — fail-soft; merge degrades to corpus-only
         return []
@@ -1671,6 +1685,7 @@ def build_keep_pace_contributor(
 def _resolve_composer_config(
     workspace_root: Path,
     workspace_slug: str,
+    session_key: Optional[str] = None,
 ) -> RetrievalConfig:
     """Resolve a RetrievalConfig for the ComposedContextPayload turn
     contributor (AC-FBM-CON-1).
@@ -1732,6 +1747,9 @@ def _resolve_composer_config(
         objectives_home=claude_home,
         episode_memory_dir=episode_memory_dir,
         episode_group_ids=(workspace_slug,) if workspace_slug else None,
+        # AC.PSR.7 — the per-session episode filter (episode branch only).
+        # None (no channel-session identity) => workspace-global (AC.PSR.3/.5).
+        episode_session_key=session_key or None,
         telemetry_dir=telemetry_dir,
         # AC.RSR.* — rules store (c) resolves from the same store root as
         # episodes/decisions (the ``decisions/`` sibling ``rules/`` dir).
@@ -1757,6 +1775,7 @@ def register_keep_pace_turn_contributor(
     workspace_root: Path,
     workspace_slug: str,
     name: str = "memory-retrieval",
+    session_key: Optional[str] = None,
 ) -> Callable[[dict], str]:
     """Register the GATED keep-pace retrieval contributor on a
     ``ComposedContextPayload`` at ``TriggerKind.turn`` (AC-FBM-CON-1).
@@ -1782,7 +1801,9 @@ def register_keep_pace_turn_contributor(
     """
     from ..context_composer import TriggerKind  # noqa: WPS433
 
-    cfg = _resolve_composer_config(workspace_root, workspace_slug)
+    # AC.PSR.7 — the resolved channel-session key is threaded through so the
+    # episode branch of this per-turn contributor is scoped to THIS session.
+    cfg = _resolve_composer_config(workspace_root, workspace_slug, session_key)
 
     def contributor(context: dict) -> str:
         try:

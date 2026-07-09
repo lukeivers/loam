@@ -163,6 +163,7 @@ def build_active_thread_contributor(
     *,
     workspace_root: Path,
     workspace_slug: str,
+    session_key: str | None = None,
 ) -> Callable[[dict[str, Any]], str]:
     """Return the callable registered against
     ``ComposedContextPayload.register(name="active-thread",
@@ -194,11 +195,28 @@ def build_active_thread_contributor(
     """
 
     def contributor(context: dict[str, Any]) -> str:
+        # AC.PSR.1 — scope the recency scan to THIS channel-session's key
+        # (episodic resume is per-session). AC.PSR.5 fail-soft: if the store
+        # cannot honor the filter (older store signature / any error), fall
+        # back to a session-key-less scan so the session still resumes
+        # workspace-global rather than blank. session_key None → the store
+        # runs its byte-identical no-session path (AC.PSR.3).
         try:
             episodes = store.recent_episodes(
                 group_ids=[workspace_slug],
                 limit=ACTIVE_THREAD_EPISODE_SCAN,
+                session_key=session_key,
             )
+        except TypeError:
+            # A fake/older store without the session_key kwarg — degrade to
+            # workspace-global (AC.PSR.5: never blank when episodes exist).
+            try:
+                episodes = store.recent_episodes(
+                    group_ids=[workspace_slug],
+                    limit=ACTIVE_THREAD_EPISODE_SCAN,
+                )
+            except Exception:  # noqa: BLE001 — AC.MSC.5 fail-soft
+                episodes = []
         except Exception:  # noqa: BLE001 — AC.MSC.5 fail-soft
             episodes = []
 
@@ -207,7 +225,23 @@ def build_active_thread_contributor(
         except Exception:  # noqa: BLE001 — AC.MSC.5 fail-soft
             named = []
 
-        if not episodes and not named:
+        # AC.PSR.2 (D4) — the SECONDARY per-persona handoff file. Read only
+        # this session's own <persona>.md (persona-filtered by construction —
+        # never another persona's). It is a convenience fallback: a persona
+        # with no episodes yet but a handoff file still resumes from it. No
+        # session identity (session_key None) → no handoff → single-session
+        # workspaces are byte-identical (AC.PSR.3).
+        handoff: str | None = None
+        if session_key:
+            try:
+                from .handoffs import read_handoff
+
+                handoff = read_handoff(workspace_root, persona=session_key)
+            except Exception:  # noqa: BLE001 — AC.MSC.5 fail-soft
+                handoff = None
+        handoff_text = (handoff or "").strip()
+
+        if not episodes and not named and not handoff_text:
             return ""
 
         lines: list[str] = [ACTIVE_THREAD_MARKER]
@@ -230,6 +264,12 @@ def build_active_thread_contributor(
                     lines.append(f"    {preview}")
         if named:
             lines.extend(named)
+        if handoff_text:
+            # SECONDARY (D4) — placed after the crash-robust episodes + named
+            # thread so a truncation drops it before the primary signal.
+            lines.append("handoff note (secondary; this session's persona):")
+            for hl in handoff_text.splitlines():
+                lines.append(f"  {hl}")
 
         block = "\n".join(lines)
         if len(block) > ACTIVE_THREAD_BLOCK_CAP:

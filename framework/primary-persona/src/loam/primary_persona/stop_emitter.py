@@ -372,12 +372,19 @@ def _spawn_memory_write(
     monkeypatch the symbol at module level continue to bind to
     the same call site — the AC.M.5 surface is untouched.
     """
+    # AC.PSR.6 (D3) — resolve the channel-session key HERE, in-process with the
+    # Stop hook's env, where CLAUDE_PERSONA is live. It is stored on the queue
+    # record so the detached worker (which may run post-session-end, with its own
+    # env unset or wrong) materializes it FROM THE RECORD, never from its env.
+    from .session_identity import resolve_session_key
+
     _mwq.enqueue(
         workspace_root=Path(workspace_root),
         turn_id=turn_id,
         session_id=session_id,
         user_message=user_message,
         assistant_reply=assistant_reply,
+        session_key=resolve_session_key(),
     )
 
 

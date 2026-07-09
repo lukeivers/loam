@@ -162,6 +162,13 @@ def _build_episode_args(
         "cwd": record.get("cwd"),
         "active_files": active_files,
     }
+    # AC.PSR.6 (D3) — the channel-session key is read FROM THE RECORD (captured
+    # at enqueue in the Stop hook's env) and materialized as a top-level episode
+    # arg. The worker reads NOTHING from its own env here: a worker whose own
+    # CLAUDE_PERSONA is unset or wrong still stamps the enqueuing session's key.
+    # group_id stays workspace_slug; session_key is an ADDITIVE frontmatter
+    # dimension (Fork A: a top-level field, not a 5th context field — the
+    # context block's 4-field schema, AC.FBMT1.ENCC.1, is untouched).
     return {
         "name": f"turn:{turn_id}",
         "body": body,
@@ -170,6 +177,7 @@ def _build_episode_args(
         "source": "message",
         "group_id": workspace_slug,
         "context": context,
+        "session_key": record.get("session_key"),
     }
 
 
@@ -202,7 +210,9 @@ async def _call_add_episode(
         # write path keeps working; the encoding-context is
         # silently dropped only when the client cannot accept it.
         legacy_args = {
-            k: v for k, v in arguments.items() if k != "context"
+            k: v
+            for k, v in arguments.items()
+            if k not in ("context", "session_key")
         }
         result = await client.add_episode(**legacy_args)
     return result if isinstance(result, dict) else {}

@@ -296,7 +296,16 @@ class TurnAggregator:
         """
         ref = reference_time or datetime.now(timezone.utc)
         body = _compose_episode_body(user_message=user_message, persona_reply=persona_reply)
-        coro = self.memory_client.add_episode(
+        # AC.PSR.7 (dormant-twin consistency) — scope this DORMANT MCP-twin
+        # write by the same channel-session key the LIVE write path stamps, so
+        # re-enabling the MCP client later cannot reintroduce the leak. Captured
+        # in-process where CLAUDE_PERSONA is live. TypeError-tolerant: a client
+        # (or test fake) whose add_episode predates the kwarg is retried without
+        # it — byte-identical to pre-amendment for those clients (mirrors the
+        # worker's _call_add_episode legacy-strip).
+        from .session_identity import resolve_session_key
+
+        _add_kwargs: dict[str, Any] = dict(
             name=f"turn/{turn_id}",
             body=body,
             source_description=self.source_description,
@@ -304,6 +313,12 @@ class TurnAggregator:
             source="message",
             group_id=self.workspace_slug,
         )
+        try:
+            coro = self.memory_client.add_episode(
+                **_add_kwargs, session_key=resolve_session_key()
+            )
+        except TypeError:
+            coro = self.memory_client.add_episode(**_add_kwargs)
         task = asyncio.create_task(coro, name=f"memory-write/{turn_id}")
         self._pending.append(task)
         # Opportunistic cleanup — drop done tasks so _pending doesn't
@@ -383,14 +398,28 @@ def build_memory_retrieval_contributor(
         if not prompt.strip():
             return ""
         try:
-            result = _run_async(
-                config.memory_client.search(
-                    query=prompt,
-                    group_ids=[config.workspace_slug],
-                    num_results=config.num_results,
-                    center_node_uuid=None,
-                )
+            # AC.PSR.7 (dormant-twin consistency) — scope this DORMANT MCP-twin
+            # read by THIS channel-session's key so re-enabling the MCP path
+            # cannot reintroduce the leak. The episode branch only — this twin
+            # reads episodes. TypeError-tolerant: a client/fake whose search
+            # predates the kwarg is retried without it (byte-identical for those
+            # clients). The retry is BEFORE the outer fail-closed except so a
+            # legacy fake still returns results rather than an empty block.
+            from .session_identity import resolve_session_key
+
+            _search_kwargs: dict[str, Any] = dict(
+                query=prompt,
+                group_ids=[config.workspace_slug],
+                num_results=config.num_results,
+                center_node_uuid=None,
             )
+            try:
+                _search_coro = config.memory_client.search(
+                    **_search_kwargs, session_key=resolve_session_key()
+                )
+            except TypeError:
+                _search_coro = config.memory_client.search(**_search_kwargs)
+            result = _run_async(_search_coro)
         except Exception as exc:
             # Fail-closed per AC-D7.7 — any boundary error, regardless
             # of cause (connection refused, HTTP 5xx, timeout, garbage

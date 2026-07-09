@@ -791,6 +791,19 @@ RECENCY_HALF_LIFE_DAYS = 5.0
 RECENCY_CANDIDATE_FACTOR = 8
 RECENCY_CANDIDATE_FLOOR = 40
 
+# AC.PSR.1 — hard file-read ceiling for the session-start recency scan's
+# persona-aware bounded walk (per-session-resume-handoff, plan §2A Finding B).
+# When the reader carries a session_key, ``recent_episodes`` reads frontmatter
+# IN-walk and counts only that persona's episodes toward ``limit``, continuing
+# PAST the ``limit*4`` all-persona horizon so an idle persona is not starved by
+# chatty siblings. The ceiling bounds worst-case I/O so a 600+-episode store
+# cannot blow the 5s session-start hook envelope (the same envelope
+# ``RECENCY_CANDIDATE_FLOOR`` protects on the FTS path): read at most this many
+# files looking for ``limit`` matches, then stop and return what was found (a
+# thin resume beats an envelope overrun). Only engaged when a session_key is
+# present; the no-session path is byte-identical to pre-amendment (AC.PSR.3).
+RECENCY_SESSION_SCAN_CEILING = 400
+
 # AC.FBMT1.SUPM.2 — multiplicative penalty applied to the blended
 # score of a memory file whose frontmatter carries a
 # ``superseded-by:`` field (the supersession-marker convention; mark-
@@ -853,6 +866,7 @@ class FileMemoryStore:
         source: str,
         group_id: str,
         context: dict[str, Any] | None = None,
+        session_key: str | None = None,
     ) -> dict[str, Any]:
         """Write one markdown episode file.
 
@@ -970,6 +984,16 @@ class FileMemoryStore:
             epistemic_block = f"{_EPISTEMIC_KEY}: {epistemic}\n"
         else:
             epistemic_block = ""
+        # AC.PSR.6 (D3, Fork A) — the channel-session key is an ADDITIVE
+        # top-level frontmatter field (a sibling to salience / volatility /
+        # epistemic), NOT a 5th field in the sealed 4-field context: block
+        # (AC.FBMT1.ENCC.1). Emitted only when present: an untagged episode
+        # (single-session / pre-amendment) omits the line, and the read-side
+        # filter is absent-key-inclusive so it still surfaces (D5 age-out).
+        if session_key:
+            session_block = f"session_key: {session_key}\n"
+        else:
+            session_block = ""
         front = (
             "---\n"
             f"name: {name}\n"
@@ -980,6 +1004,7 @@ class FileMemoryStore:
             f"salience: {salience}\n"
             f"{volatile_block}"
             f"{epistemic_block}"
+            f"{session_block}"
             f"{context_block}"
             "---\n"
         )
@@ -1003,6 +1028,7 @@ class FileMemoryStore:
                     body=body,
                     group_id=group_id,
                     reference_time=ref_utc,
+                    session_key=session_key,
                 )
             except (sqlite3.Error, OSError):
                 pass
@@ -1021,6 +1047,7 @@ class FileMemoryStore:
         group_ids: list[str] | None,
         num_results: int = 5,
         as_of: datetime | None = None,
+        session_key: str | None = None,
     ) -> dict[str, Any]:
         """Return the canonical retrieval-result shape for ``query``.
 
@@ -1066,6 +1093,7 @@ class FileMemoryStore:
                 group_ids=group_ids,
                 num_results=num_results,
                 as_of=as_of,
+                session_key=session_key,
             )
         except (sqlite3.Error, OSError):
             episodes = []
@@ -1075,6 +1103,7 @@ class FileMemoryStore:
                 group_ids=group_ids,
                 num_results=num_results,
                 as_of=as_of,
+                session_key=session_key,
             )
         return {
             "query": query,
@@ -1090,6 +1119,7 @@ class FileMemoryStore:
         *,
         group_ids: list[str] | None,
         limit: int,
+        session_key: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return the most-recent ``limit`` episodes newest-first,
         independent of any query (AC.MSC.2 / D-MSC.4).
@@ -1112,60 +1142,130 @@ class FileMemoryStore:
         ``episodes`` entries (``name``/``content``/``path``/
         ``group_id``/``valid_at``) so the contributor reuses the
         existing rendering surface.
+
+        AC.PSR.1 — when ``session_key`` is present, the scan is
+        persona-aware: it reads frontmatter IN-walk and counts only that
+        persona's (absent-key-inclusive) episodes toward ``limit``,
+        continuing PAST the ``limit*4`` all-persona horizon up to
+        :data:`RECENCY_SESSION_SCAN_CEILING` files so an idle persona is
+        not starved by chatty siblings (plan §2A Finding B — the leak's
+        subtlest and most-common case). ``session_key`` None → the walk
+        is byte-identical to pre-amendment (AC.PSR.3 / AC.PSR.5 fail-soft).
         """
         episodes_root = self.memory_dir / EPISODES_SUBDIR
         if not episodes_root.exists() or limit <= 0:
             return []
-        candidates: list[tuple[str, str, Path]] = []
         try:
             group_dirs = [
                 d for d in episodes_root.iterdir() if d.is_dir()
             ]
         except OSError:
             return []
-        for group_dir in group_dirs:
-            if group_ids and group_dir.name not in group_ids:
-                continue
-            try:
-                date_dirs = sorted(
-                    (d for d in group_dir.iterdir() if d.is_dir()),
-                    key=lambda d: d.name,
-                    reverse=True,
-                )
-            except OSError:
-                continue
-            for date_dir in date_dirs:
+        scored: list[tuple[str, str, Path, str, dict[str, str]]] = []
+        if session_key:
+            # AC.PSR.1 persona-aware bounded walk: read frontmatter as we
+            # descend (newest date-dir first), keep only this persona's
+            # episodes, and keep descending until ``limit`` of them are
+            # collected OR the file-read ceiling is hit. The per-persona
+            # count (not the raw file count) drives the "enough" break, so
+            # a persona quiet while siblings were chatty is still found.
+            matched = 0
+            files_read = 0
+            ceiling = max(limit * 4, RECENCY_SESSION_SCAN_CEILING)
+            done = False
+            for group_dir in group_dirs:
+                if done:
+                    break
+                if group_ids and group_dir.name not in group_ids:
+                    continue
                 try:
-                    files = [
-                        f
-                        for f in date_dir.iterdir()
-                        if f.is_file() and f.suffix == ".md"
-                    ]
+                    date_dirs = sorted(
+                        (d for d in group_dir.iterdir() if d.is_dir()),
+                        key=lambda d: d.name,
+                        reverse=True,
+                    )
                 except OSError:
                     continue
-                for ep in files:
-                    candidates.append((date_dir.name, "", ep))
-                # Bound the walk — once we have comfortably more than
-                # ``limit`` from the newest date-dirs we can stop
-                # descending into older dirs (they cannot out-rank).
+                for date_dir in date_dirs:
+                    try:
+                        files = [
+                            f
+                            for f in date_dir.iterdir()
+                            if f.is_file() and f.suffix == ".md"
+                        ]
+                    except OSError:
+                        continue
+                    for ep in files:
+                        files_read += 1
+                        try:
+                            content = ep.read_text(encoding="utf-8")
+                        except (OSError, UnicodeDecodeError):
+                            continue
+                        front, body = _split_frontmatter(content)
+                        if not _episode_session_matches(front, session_key):
+                            continue
+                        parsed = _parse_reference_time(
+                            front.get("reference_time", "")
+                        )
+                        ref_sort = (
+                            parsed.isoformat() if parsed is not None else ""
+                        )
+                        scored.append(
+                            (date_dir.name, ref_sort, ep, body, front)
+                        )
+                        matched += 1
+                    # Break AFTER finishing a date-dir so within-day sorting
+                    # is complete for the dir that satisfied the limit; an
+                    # older date-dir can never out-rank a newer one.
+                    if matched >= limit or files_read >= ceiling:
+                        done = True
+                        break
+        else:
+            # Pre-amendment path — byte-identical (AC.PSR.3). Path-only
+            # collection bounded at ``limit*4``, frontmatter read after.
+            candidates: list[tuple[str, str, Path]] = []
+            for group_dir in group_dirs:
+                if group_ids and group_dir.name not in group_ids:
+                    continue
+                try:
+                    date_dirs = sorted(
+                        (d for d in group_dir.iterdir() if d.is_dir()),
+                        key=lambda d: d.name,
+                        reverse=True,
+                    )
+                except OSError:
+                    continue
+                for date_dir in date_dirs:
+                    try:
+                        files = [
+                            f
+                            for f in date_dir.iterdir()
+                            if f.is_file() and f.suffix == ".md"
+                        ]
+                    except OSError:
+                        continue
+                    for ep in files:
+                        candidates.append((date_dir.name, "", ep))
+                    # Bound the walk — once we have comfortably more than
+                    # ``limit`` from the newest date-dirs we can stop
+                    # descending into older dirs (they cannot out-rank).
+                    if len(candidates) >= limit * 4:
+                        break
                 if len(candidates) >= limit * 4:
                     break
-            if len(candidates) >= limit * 4:
-                break
-        scored: list[tuple[str, str, Path, str, dict[str, str]]] = []
-        for date_name, _placeholder, path in candidates:
-            try:
-                content = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
-                continue
-            front, body = _split_frontmatter(content)
-            ref_raw = front.get("reference_time", "")
-            parsed = _parse_reference_time(ref_raw)
-            # Sort key: date-dir desc, then reference_time desc. A
-            # missing/unparseable timestamp sorts last within its
-            # date-dir (empty string < any ISO string under desc).
-            ref_sort = parsed.isoformat() if parsed is not None else ""
-            scored.append((date_name, ref_sort, path, body, front))
+            for date_name, _placeholder, path in candidates:
+                try:
+                    content = path.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    continue
+                front, body = _split_frontmatter(content)
+                ref_raw = front.get("reference_time", "")
+                parsed = _parse_reference_time(ref_raw)
+                # Sort key: date-dir desc, then reference_time desc. A
+                # missing/unparseable timestamp sorts last within its
+                # date-dir (empty string < any ISO string under desc).
+                ref_sort = parsed.isoformat() if parsed is not None else ""
+                scored.append((date_name, ref_sort, path, body, front))
         scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
         out: list[dict[str, Any]] = []
         for _dname, _rsort, path, body, front in scored[:limit]:
@@ -1266,7 +1366,7 @@ class FileMemoryStore:
         conn.execute(
             "CREATE VIRTUAL TABLE IF NOT EXISTS episodes "
             "USING fts5(name, body, group_id, path UNINDEXED, "
-            "reference_time UNINDEXED)"
+            "reference_time UNINDEXED, session_key UNINDEXED)"
         )
         conn.commit()
         if not self._index_schema_is_current(conn):
@@ -1278,7 +1378,7 @@ class FileMemoryStore:
             conn.execute(
                 "CREATE VIRTUAL TABLE episodes "
                 "USING fts5(name, body, group_id, path UNINDEXED, "
-                "reference_time UNINDEXED)"
+                "reference_time UNINDEXED, session_key UNINDEXED)"
             )
             conn.commit()
         self._conn = conn
@@ -1286,18 +1386,24 @@ class FileMemoryStore:
 
     @staticmethod
     def _index_schema_is_current(conn: sqlite3.Connection) -> bool:
-        """Return ``True`` when the ``episodes`` FTS5 table carries the
+        """Return ``True`` when the ``episodes`` FTS5 table carries BOTH the
         ``reference_time`` column (the EVENT-time carried onto each hit for
-        the merge-side recency prioritizer; discovery itself is relevance-only).
+        the merge-side recency prioritizer) AND the ``session_key`` column
+        (the per-session-resume filter dimension, AC.PSR.7/.8).
 
-        A pre-MSC index lacks it. Probing via a bounded SELECT keeps
-        this stdlib + FTS5-portable (``PRAGMA table_info`` is empty for
-        FTS5 virtual tables). Any sqlite error → treat as not-current
-        so the caller rebuilds (fail-toward-rebuild, never raise —
-        AC.MSC.5)."""
+        A pre-MSC index lacks ``reference_time``; a pre-per-session-resume
+        index lacks ``session_key``. Either absence → not-current → the
+        caller drops + lazily rebuilds via the D-MSC.5 derived-cache path
+        (grep covers the rebuild window — AC.PSR.7's grep leg). This is the
+        rebuild that clears plan §8 Halt-trigger 4: the index is a derived
+        cache, NOT the episode source store, so a column-add is a rebuild,
+        not a source migration. Probing via a bounded SELECT keeps this
+        stdlib + FTS5-portable (``PRAGMA table_info`` is empty for FTS5
+        virtual tables). Any sqlite error → treat as not-current so the
+        caller rebuilds (fail-toward-rebuild, never raise — AC.MSC.5)."""
         try:
             conn.execute(
-                "SELECT reference_time FROM episodes LIMIT 0"
+                "SELECT reference_time, session_key FROM episodes LIMIT 0"
             ).fetchall()
         except sqlite3.Error:
             return False
@@ -1311,6 +1417,7 @@ class FileMemoryStore:
         body: str,
         group_id: str,
         reference_time: datetime,
+        session_key: str | None = None,
     ) -> None:
         conn = self._connection()
         # UPSERT shape: delete prior row at same path, insert fresh.
@@ -1318,10 +1425,23 @@ class FileMemoryStore:
             "DELETE FROM episodes WHERE path = ?",
             (str(path),),
         )
+        # AC.PSR.7 — session_key rides the index as an UNINDEXED filter
+        # column so the per-turn FTS filter engages in the SQL WHERE,
+        # upstream of the candidate_limit / num_results / byte-cap volume
+        # cuts. An absent key stores '' (empty string), which the read-side
+        # filter treats as absent-key-inclusive (D5 age-out).
         conn.execute(
-            "INSERT INTO episodes (name, body, group_id, path, reference_time) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (name, body, group_id, str(path), reference_time.isoformat()),
+            "INSERT INTO episodes "
+            "(name, body, group_id, path, reference_time, session_key) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                name,
+                body,
+                group_id,
+                str(path),
+                reference_time.isoformat(),
+                session_key or "",
+            ),
         )
         conn.commit()
 
@@ -1332,6 +1452,7 @@ class FileMemoryStore:
         group_ids: list[str] | None,
         num_results: int,
         as_of: datetime | None = None,
+        session_key: str | None = None,
     ) -> list[dict[str, Any]]:
         index_path = self.memory_dir / SEARCH_INDEX_NAME
         if not index_path.exists():
@@ -1362,23 +1483,43 @@ class FileMemoryStore:
             num_results * RECENCY_CANDIDATE_FACTOR,
             RECENCY_CANDIDATE_FLOOR,
         )
+        # AC.PSR.7 / AC.PSR.8 — the session_key filter is composed INTO the
+        # SQL WHERE so it engages BEFORE the ``candidate_limit`` LIMIT (and
+        # therefore before the downstream num_results / INJECTION_CHAR_CAP
+        # cuts). A post-scan filter would starve persona P (F2-2). The clause
+        # is absent-key-inclusive (``= ? OR session_key = ''``): pre-amendment
+        # untagged episodes (empty key in the index) still surface (D5). When
+        # ``session_key`` is None the reader could not resolve its own identity
+        # (single-session / garbled env) → no clause → workspace-global
+        # (AC.PSR.3 / AC.PSR.5).
+        session_clause = ""
+        session_params: list[Any] = []
+        if session_key:
+            session_clause = " AND (session_key = ? OR session_key = '')"
+            session_params = [session_key]
         if group_ids:
             placeholders = ",".join("?" for _ in group_ids)
             sql = (
                 "SELECT name, body, path, group_id, reference_time, "
                 "bm25(episodes) as score "
-                f"FROM episodes WHERE episodes MATCH ? AND group_id IN ({placeholders}) "
+                f"FROM episodes WHERE episodes MATCH ? AND group_id IN ({placeholders})"
+                f"{session_clause} "
                 "ORDER BY score LIMIT ?"
             )
-            params: list[Any] = [safe_query, *group_ids, candidate_limit]
+            params: list[Any] = [
+                safe_query,
+                *group_ids,
+                *session_params,
+                candidate_limit,
+            ]
         else:
             sql = (
                 "SELECT name, body, path, group_id, reference_time, "
                 "bm25(episodes) as score "
-                "FROM episodes WHERE episodes MATCH ? "
+                f"FROM episodes WHERE episodes MATCH ?{session_clause} "
                 "ORDER BY score LIMIT ?"
             )
-            params = [safe_query, candidate_limit]
+            params = [safe_query, *session_params, candidate_limit]
         try:
             cur = conn.execute(sql, params)
         except sqlite3.OperationalError:
@@ -1434,6 +1575,7 @@ class FileMemoryStore:
         group_ids: list[str] | None,
         num_results: int,
         as_of: datetime | None = None,
+        session_key: str | None = None,
     ) -> list[dict[str, Any]]:
         """Fallback retrieval — scan the most recent N episode files
         and rank by raw term-occurrence count.
@@ -1480,6 +1622,16 @@ class FileMemoryStore:
             try:
                 content = path.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
+                continue
+            # AC.PSR.7 — the FTS-rebuild-window fallback is a LIVE per-turn
+            # read (plan §2A Finding C): grep reads every candidate's
+            # frontmatter here anyway, so the session filter is an in-scan
+            # frontmatter fence, absent-key-inclusive (D5). Without it the
+            # leak would persist through the entire post-deploy rebuild window,
+            # exactly when it matters. Parse frontmatter BEFORE scoring so a
+            # non-matching persona's episode is skipped before it can rank.
+            front_early, _body_early = _split_frontmatter(content)
+            if not _episode_session_matches(front_early, session_key):
                 continue
             content_lower = content.lower()
             raw_score = sum(content_lower.count(t) for t in terms)
@@ -1628,6 +1780,28 @@ ENCODING_CONTEXT_FIELDS: tuple[str, ...] = (
     "cwd",
     "active_files",
 )
+
+
+def _episode_session_matches(
+    front: dict[str, Any], session_key: str | None
+) -> bool:
+    """Absent-key-inclusive session filter for the frontmatter surfaces.
+
+    The ONE place the D5 age-out rule is expressed for ``recent_episodes``
+    (session-start) and ``_grep_search`` (the FTS-rebuild-window fallback);
+    ``_fts_search`` expresses the identical rule in SQL. Returns ``True`` when:
+      * the reader has no session dimension (``session_key`` falsy →
+        workspace-global; AC.PSR.3 single-session / AC.PSR.5 fail-soft), OR
+      * the episode carries no ``session_key`` (pre-amendment / single-session
+        untagged — it still surfaces, never hidden by the new filter; D5), OR
+      * the episode's key equals the reader's (AC.PSR.1 / AC.PSR.7).
+    An episode explicitly tagged with a DIFFERENT persona's key is the only
+    case filtered out.
+    """
+    if not session_key:
+        return True
+    ep_key = str(front.get("session_key", "") or "").strip()
+    return ep_key == "" or ep_key == session_key
 
 
 def _split_frontmatter(content: str) -> tuple[dict[str, Any], str]:
@@ -2312,6 +2486,7 @@ class FileBackedMemoryClient:
         source: str,
         group_id: str,
         context: dict[str, Any] | None = None,
+        session_key: str | None = None,
     ) -> dict[str, Any]:
         """Async-shaped surface; delegates to the synchronous
         :meth:`FileMemoryStore.write_episode`. The async signature
@@ -2332,6 +2507,7 @@ class FileBackedMemoryClient:
             source=source,
             group_id=group_id,
             context=context,
+            session_key=session_key,
         )
         # AC.FBMT2.PLBLA.1 — emit a ``write`` access-log event for every
         # successful add_episode call. The store's ``write_episode``
@@ -2362,15 +2538,21 @@ class FileBackedMemoryClient:
         group_ids: list[str] | None,
         num_results: int,
         center_node_uuid: str | None = None,
+        session_key: str | None = None,
     ) -> dict[str, Any]:
         """Async-shaped surface; delegates to
         :meth:`FileMemoryStore.search`. ``center_node_uuid`` is
         accepted for Protocol parity but ignored at v0.1.0 (graph
-        traversal is M-GMP)."""
+        traversal is M-GMP).
+
+        AC.PSR.7 — the optional ``session_key`` threads the per-turn
+        episode-branch session filter through to the store (the episode
+        branch ONLY; corpus + decision branches stay workspace-global)."""
         return self._store.search(
             query=query,
             group_ids=group_ids,
             num_results=num_results,
+            session_key=session_key,
         )
 
 

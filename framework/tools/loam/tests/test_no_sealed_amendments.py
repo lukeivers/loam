@@ -45,7 +45,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 # Advancing to the immediate pre-build tip bounds the diff window to THIS
 # amendment's loam-cli changes (the standard "advance sidecar + BASELINE"
 # seal pattern). Prior baseline was 1fe3c31a.
-BASELINE = "6ca68259"
+BASELINE = "6ca6825947747abc9f69d84d8003e5c308036cc4"
 
 SEAL_COMMIT_PATH = Path(__file__).parent / "SEAL_COMMIT"
 

@@ -34,10 +34,11 @@ import os
 import threading
 import time
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Iterator
+from typing import Callable, Iterable
 
 from ._liveness import probe_liveness
 from .overlap import globs_conflict
@@ -141,7 +142,7 @@ class LeaseRegistry:
     # -- critical section (atomic across threads AND processes) ---------
 
     @contextmanager
-    def _critical(self) -> Iterator[None]:
+    def _critical(self) -> Generator[None, None, None]:
         with self._tlock:
             with open(self._lock_path, "w") as lf:
                 fcntl.flock(lf, fcntl.LOCK_EX)

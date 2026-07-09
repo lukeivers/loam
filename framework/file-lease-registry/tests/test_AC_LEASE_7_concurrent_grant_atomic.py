@@ -28,7 +28,7 @@ from loam.file_lease_registry import Lease, LeaseRefusal, LeaseRegistry
 def test_AC_LEASE_7_concurrent_overlapping_grants_exactly_one_wins(tmp_path):
     reg = LeaseRegistry(tmp_path / "leases.json")
 
-    results: list[object] = []
+    results: list[Lease | LeaseRefusal] = []
     barrier = threading.Barrier(2)
 
     def attempt(dispatch_id, glob):

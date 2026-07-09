@@ -25,18 +25,31 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-# framework/file-lease-registry/src/loam/file_lease_registry/_liveness.py
-#   parents[4] == framework/
-_HANDSOFF_SRC = (
-    Path(__file__).resolve().parents[4]
-    / "tools"
-    / "handsoff-loop"
-    / "src"
-)
-if _HANDSOFF_SRC.is_dir() and str(_HANDSOFF_SRC) not in sys.path:
-    sys.path.insert(0, str(_HANDSOFF_SRC))
+if TYPE_CHECKING:
+    # Static view: the shared reader is reached at runtime by a
+    # ``__file__``-relative ``sys.path`` insert (loam's cross-package
+    # convention — the sibling is deliberately NOT a pip dependency, so
+    # a type checker cannot follow the dynamic import).  Declaring the
+    # signature here binds ``probe_liveness`` as a known, typed symbol
+    # for the type checker; the ``else`` branch below is the real
+    # runtime import.  The signature mirrors
+    # ``handsoff_loop.convergence.probe_liveness``.
+    def probe_liveness(run_dir: Path, *, stale_after_s: float = 300.0) -> dict: ...
 
-from handsoff_loop.convergence import probe_liveness  # noqa: E402
+else:
+    # framework/file-lease-registry/src/loam/file_lease_registry/_liveness.py
+    #   parents[4] == framework/
+    _HANDSOFF_SRC = (
+        Path(__file__).resolve().parents[4]
+        / "tools"
+        / "handsoff-loop"
+        / "src"
+    )
+    if _HANDSOFF_SRC.is_dir() and str(_HANDSOFF_SRC) not in sys.path:
+        sys.path.insert(0, str(_HANDSOFF_SRC))
+
+    from handsoff_loop.convergence import probe_liveness
 
 __all__ = ["probe_liveness"]

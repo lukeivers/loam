@@ -1,5 +1,9 @@
-"""AC.KDOC.1 — methodology spec rewritten ≤360 lines with every
+"""AC.KDOC.1 — methodology spec rewritten ≤380 lines with every
 plan-§5-scope-item-3 element present (KEEL adoption program Phase 1).
+
+Line budget raised 360 → 380 in v1.11.0 (amendment
+dev-sdlc-kdoc-methodology-line-budget-raise, AC.MSLB.1) to admit the
+recall-volume AC.RVL.8 cap-bias checklist (§7.6 + reviewer item 15).
 
 Checkable per-element list per the plan's AC table:
 spine-as-system; §2.5 forward/reverse leading; altitude tests +
@@ -31,9 +35,15 @@ def _flat() -> str:
     return re.sub(r"\s+", " ", _text())
 
 
-def test_spec_at_most_360_lines() -> None:
+# Budget raised 360 -> 380 (v1.11.0, amendment dev-sdlc-kdoc-methodology-line-budget-raise,
+# AC.MSLB.1): the recall-volume reshape's AC.RVL.8 cap-bias checklist (§7.6 +
+# reviewer item 15 in odd-methodology.md) is required content that grew the spec
+# 360 -> 373. The guard's intent is leanness / no return of the dropped 8-lens
+# sprawl; a ~13-line legitimately-required feature checklist is not that bloat, so
+# the bound admits it with a little headroom while still catching real bloat.
+def test_spec_at_most_380_lines() -> None:
     n = len(_text().splitlines())
-    assert n <= 360, f"rewritten spec is {n} lines (> 360)"
+    assert n <= 380, f"rewritten spec is {n} lines (> 380)"
 
 
 REQUIRED_ELEMENTS = [

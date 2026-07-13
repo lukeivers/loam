@@ -6,22 +6,25 @@ Copy page Commands control Claude Code from inside a session.
 They provide a quick way to switch models, manage permissions, clear context, run a workflow, and more.
 Type / to see every command available to you, or type / followed by letters to filter.
 A command is only recognized at the start of your message.
-Text that follows the command name is passed to it as arguments.
+Text that follows the command name becomes its arguments.
+As of v2.1.199, skills are the exception: a skill invocation followed by more skills, such as /skill-a /skill-b do XYZ , loads every skill named at the start and passes the trailing text to each as arguments.
+Up to six skills can be chained.
 ​ Commands across a typical workflow Most commands are useful at a specific point in a session, from setting up a project to shipping a change.
 First session in a repo.
 Run /init to generate a starter CLAUDE.md , then /memory to refine it.
-Use /mcp and /agents to set up any servers or subagents the project needs, and /permissions to set the approval rules you want.
+Use /mcp to set up any servers the project needs, ask Claude to create any subagents you want, and run /permissions to set your approval rules.
 During a task.
 /plan switches into plan mode before a large change.
-/model and /effort adjust how much reasoning you’re spending.
-When the conversation gets long, /context shows where the window is going and /compact summarizes it down; use /btw for a quick aside that shouldn’t bloat history.
-Running work in parallel.
-/agents opens the manager for the subagents Claude can delegate side tasks to, and /tasks lists what’s running in the background of the current session.
+/model and /effort adjust which model you’re using and how much reasoning it applies.
+When the conversation gets long, /context shows what’s filling the window and /compact summarizes it to free space.
+Use /btw for a quick aside that shouldn’t add to the conversation history.
+Run work in parallel.
+Claude delegates side tasks to subagents , and /tasks lists what’s running in the background of the current session.
 /background detaches the whole session to keep running as a background agent and frees your terminal.
 For a large change that spans the codebase, /batch decomposes it into independent units and runs each in its own worktree .
 See Run agents in parallel for how these approaches relate.
 Before you ship.
-/diff shows what changed, /code-review checks the diff for correctness bugs and cleanups and can apply the findings with --fix , /review runs the same read-only review on a GitHub pull request, and /security-review gives a deeper read-only pass.
+/diff shows what changed, /code-review checks the diff for correctness bugs and cleanups and can apply the findings with --fix , /review gives a fast single-pass, read-only review of a GitHub pull request, /code-review <level> <pr#> runs a multi-agent review of one, and /security-review checks the diff for security vulnerabilities.
 /code-review ultra runs a multi-agent review in the cloud.
 Between sessions.
 /clear starts fresh on a new task while keeping project memory.
@@ -29,7 +32,7 @@ Between sessions.
 /teleport pulls a web session into this terminal, and /remote-control lets you continue this local session from another device.
 When something is wrong.
 /rewind rolls code and conversation back to a checkpoint, or summarizes part of the conversation.
-/doctor and /debug diagnose install and runtime issues, and /feedback reports a bug with session context attached.
+/doctor runs a setup checkup that diagnoses installation and configuration issues and can fix them, /debug diagnoses runtime issues, and /feedback reports a bug with session context attached.
 ​ All commands The table below lists all the commands included in Claude Code.
 Most are built-in commands whose behavior is coded into the CLI.
 Two kinds of entries are marked: Skill : a bundled skill.
@@ -45,7 +48,8 @@ Most .claude/ configuration is not discovered from the added directory.
 You can later resume the session from the added directory with --continue or --resume /advisor [model|off] Enable or disable the advisor tool , which consults a second model for guidance at key moments during a task.
 Accepts opus , sonnet , fable ( v2.1.170+), or a full model ID.
 Without an argument, opens a picker.
-Requires Claude Code v2.1.98 or later /agents Manage agent configurations /autofix-pr [prompt] Spawn a Claude Code on the web session that watches the current branch’s PR and pushes fixes when CI fails or reviewers leave comments.
+Requires Claude Code v2.1.98 or later /agents As of v2.1.198, running /agents prints a reminder to ask Claude to create or manage subagents , or to edit .claude/agents/ or ~/.claude/agents/ directly.
+On v2.1.197 and earlier, opens an interactive interface for creating and managing subagent configurations /autofix-pr [prompt] Spawn a Claude Code on the web session that watches the current branch’s PR and pushes fixes when CI fails or reviewers leave comments.
 Detects the open PR from your checked-out branch with gh pr view ; to watch a different PR, check out its branch first.
 By default the cloud session is told to fix every CI failure and review comment; pass a prompt to give it different instructions, for example /autofix-pr only fix lint and type errors .
 Requires the gh CLI and access to Claude Code on the web /background [prompt] Detach the current session to run as a background agent and free this terminal.
@@ -81,7 +85,8 @@ From v2.1.154, /simplify runs a separate cleanup-only review that applies fixes 
 See Review a diff locally for effort levels and targeting /color [color|default] Set the prompt bar color for the current session.
 Available colors: red , blue , green , yellow , purple , orange , pink , cyan .
 Use default to reset, or run with no argument to pick a random color.
-When Remote Control is connected, the color syncs to claude.ai/code /compact [instructions] Free up context by summarizing the conversation so far.
+When Remote Control is connected, the color syncs to claude.ai/code.
+Also available in non-interactive mode ( -p ); requires Claude Code v2.1.205 or later /compact [instructions] Free up context by summarizing the conversation so far.
 Optionally pass focus instructions for the summary.
 See how compaction handles rules, skills, and memory files /config [key=value ...] Open the Settings interface to adjust theme, model, output style , and other preferences.
 From v2.1.181, pass one or more key=value pairs to set a setting directly without opening the interface, for example /config thinking=false .
@@ -94,7 +99,11 @@ In fullscreen mode the per-item breakdown is collapsed to keep the grid visible.
 Pass all to expand it /copy [N] Copy the last assistant response to clipboard.
 Pass a number N to copy the Nth-latest response: /copy 2 copies the second-to-last.
 When code blocks are present, shows an interactive picker to select individual blocks or the full response.
-Press w in the picker to write the selection to a file instead of the clipboard, which is useful over SSH /cost Alias for /usage /debug [description] Skill .
+Press w in the picker to write the selection to a file instead of the clipboard, which is useful over SSH /cost Alias for /usage /dataviz [request] Skill .
+Design guidance for charts, graphs, and dashboards.
+Claude picks the chart form for the data, assigns color by role, validates the palette for colorblind safety and contrast with a bundled script, and applies mark, interaction, and accessibility rules.
+Uses a brand-neutral placeholder palette that you replace with your own.
+Requires Claude Code v2.1.198 or later /debug [description] Skill .
 Enable debug logging for the current session and troubleshoot issues by reading the session debug log.
 Debug logging is off by default unless you started with claude --debug , so running /debug mid-session starts capturing logs from that point forward.
 Optionally describe the issue to focus the analysis /deep-research <question> Workflow .
@@ -105,20 +114,32 @@ A first-time sync verifies every component and can take a few hours on a large r
 Available on the Anthropic API; on Amazon Bedrock, Google Cloud’s Agent Platform, and Microsoft Foundry the underlying tool can’t reach claude.ai, so the command is unavailable /desktop Continue the current session in the Claude Code Desktop app.
 Requires macOS or Windows and a Claude subscription.
 Alias: /app /diff Open an interactive diff viewer showing uncommitted changes and per-turn diffs.
-Use left/right arrows to switch between the current git diff and individual Claude turns, and up/down to browse files /doctor Diagnose and verify your Claude Code installation and settings.
-Results show with status icons.
-Press f to have Claude fix any reported issues /effort [level|auto] Set the model effort level .
+Use left/right arrows to switch between the current git diff and individual Claude turns, and up/down to browse files.
+As of v2.1.198, the open viewer also refreshes automatically when the repository’s git state changes outside the session, such as a branch switch or commit in another terminal /doctor Skill .
+Run a setup checkup that diagnoses issues and can fix them.
+Checks installation health, including duplicate or leftover installs, PATH problems, and unparseable settings files.
+Finds unused skills, MCP servers, and plugins versus their context cost, deduplicates local CLAUDE.md files against checked-in ones, migrates always-loaded guidance into skills and nested CLAUDE.md files that load on demand, flags slow hooks , and checks for a newer version.
+Also offers to make auto mode your default and to pre-approve frequently denied read-only commands.
+Reports findings first and asks for confirmation before changing anything.
+From the terminal, claude doctor prints read-only installation diagnostics without starting a session.
+Alias: /checkup .
+Before v2.1.205, /doctor opened a read-only diagnostics screen and pressing f sent the report to Claude /effort [level|auto] Set the model effort level .
 Accepts low , medium , high , xhigh , max , or ultracode ; available levels depend on the model, and max and ultracode are session-only.
 ultracode is a Claude Code setting that combines xhigh reasoning with automatic workflow orchestration.
 auto resets to the model default.
 Without an argument, opens an interactive slider; use left and right arrows to pick a level and Enter to apply.
-Takes effect immediately without waiting for the current response to finish /exit Exit the CLI.
+Takes effect immediately without waiting for the current response to finish.
+Also available in non-interactive mode ( -p ) with a level argument, where it applies to the current session only and isn’t saved as your default; requires Claude Code v2.1.205 or later.
+On Fable 5, Opus 4.8, and Opus 4.7, a non-interactive /effort reports Not applied while the model-default effort hold is in force, so pass --effort at launch instead /exit Exit the CLI.
 In an attached background session , this detaches and the session keeps running.
 Alias: /quit /export [filename] Export the current conversation as plain text.
 With a filename, writes directly to that file.
-Without, opens a dialog to copy to clipboard or save to a file /fast [on|off] Toggle fast mode on or off /feedback [report] Submit feedback, report a bug, or share your conversation.
+Without, opens a dialog to copy to clipboard or save to a file /fast [on|off] Toggle fast mode on or off.
+In non-interactive mode ( -p ), /fast works only in a session launched with fast mode in its --settings value, for example claude -p --settings '{"fastMode": true}' ; the toggle then applies to the current session only and isn’t saved as your default, and in any other non-interactive session the command reports that fast mode isn’t available.
+Requires Claude Code v2.1.205 or later /feedback [report] Submit feedback, report a bug, or share your conversation.
 Aliases: /bug , /share /fewer-permission-prompts Skill .
 Scan your transcripts for common read-only Bash and MCP tool calls, then add a prioritized allowlist to project .claude/settings.json to reduce permission prompts /focus Toggle the focus view, which shows only your last prompt, a one-line tool-call summary with edit diffstats, and the final response.
+As of v2.1.198, the tool-call summary also counts the subagents launched in the turn and collapses completed background-task notifications into a single count.
 The selection persists across sessions; set viewMode in settings to override it.
 Only available in fullscreen rendering /fork <directive> Spawn a forked subagent : a background subagent that inherits the full conversation and works on the directive while you keep going.
 Its result returns to your conversation when it finishes.
@@ -136,12 +157,14 @@ Omit the prompt and, where available , Claude runs an autonomous maintenance che
 Example: /loop 5m check if the deploy finished .
 See Run prompts on a schedule .
 Alias: /proactive /mcp [reconnect <server>|enable|disable [<server>|all]] Manage MCP server connections and OAuth authentication.
-Run with no argument to open the interactive list, pass reconnect <server> to reconnect one disconnected server, or pass enable / disable with a server name or all to change connection state without opening the dialog /memory Edit CLAUDE.md memory files, enable or disable auto-memory , and view auto-memory entries /mobile Show QR code to download the Claude mobile app.
+Run with no argument to open the interactive list, pass reconnect <server> to reconnect one disconnected server, or pass enable / disable with a server name or all to change connection state without opening the dialog.
+Also available in non-interactive mode ( -p ), where running it with no argument prints a text summary of server status instead of opening the list; requires Claude Code v2.1.205 or later /memory Edit CLAUDE.md memory files, enable or disable auto-memory , and view auto-memory entries /mobile Show QR code to download the Claude mobile app.
 Aliases: /ios , /android /model [model] Switch the AI model and save it as your default for new sessions.
 For models that support it, use left/right arrows to adjust effort level .
 With no argument, opens a picker; press s on a row to switch for the current session only.
 The picker asks for confirmation when the conversation has prior output, since the next response re-reads the full history without cached context.
-Once confirmed, the change applies without waiting for the current response to finish /passes Share a free week of Claude Code with friends.
+Once confirmed, the change applies without waiting for the current response to finish.
+Also available in non-interactive mode ( -p ) with a model argument instead of the picker, where it applies to the current session only and isn’t saved as your default; requires Claude Code v2.1.205 or later /passes Share a free week of Claude Code with friends.
 Only visible if your account is eligible /permissions Manage allow, ask, and deny rules for tool permissions.
 Opens an interactive dialog where you can view rules by scope, add or remove rules, manage working directories, and review recent auto mode denials .
 Alias: /allowed-tools /plan [description] Enter plan mode directly from the prompt.
@@ -152,7 +175,7 @@ On earlier versions, fetches and displays comments from a GitHub pull request; a
 Requires the gh CLI /privacy-settings View and update your privacy settings.
 Only available for Pro and Max plan subscribers /radio Open Claude FM lo-fi radio in your browser.
 Prints the stream URL when no browser is available.
-Not available on Bedrock, Vertex, or Foundry /recap Generate a one-line summary of the current session on demand.
+Not available on Amazon Bedrock, Google Cloud’s Agent Platform, or Microsoft Foundry /recap Generate a one-line summary of the current session on demand.
 See Session recap for the automatic recap that appears after you’ve been away /release-notes View the changelog in an interactive version picker.
 Select a specific version to see its release notes, or choose to show all versions /reload-plugins [--force] Reload all active plugins to apply pending changes without restarting.
 Reports counts for each reloaded component and flags any load errors.
@@ -160,14 +183,16 @@ When the reload would change which MCP tools are loaded and invalidate the promp
 Reports how many skills are available and how many were added or removed.
 Added in v2.1.152 /remote-control Make this session available for remote control from claude.ai.
 Alias: /rc /remote-env Choose the default environment for cloud agents /rename [name] Rename the current session and show the name on the prompt bar.
-Without a name, auto-generates one from conversation history /resume [session] Resume a conversation by ID or name, or open the session picker.
+Without a name, auto-generates one from conversation history.
+Also available in non-interactive mode ( -p ); requires Claude Code v2.1.205 or later /resume [session] Resume a conversation by ID or name, or open the session picker.
 As of v2.1.144, background sessions appear in the picker marked with bg .
-Alias: /continue /review [PR] Review a GitHub pull request by number, using the same review engine as /code-review .
-With no arguments, lists open PRs to pick from.
-For a cloud-based review, see /code-review ultra /rewind Rewind the conversation and/or code to a previous point, or summarize from a selected message.
+Alias: /continue /review [PR] Run a fast single-pass, read-only review of a GitHub pull request by number.
+With no argument, lists open PRs to pick from; text after the PR number becomes additional review instructions.
+From v2.1.186 through v2.1.201, /review instead ran the same multi-agent engine as /code-review medium .
+For a multi-agent review at a chosen effort level, use /code-review <level> <pr#> ; for a cloud-based review, see /code-review ultra /rewind Rewind the conversation and/or code to a previous point, or summarize from a selected message.
 See checkpointing .
 Aliases: /checkpoint , /undo /run Skill .
-Launch and drive your project’s app to see a change working in the running app, not just in tests.
+Launch and drive your project’s app to see a change working, not only passing tests.
 See Run and verify your app .
 Requires Claude Code v2.1.145 or later /run-skill-generator Skill .
 Teach /run and /verify how to build, launch, and drive your project’s app from a clean environment by writing a per-project skill .
@@ -178,19 +203,20 @@ Alias: /routines /scroll-speed Adjust mouse wheel scroll speed interactively, wi
 Available in fullscreen rendering only and not in the JetBrains IDE terminal /security-review Analyze pending changes on the current branch for security vulnerabilities.
 Reviews the git diff and identifies risks like injection, auth issues, and data exposure /setup-bedrock Configure Amazon Bedrock authentication, region, and model pins through an interactive wizard.
 Only visible when CLAUDE_CODE_USE_BEDROCK=1 is set.
-First-time Bedrock users can also access this wizard from the login screen /setup-vertex Configure Google Vertex AI authentication, project, region, and model pins through an interactive wizard.
+First-time Amazon Bedrock users can also access this wizard from the login screen /setup-vertex Configure Google Cloud’s Agent Platform authentication, project, region, and model pins through an interactive wizard.
 Only visible when CLAUDE_CODE_USE_VERTEX=1 is set.
-First-time Vertex AI users can also access this wizard from the login screen /simplify [target] Skill .
+First-time Google Cloud’s Agent Platform users can also access this wizard from the login screen /simplify [target] Skill .
 Review the changed code for cleanup opportunities and apply the fixes.
-Four review agents run in parallel, covering reuse of existing helpers, simplification, efficiency, and whether the change sits at the right level of abstraction.
-From v2.1.154, the review does not look for correctness bugs.
+Four review agents run in parallel, covering reuse of existing helpers, simplification, efficiency, and whether the change is at the right level of abstraction.
+From v2.1.154, the review doesn’t look for correctness bugs.
 Use /code-review to find bugs.
-On earlier versions /simplify is equivalent to /code-review --fix .
+On earlier versions, /simplify is equivalent to /code-review --fix .
 Pass a path or PR reference to review a specific target /skills List available skills .
+As of v2.1.121, type to filter the list by name.
 Press t to sort by token count.
-Press Space to hide a skill from Claude or the / menu , then Enter to save /stats Alias for /usage .
-Opens on the Stats tab /status Open the Settings interface (Status tab) showing version, model, account, and connectivity.
-Works while Claude is responding, without waiting for the current response to finish /statusline Configure Claude Code’s status line .
+Press Space to cycle a skill’s visibility to Claude and the / menu , then Enter to save /stats Alias for /usage .
+Opens on the Stats tab /status Open the Settings interface on the Status tab, showing version, model, account, and connectivity.
+Works while Claude is responding /statusline Configure Claude Code’s status line .
 Describe what you want, or run without arguments to auto-configure from your shell prompt /stickers Order Claude Code stickers /stop Stop the current background session .
 Only available while attached to a background session; the transcript and any worktree are kept.
 To detach without stopping, use /exit or press ← /tasks View and manage everything running in the background.
@@ -209,6 +235,8 @@ Includes 3 free runs on Pro and Max, then requires usage credits /upgrade Open t
 On a Pro, Max, Team, or Enterprise plan, includes a breakdown of usage by skill, subagent, plugin, and MCP server.
 See the cost tracking guide for details.
 /cost and /stats are aliases /usage-credits Configure usage credits to keep working when you hit a limit.
+Opens the usage-credits billing page in your browser.
+When no browser can open, for example over SSH, the command prints the URL to visit instead; this requires Claude Code v2.1.205 or later, and earlier versions showed nothing in that case.
 Previously /extra-usage /verify Skill .
 Confirm a code change does what it should by building your project’s app, running it, and observing the result, rather than relying on tests or type checks.
 See Run and verify your app .

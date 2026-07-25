@@ -87,6 +87,6 @@ correct.
 
 ```
 source_url: https://code.claude.com/docs/en/hooks
-source_fetch_ts: 2026-07-02T13:49:59Z
+source_fetch_ts: 2026-07-25T12:59:26Z
 source_status: current
 ```

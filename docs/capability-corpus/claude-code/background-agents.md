@@ -90,6 +90,6 @@ agents need serialisation in a single tree.
 
 ```
 source_url: https://code.claude.com/docs/en/sub-agents
-source_fetch_ts: 2026-07-02T13:49:59Z
+source_fetch_ts: 2026-07-28T13:12:03Z
 source_status: current
 ```

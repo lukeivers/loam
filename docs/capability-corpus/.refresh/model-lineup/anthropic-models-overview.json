@@ -1,11 +1,17 @@
 {
   "ids": [
     "claude-fable-5",
+    "claude-haiku-4-5-20251001",
     "claude-mythos-5",
     "claude-mythos-preview",
-    "claude-opus-4-1-20250805",
+    "claude-opus-4-5-20251101",
     "claude-opus-4-6",
+    "claude-opus-4-7",
+    "claude-opus-4-8",
+    "claude-opus-5",
+    "claude-sonnet-4-5-20250929",
+    "claude-sonnet-4-6",
     "claude-sonnet-5"
   ],
-  "run_ts": "2026-07-02T13:49:59Z"
+  "run_ts": "2026-08-07T13:54:05Z"
 }

@@ -69,6 +69,6 @@ the local machine — it works while Claude Code is closed.
 
 ```
 source_url: https://code.claude.com/docs/en/routines
-source_fetch_ts: 2026-07-02T13:49:59Z
+source_fetch_ts: 2026-08-12T14:02:50Z
 source_status: current
 ```
